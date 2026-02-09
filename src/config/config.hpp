@@ -8,14 +8,19 @@
 using std::string;
 
 class Config {
+    Config();
+    Config(string Path);
+    ~Config();
+
+    Config(const Config&) = delete;
+    Config& operator=(const Config&) = delete;
+
     bool loaded;
     const string path;
 
     nlohmann::json j;
 public:
-    Config();
-    Config(string Path);
-    ~Config();
+    static Config& getInstance();
 
     bool New();
 

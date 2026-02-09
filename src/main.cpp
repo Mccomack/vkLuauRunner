@@ -8,7 +8,7 @@ using std::endl;
 using std::string;
 
 int main() {
-    Config config;
+    Config& config = Config::getInstance();
 
     config.New();
     config.Load();

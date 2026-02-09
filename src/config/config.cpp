@@ -19,6 +19,12 @@ Config::~Config() {
     }
 }
 
+Config& Config::getInstance() {
+    static Config instance;
+
+    return instance;
+}
+
 bool Config::New() {
     if (fs::exists(path)) {
         return false;
