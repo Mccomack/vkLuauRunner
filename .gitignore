@@ -1,7 +1,9 @@
 .DS_Store
 
 /build
+/logs
 config.json
+*.log
 
 # VS Code files for those working on multiple tools
 .vscode/*
