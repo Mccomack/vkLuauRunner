@@ -1,18 +1,21 @@
+#ifndef CONFIG_HPP
+#define CONFIG_HPP
+
 #include <iostream>
 #include <string>
-#include <optional>
 #include <nlohmann/json.hpp>
 
 using std::string;
 
 class Config {
     bool loaded;
-    string path;
+    const string path;
 
     nlohmann::json j;
 public:
-    Config() : loaded(false), path("config.json"), j(nullptr) {};
-    Config(std::optional<string> Path) : loaded(false), path(Path.value_or("config.json")), j(nullptr) {};
+    Config();
+    Config(string Path);
+    ~Config();
 
     bool New();
 
@@ -20,9 +23,11 @@ public:
     bool Save();
 
     template <typename configType>
-    std::optional<configType> Get(string index) {
+    configType Get(string index, configType defaultValue) {
         if (!j.contains(index)) {
-            return std::nullopt;
+            this->Set(index, defaultValue);
+
+            return defaultValue;
         }
 
         return j[index].get<configType>();
@@ -33,3 +38,5 @@ public:
         j[index] = value;
     }
 };
+
+#endif

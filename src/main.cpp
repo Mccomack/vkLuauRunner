@@ -1,6 +1,5 @@
 #include <iostream>
 #include <string>
-#include <optional>
 #include "config/config.hpp"
 
 using std::cout;
@@ -14,7 +13,7 @@ int main() {
     config.New();
     config.Load();
 
-    int v = config.Get<int>("asdf").value_or(1);
+    int v = config.Get<int>("asdf", 1);
 
     cout << v << endl;
 

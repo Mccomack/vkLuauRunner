@@ -9,6 +9,16 @@ namespace fs = std::filesystem;
 
 using std::string;
 
+Config::Config() : loaded(false), path("config.json"), j(nullptr) {}
+
+Config::Config(string Path) : loaded(false), path(Path), j(nullptr) {}
+
+Config::~Config() {
+    if (loaded) {
+        this->Save();
+    }
+}
+
 bool Config::New() {
     if (fs::exists(path)) {
         return false;
