@@ -1,10 +1,22 @@
 #include <iostream>
+#include <string>
+#include <optional>
+#include "config/config.hpp"
 
 using std::cout;
 using std::endl;
 
+using std::string;
+
 int main() {
-    cout << "Hello, World!" << endl;
+    Config config;
+
+    config.New();
+    config.Load();
+
+    int v = config.Get<int>("asdf").value_or(1);
+
+    cout << v << endl;
 
     return 0;
 }
