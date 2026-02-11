@@ -3,14 +3,12 @@
 #include "config/config.hpp"
 #include "logger/logger.hpp"
 
-using std::cout;
-using std::endl;
-
 using std::string;
 
 int main() {
     Config& config = Config::getInstance();
     Logger logger("main");
+    Logger anotherLogger("totallyNotMain");
 
     config.New();
     config.Load();
@@ -18,6 +16,7 @@ int main() {
     int v = config.Get<int>("asdf", 1);
 
     logger.Log("asdf");
+    anotherLogger.Log("zxcv");
 
     return 0;
 }

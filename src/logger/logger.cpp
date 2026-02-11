@@ -48,7 +48,6 @@ std::ofstream& Logger::getFile() {
     return file;
 }
 
-
 string Logger::getCurrentTime() {
     return getFormattedCurrentTime();
 }
@@ -60,7 +59,7 @@ string Logger::format(string log, std::optional<string> logLevel) {
 }
 
 void Logger::write(const string& log) {
-    getFile() << log << std::endl;
+    getFile() << log;
     getFile().flush();
 }
 
