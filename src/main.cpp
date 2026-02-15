@@ -1,7 +1,10 @@
 #include <iostream>
 #include <string>
+#include <stdexcept>
+#include <cstdlib>
 #include "config/config.hpp"
 #include "logger/logger.hpp"
+#include "graphic/graphic.hpp"
 
 using std::string;
 
@@ -18,5 +21,23 @@ int main() {
     logger.Log("asdf");
     anotherLogger.Log("zxcv");
 
-    return 0;
+#ifdef NDEBUG
+    logger.Log("Current build type: Release");
+#else
+    logger.Log("Current build type: Debug");
+#endif
+
+    //graphic::graphicLearning();
+
+    graphic::triangle helloTriangle;
+
+    try {
+        helloTriangle.run();
+    } catch (const std::exception& e) {
+        logger.Log(e.what(), "Error");
+
+        return EXIT_FAILURE;
+    }
+
+    return EXIT_SUCCESS;
 }

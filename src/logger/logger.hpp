@@ -24,6 +24,7 @@ public:
     //~Logger();
 
     void Log(string log);
+    void Log(string log, string logLevel);
 };
 
 #endif

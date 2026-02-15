@@ -71,3 +71,10 @@ void Logger::Log(string log) {
 
     std::cout << formattedStr;
 }
+
+void Logger::Log(string log, string logLevel) {
+    string formattedStr = format(log, logLevel);
+    write(formattedStr);
+
+    std::cout << formattedStr;
+}
