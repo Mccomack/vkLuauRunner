@@ -108,11 +108,13 @@ void triangle::createInstance() {
     createInfo.enabledExtensionCount = (uint32_t) extensions.size();
     createInfo.ppEnabledExtensionNames = extensions.data();
 
-    logger.Log("Enabled instance extensions: ", "Info");
+#ifndef NDEBUG
+    logger.Log("Enabled instance extensions: ", "Debug");
 
     for (const char* extension : extensions) {
-        logger.Log(std::format("\t{}", extension), "Info");
+        logger.Log(std::format("\t{}", extension), "Debug");
     }
+#endif
 
     // the time has come
     VkResult result = vkCreateInstance(&createInfo, nullptr, &instance);
