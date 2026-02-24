@@ -37,7 +37,13 @@ string& Logger::getPath() {
 }
 
 string& Logger::getFileName() {
-    static string fileName = std::format("{}_my3DGame_last.log", getFormattedCurrentTime());
+#ifdef NDEBUG
+    string buildType = "Release";
+#else
+    string buildType = "Debug";
+#endif
+
+    static string fileName = std::format("{}_my3DGame_{}_last.log", getFormattedCurrentTime(), buildType);
 
     return fileName;
 }

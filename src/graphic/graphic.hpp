@@ -1,13 +1,24 @@
 #ifndef GRAPHIC_HPP
 #define GRAPHIC_HPP
 
+#include <optional>
+
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
-#include <optional>
+#include "validationLayer/validationLayer.hpp"
+#include "device/device.hpp"
 
 namespace graphic {
     void graphicLearning();
+
+    namespace validationLayer {
+        using namespace ::validationLayer;
+    }
+
+    namespace device {
+        using namespace ::device;
+    }
 
     class triangle;
 }
@@ -16,53 +27,21 @@ class graphic::triangle {
     const uint32_t WIDTH = 800;
     const uint32_t HEIGHT = 600;
 
-    const std::vector<const char*> validationLayers = {
-        "VK_LAYER_KHRONOS_validation"
-    };
-
-    struct QueueFamilyIndices {
-        std::optional<uint32_t> graphicsFamily;
-
-        bool isComplete() {
-            return graphicsFamily.has_value();
-        }
-    };
-
-    #ifdef NDEBUG
-        const bool enableValidationLayers = false;
-    #else
-        const bool enableValidationLayers = true;
-    #endif
-
     GLFWwindow* window;
 
     VkInstance instance;
+    VkSurfaceKHR surface;
 
     VkDebugUtilsMessengerEXT debugMessenger;
 
-    bool checkValidationLayerSupport();
-    std::vector<const char*> getRequiredExtensions();
-
-    void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
-
-    VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger);
-    void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator);
-
-    static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
-        VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, 
-        VkDebugUtilsMessageTypeFlagsEXT messageType, 
-        const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
-        void* pUserData
-    );
-
-    QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
-
-    bool isDeviceSuitable(VkPhysicalDevice device);
+    VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+    VkDevice device;
+    VkQueue graphicsQueue;
+    VkQueue presentQueue;
 
     void createInstance();
-    void setupDebugMessenger();
-    void pickPhysicalDevice();
-
+    void createSurface();
+    
     void initWindow();
     void initVulkan();
     void mainLoop();

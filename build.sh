@@ -1,8 +1,8 @@
 #!/bin/bash
-rm -rf build ; mkdir build ; cd build
+set -e
 
 buildType=""
-tmp=$(echo $1 | tr '[:upper:]' '[:lower:]')
+tmp=$(echo "$1" | tr '[:upper:]' '[:lower:]')
 
 if [ "$tmp" == "release" ] 
 then
@@ -16,8 +16,6 @@ else
     buildType="Debug"
 fi
 
-cmake .. -G "Ninja" -DCMAKE_BUILD_TYPE=$buildType
+cmake -S . -B "build/$buildType" -G "Ninja" -DCMAKE_BUILD_TYPE=$buildType
 
-cmake --build .
-
-cd ..
+cmake --build "build/$buildType"

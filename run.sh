@@ -2,4 +2,4 @@
 
 ./build.sh "Release"
 
-./build/program
+./build/Release/program

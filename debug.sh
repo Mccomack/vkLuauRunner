@@ -2,4 +2,4 @@
 
 ./build.sh "Debug"
 
-lldb ./build/program
+lldb ./build/Debug/program
