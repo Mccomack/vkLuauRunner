@@ -1,17 +1,54 @@
+module;
 #include <iostream>
 #include <fstream>
 #include <filesystem>
 #include <string>
 #include <nlohmann/json.hpp>
-#include "config.hpp"
 
 namespace fs = std::filesystem;
 
-using std::string;
+export module Config;
+
+export class Config {
+    Config();
+    Config(std::string Path);
+    ~Config();
+
+    Config(const Config&) = delete;
+    Config& operator=(const Config&) = delete;
+
+    bool loaded;
+    const std::string path;
+
+    nlohmann::json j;
+public:
+    static Config& getInstance();
+
+    bool New();
+
+    bool Load();
+    bool Save();
+
+    template <typename configType>
+    configType Get(std::string index, configType defaultValue) {
+        if (!j.contains(index)) {
+            this->Set(index, defaultValue);
+
+            return defaultValue;
+        }
+
+        return j[index].get<configType>();
+    }
+
+    template <typename configType>
+    void Set(std::string index, configType value) {
+        j[index] = value;
+    }
+};
 
 Config::Config() : loaded(false), path("config.json"), j(nullptr) {}
 
-Config::Config(string Path) : loaded(false), path(Path), j(nullptr) {}
+Config::Config(std::string Path) : loaded(false), path(Path), j(nullptr) {}
 
 Config::~Config() {
     if (loaded) {

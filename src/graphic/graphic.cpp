@@ -1,4 +1,3 @@
-#define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
 #define GLM_FORCE_RADIANS
@@ -11,9 +10,11 @@
 #include <cstring>
 #include <format>
 #include <optional>
-#include "./../logger/logger.hpp"
+//#include "./../logger/logger.hpp"
 
 #include "graphic.hpp"
+
+import Logger;
 
 using namespace graphic::validationLayer;
 using namespace graphic::device;

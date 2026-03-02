@@ -1,4 +1,15 @@
 {
-    "C_Cpp.default.compilerPath": "/usr/bin/g++",
-    "makefile.configureOnOpen": true
+    "C_Cpp.intelliSenseEngine": "disabled",
+    "C_Cpp.default.compilerPath": "/opt/homebrew/opt/llvm/bin/clang++",
+    "makefile.configureOnOpen": true,
+    "cmake.generator": "Ninja",
+    "cmake.configureOnOpen": true,
+    "files.associations": {
+        "*.cppm": "cpp"
+    },
+    "clangd.path": "/opt/homebrew/opt/llvm/bin/clangd",
+    "clangd.arguments": [
+        "--compile-commands-dir=${workspaceFolder}/build/current",
+        "--log=verbose"
+    ]
 }

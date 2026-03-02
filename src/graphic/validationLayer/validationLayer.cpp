@@ -1,11 +1,11 @@
-#define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
 #include <vector>
 #include <format>
 
 #include "validationLayer.hpp"
-#include "./../../logger/logger.hpp"
+
+import Logger;
 
 namespace {
     Logger logger("graphic/validationLayer");

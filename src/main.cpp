@@ -2,9 +2,10 @@
 #include <string>
 #include <stdexcept>
 #include <cstdlib>
-#include "config/config.hpp"
-#include "logger/logger.hpp"
 #include "graphic/graphic.hpp"
+
+import Config;
+import Logger;
 
 using std::string;
 
