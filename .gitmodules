@@ -10,3 +10,6 @@
 [submodule "external/luau"]
 	path = external/luau
 	url = https://github.com/luau-lang/luau.git
+[submodule "luau"]
+	path = luau
+	url = https://github.com/luau-lang/luau.git
