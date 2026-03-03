@@ -2,10 +2,10 @@
 #include <string>
 #include <stdexcept>
 #include <cstdlib>
-#include "graphic/graphic.hpp"
 
 import Config;
 import Logger;
+import graphic;
 
 using std::string;
 

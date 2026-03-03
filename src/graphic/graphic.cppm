@@ -1,3 +1,4 @@
+module;
 #include <GLFW/glfw3.h>
 
 #define GLM_FORCE_RADIANS
@@ -10,16 +11,54 @@
 #include <cstring>
 #include <format>
 #include <optional>
-//#include "./../logger/logger.hpp"
-
-#include "graphic.hpp"
 
 import Logger;
 
-using namespace graphic::validationLayer;
-using namespace graphic::device;
+export module graphic;
+export import :device;
+export import :validationLayer;
 
-using graphic::triangle;
+export namespace graphic {
+    void graphicLearning();
+
+    namespace validationLayer {
+        using namespace ::validationLayer;
+    }
+
+    namespace device {
+        using namespace ::device;
+    }
+
+    class triangle;
+}
+
+class graphic::triangle {
+    const uint32_t WIDTH = 800;
+    const uint32_t HEIGHT = 600;
+
+    GLFWwindow* window;
+
+    VkInstance instance;
+    VkSurfaceKHR surface;
+
+    VkDebugUtilsMessengerEXT debugMessenger;
+
+    VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+    VkDevice device;
+    VkQueue graphicsQueue;
+    VkQueue presentQueue;
+
+    void createInstance();
+    void createSurface();
+    
+    void initWindow();
+    void initVulkan();
+    void mainLoop();
+    void cleanup();
+
+public:
+    void run();
+};
 
 namespace {
     Logger logger("graphic");
@@ -51,7 +90,7 @@ void graphic::graphicLearning() {
     return;
 }
 
-void triangle::createInstance() {
+void graphic::triangle::createInstance() {
     if (validationLayer::enableValidationLayers && !validationLayer::checkValidationLayerSupport()) {
         throw std::runtime_error("validation layers requested, but not available!");
     }
@@ -129,13 +168,13 @@ void triangle::createInstance() {
     logger.Log("vkCreateInstance success", "Info");
 }
 
-void triangle::createSurface() {
+void graphic::triangle::createSurface() {
     if (glfwCreateWindowSurface(instance, window, nullptr, &surface) != VK_SUCCESS) {
         throw std::runtime_error("Cannot create window surface. ");
     }
 }
 
-void triangle::initWindow() {
+void graphic::triangle::initWindow() {
     glfwInit();
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
@@ -145,7 +184,7 @@ void triangle::initWindow() {
     this->window = window;
 }
 
-void triangle::initVulkan() {
+void graphic::triangle::initVulkan() {
     createInstance();
 
     if (validationLayer::enableValidationLayers) {
@@ -163,7 +202,7 @@ void triangle::initVulkan() {
 
 }
 
-void triangle::mainLoop() {
+void graphic::triangle::mainLoop() {
     logger.Log("mainLoop start", "Info");
 
     while (!glfwWindowShouldClose(window)) {
@@ -173,7 +212,7 @@ void triangle::mainLoop() {
     logger.Log("close", "Info");
 }
 
-void triangle::cleanup() {
+void graphic::triangle::cleanup() {
     vkDestroyDevice(device, nullptr);
 
     if (debugMessenger) {
@@ -188,9 +227,9 @@ void triangle::cleanup() {
     glfwTerminate();
 }
 
-void triangle::run() {
-    triangle::initWindow();
-    triangle::initVulkan();
-    triangle::mainLoop();
-    triangle::cleanup();
+void graphic::triangle::run() {
+    graphic::triangle::initWindow();
+    graphic::triangle::initVulkan();
+    graphic::triangle::mainLoop();
+    graphic::triangle::cleanup();
 }

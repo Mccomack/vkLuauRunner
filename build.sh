@@ -20,4 +20,4 @@ cmake -S . -B "build/$buildType" -G "Ninja" -DCMAKE_BUILD_TYPE=$buildType
 
 cmake --build "build/$buildType"
 
-ln -sf "$buildType" "build/current"
+ln -sfn "$buildType" "build/current"
