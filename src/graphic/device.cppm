@@ -5,8 +5,6 @@ module;
 
 #include <vulkan/vulkan.hpp>
 
-#include "validationLayer/validationLayer.hpp"
-
 export module graphic:device;
 
 export namespace device {
