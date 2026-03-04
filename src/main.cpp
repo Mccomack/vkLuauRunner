@@ -1,8 +1,10 @@
+#include <format>
 #include <iostream>
 #include <string>
 #include <stdexcept>
 #include <cstdlib>
 
+import osinfo;
 import Config;
 import Logger;
 import graphic;
@@ -12,15 +14,12 @@ using std::string;
 int main() {
     Config& config = Config::getInstance();
     Logger logger("main");
-    Logger anotherLogger("totallyNotMain");
 
     config.New();
     config.Load();
 
-    int v = config.Get<int>("asdf", 1);
-
-    logger.Log("asdf");
-    anotherLogger.Log("zxcv");
+    logger.Log(std::format("Current OS: {}", os::name));
+    logger.Log(std::format("appData folder path: {}", os::appPath));
 
 #ifdef NDEBUG
     logger.Log("Current build type: Release");

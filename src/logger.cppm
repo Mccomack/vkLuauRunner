@@ -4,6 +4,7 @@ module;
 #include <sstream>
 #include <filesystem>
 #include <string>
+#include <string_view>
 #include <format>
 #include <optional>
 #include <chrono>
@@ -16,22 +17,24 @@ namespace ch = std::chrono;
 export module Logger;
 
 export class Logger {
-    std::string name;
+    std::string_view name;
 
     static std::string& getPath();
     static std::string& getFileName();
     static std::ofstream& getFile();
 
     std::string getCurrentTime();
-    std::string format(std::string log, std::optional<std::string> logLevel);
-    void write(const std::string& log);
+    std::string format(std::string_view log, std::optional<std::string_view> logLevel);
+    void write(std::string_view log);
 
 public:
-    Logger(std::string Name);
+    Logger(std::string_view Name);
     //~Logger();
 
-    void Log(std::string log);
-    void Log(std::string log, std::string logLevel);
+    void Log(std::string_view log);
+    void Log(std::string_view log, std::string_view logLevel);
+
+    void Debug(std::string_view log);
 };
 
 std::string getFormattedCurrentTime() {
@@ -78,29 +81,37 @@ std::string Logger::getCurrentTime() {
     return getFormattedCurrentTime();
 }
 
-std::string Logger::format(std::string log, std::optional<std::string> logLevel) {
+std::string Logger::format(std::string_view log, std::optional<std::string_view> logLevel) {
     std::string LogLevel = logLevel.has_value() ? std::format(" {}", *logLevel) : "";
 
     return std::format("{};{} [{}]: {}\n", getCurrentTime(), LogLevel, name, log);
 }
 
-void Logger::write(const std::string& log) {
+void Logger::write(std::string_view log) {
     getFile() << log;
     getFile().flush();
 }
 
-Logger::Logger(std::string Name) : name(Name) {};
+Logger::Logger(std::string_view Name) : name(Name) {};
 
-void Logger::Log(std::string log) {
+void Logger::Log(std::string_view log) {
     std::string formattedStr = format(log, std::nullopt);
     write(formattedStr);
 
     std::cout << formattedStr;
 }
 
-void Logger::Log(std::string log, std::string logLevel) {
+void Logger::Log(std::string_view log, std::string_view logLevel) {
     std::string formattedStr = format(log, logLevel);
     write(formattedStr);
 
     std::cout << formattedStr;
+}
+
+void Logger::Debug(std::string_view log) {
+#ifdef NDEBUG
+    return;
+#endif
+
+    Log(log, "DEBUG");
 }

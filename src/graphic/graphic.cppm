@@ -1,5 +1,6 @@
 module;
 #include <GLFW/glfw3.h>
+#include <vulkan/vulkan_core.h>
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -10,13 +11,14 @@ module;
 #include <tuple>
 #include <cstring>
 #include <format>
-#include <optional>
 
 import Logger;
 
 export module graphic;
-export import :device;
 export import :validationLayer;
+export import :device;
+export import :swapchain;
+export import :common;
 
 export namespace graphic {
     void graphicLearning();
@@ -27,6 +29,10 @@ export namespace graphic {
 
     namespace device {
         using namespace ::device;
+    }
+
+    namespace swapchain {
+        using namespace ::swapchain;
     }
 
     class triangle;
@@ -47,6 +53,12 @@ class graphic::triangle {
     VkDevice device;
     VkQueue graphicsQueue;
     VkQueue presentQueue;
+
+    VkSwapchainKHR swapChain;
+    std::vector<VkImage> swapChainImages;
+    VkFormat swapChainImageFormat;
+    VkExtent2D swapChainExtent;
+    std::vector<VkImageView> swapChainImageViews;
 
     void createInstance();
     void createSurface();
@@ -200,6 +212,15 @@ void graphic::triangle::initVulkan() {
     graphicsQueue = std::get<1>(tmpdev);
     presentQueue = std::get<2>(tmpdev);
 
+    std::tuple<VkSwapchainKHR, std::vector<VkImage>> tmpswp = swapchain::createSwapChain(physicalDevice, device, surface, window);
+    swapChain = std::get<0>(tmpswp);
+    swapChainImages = std::get<1>(tmpswp);
+
+    SwapChainSupportDetails swapchainSupport = querySwapChainSupport(physicalDevice, surface);
+    swapChainImageFormat = swapchain::chooseSwapSurfaceFormat(swapchainSupport.formats).format;
+    swapChainExtent = swapchain::chooseSwapExtent(swapchainSupport.capabilities, window);
+
+    swapChainImageViews = swapchain::createImageViews(swapChainImages, device);
 }
 
 void graphic::triangle::mainLoop() {
@@ -213,6 +234,12 @@ void graphic::triangle::mainLoop() {
 }
 
 void graphic::triangle::cleanup() {
+    for (VkImageView imageView : swapChainImageViews) {
+        vkDestroyImageView(device, imageView, nullptr);
+    }
+
+    vkDestroySwapchainKHR(device, swapChain, nullptr);
+
     vkDestroyDevice(device, nullptr);
 
     if (debugMessenger) {

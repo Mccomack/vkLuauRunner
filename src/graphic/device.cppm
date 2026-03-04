@@ -6,59 +6,18 @@ module;
 #include <vulkan/vulkan.hpp>
 
 export module graphic:device;
+import :common;
 
 export namespace device {
-    struct QueueFamilyIndices {
-        std::optional<uint32_t> graphicsFamily;
-        std::optional<uint32_t> presentFamily;
-
-        bool isComplete() {
-            return graphicsFamily.has_value() && presentFamily.has_value();
-        }
-    };
-
     const std::vector<const char*> deviceExtensions = {
         VK_KHR_SWAPCHAIN_EXTENSION_NAME
     };
 
-    QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface);
     bool checkDeviceExtensionSupport(VkPhysicalDevice device);
     bool isDeviceSuitable(VkPhysicalDevice device, VkSurfaceKHR surface);
     
     VkPhysicalDevice pickPhysicalDevice(VkInstance instance, VkSurfaceKHR surface);
     std::tuple<VkDevice, VkQueue, VkQueue> createLogicalDevice(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface);
-}
-
-device::QueueFamilyIndices device::findQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface) {
-    QueueFamilyIndices indices;
-
-    uint32_t queueFamilyCount = 0;
-    vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
-
-    std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
-    vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
-
-    int i = 0;
-    for (const auto& queueFamily : queueFamilies) {
-        if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
-            indices.graphicsFamily = i;
-        }
-
-        VkBool32 presentSupport = false;
-        vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentSupport);
-
-        if (presentSupport) {
-            indices.presentFamily = i;
-        }
-
-        if (indices.isComplete()) {
-            break;
-        }
-
-        i++;
-    }
-
-    return indices;
 }
 
 bool device::checkDeviceExtensionSupport(VkPhysicalDevice device) {
@@ -70,7 +29,7 @@ bool device::checkDeviceExtensionSupport(VkPhysicalDevice device) {
 
     std::set<std::string> requiredExtensions(deviceExtensions.begin(), deviceExtensions.end());
 
-    for (const auto& extension : availableExtensions) {
+    for (const VkExtensionProperties& extension : availableExtensions) {
         requiredExtensions.erase(extension.extensionName);
     }
 
@@ -78,11 +37,17 @@ bool device::checkDeviceExtensionSupport(VkPhysicalDevice device) {
 }
 
 bool device::isDeviceSuitable(VkPhysicalDevice device, VkSurfaceKHR surface) {
-    QueueFamilyIndices indices = findQueueFamilies(device, surface);
+    graphic::QueueFamilyIndices indices = graphic::findQueueFamilies(device, surface);
 
     bool extensionsSupported = checkDeviceExtensionSupport(device);
 
-    return indices.isComplete() && extensionsSupported;
+    bool swapChainAdequate = false;
+    if (extensionsSupported) {
+        graphic::SwapChainSupportDetails swapChainSupport = graphic::querySwapChainSupport(device, surface);
+        swapChainAdequate = !swapChainSupport.formats.empty() && !swapChainSupport.presentModes.empty();
+    }
+
+    return indices.isComplete() && extensionsSupported && swapChainAdequate;
 }
 
 VkPhysicalDevice device::pickPhysicalDevice(VkInstance instance, VkSurfaceKHR surface) {
@@ -117,7 +82,7 @@ std::tuple<VkDevice, VkQueue, VkQueue> device::createLogicalDevice(VkPhysicalDev
     VkQueue graphicsQueue;
     VkQueue presentQueue;
 
-    QueueFamilyIndices indices = findQueueFamilies(physicalDevice, surface);
+    graphic::QueueFamilyIndices indices = graphic::findQueueFamilies(physicalDevice, surface);
 
     std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
     std::set<uint32_t> uniqueQueueFamilies = {indices.graphicsFamily.value(), indices.presentFamily.value()};
@@ -144,13 +109,13 @@ std::tuple<VkDevice, VkQueue, VkQueue> device::createLogicalDevice(VkPhysicalDev
 
     createInfo.pEnabledFeatures = &deviceFeatures;
 
-    std::vector<const char*> deviceExtensions;
+    std::vector<const char*> extensions(deviceExtensions);
 
     // macOS settings
-    deviceExtensions.push_back("VK_KHR_portability_subset");
+    extensions.push_back("VK_KHR_portability_subset");
     
-    createInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
-    createInfo.ppEnabledExtensionNames = deviceExtensions.data();
+    createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
+    createInfo.ppEnabledExtensionNames = extensions.data();
 
     // validation layer support. but these are already supported @ graphics.cpp, instance.
     // if (validationLayer::enableValidationLayers) {
