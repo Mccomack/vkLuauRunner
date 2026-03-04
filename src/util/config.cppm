@@ -3,6 +3,7 @@ module;
 #include <fstream>
 #include <filesystem>
 #include <string>
+#include <string_view>
 #include <nlohmann/json.hpp>
 
 namespace fs = std::filesystem;
@@ -30,7 +31,12 @@ public:
     bool Save();
 
     template <typename configType>
-    configType Get(std::string index, configType defaultValue) {
+    configType Get(std::string_view index) {
+        return j[index].get<configType>();
+    }
+
+    template <typename configType>
+    configType Get(std::string_view index, configType defaultValue) {
         if (!j.contains(index)) {
             this->Set(index, defaultValue);
 
@@ -41,7 +47,7 @@ public:
     }
 
     template <typename configType>
-    void Set(std::string index, configType value) {
+    void Set(std::string_view index, configType value) {
         j[index] = value;
     }
 };
