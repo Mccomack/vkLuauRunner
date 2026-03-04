@@ -19,7 +19,7 @@ export namespace swapchain {
     VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities, GLFWwindow* window);
 
     std::tuple<VkSwapchainKHR, std::vector<VkImage>> createSwapChain(VkPhysicalDevice physicalDevice, VkDevice device, VkSurfaceKHR surface, GLFWwindow* window);
-    std::vector<VkImageView> createImageViews(const std::vector<VkImage>& swapChainImages, VkDevice device);
+    std::vector<VkImageView> createImageViews(const std::vector<VkImage>& swapChainImages, VkDevice device, VkFormat swapChainImageFormat);
 }
 
 VkSurfaceFormatKHR swapchain::chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR> &avaliableFormats) {
@@ -115,13 +115,15 @@ std::tuple<VkSwapchainKHR, std::vector<VkImage>> swapchain::createSwapChain(VkPh
     return std::make_tuple(swapChain, swapChainImages);
 }
 
-std::vector<VkImageView> swapchain::createImageViews(const std::vector<VkImage>& swapChainImages, VkDevice device) {
+std::vector<VkImageView> swapchain::createImageViews(const std::vector<VkImage>& swapChainImages, VkDevice device, VkFormat swapChainImageFormat) {
     std::vector<VkImageView> imageViews(swapChainImages.size());
 
-    for (VkImage image : swapChainImages) {
+    for (size_t i = 0; i < swapChainImages.size(); i++) {
         VkImageViewCreateInfo createInfo{};
         createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-        createInfo.image = image;
+        createInfo.image = swapChainImages[i];
+        createInfo.format = swapChainImageFormat;
+        createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
 
         createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
         createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
@@ -134,12 +136,9 @@ std::vector<VkImageView> swapchain::createImageViews(const std::vector<VkImage>&
         createInfo.subresourceRange.baseArrayLayer = 0;
         createInfo.subresourceRange.layerCount = 1;
 
-        VkImageView img;
-        if (vkCreateImageView(device, &createInfo, nullptr, &img) != VK_SUCCESS) {
+        if (vkCreateImageView(device, &createInfo, nullptr, &imageViews[i]) != VK_SUCCESS) {
             throw std::runtime_error("cannot create image views");
         }
-
-        imageViews.emplace_back(img);
     }
 
     return imageViews;

@@ -161,10 +161,10 @@ void graphic::triangle::createInstance() {
     createInfo.ppEnabledExtensionNames = extensions.data();
 
 #ifndef NDEBUG
-    logger.Log("Enabled instance extensions: ", "Debug");
+    logger.Debug("Enabled instance extensions: ");
 
     for (const char* extension : extensions) {
-        logger.Log(std::format("\t{}", extension), "Debug");
+        logger.Debug(std::format("\t{}", extension));
     }
 #endif
 
@@ -220,7 +220,7 @@ void graphic::triangle::initVulkan() {
     swapChainImageFormat = swapchain::chooseSwapSurfaceFormat(swapchainSupport.formats).format;
     swapChainExtent = swapchain::chooseSwapExtent(swapchainSupport.capabilities, window);
 
-    swapChainImageViews = swapchain::createImageViews(swapChainImages, device);
+    swapChainImageViews = swapchain::createImageViews(swapChainImages, device, swapChainImageFormat);
 }
 
 void graphic::triangle::mainLoop() {
