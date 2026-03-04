@@ -1,6 +1,7 @@
 .DS_Store
 
 /build
+/runtest
 /logs
 config.json
 *.log

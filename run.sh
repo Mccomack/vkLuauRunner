@@ -1,5 +1,6 @@
 #!/bin/bash
+set -e
 
 ./build.sh "Release"
 
-./build/Release/program
+mkdir -p runtest && cd runtest && ../build/Release/program

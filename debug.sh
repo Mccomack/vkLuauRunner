@@ -1,5 +1,6 @@
 #!/bin/bash
+set -e
 
 ./build.sh "Debug"
 
-lldb ./build/Debug/program
+mkdir -p runtest && cd runtest && lldb ../build/Debug/program
