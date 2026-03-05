@@ -3,7 +3,6 @@ module;
 #include <cstdint>
 #include <stdexcept>
 #include <vector>
-#include <tuple>
 #include <limits>
 #include <algorithm>
 
@@ -18,8 +17,9 @@ export namespace swapchain {
     VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& avaliablePresentModes);
     VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities, GLFWwindow* window);
 
-    std::tuple<VkSwapchainKHR, std::vector<VkImage>> createSwapChain(VkPhysicalDevice physicalDevice, VkDevice device, VkSurfaceKHR surface, GLFWwindow* window);
-    std::vector<VkImageView> createImageViews(const std::vector<VkImage>& swapChainImages, VkDevice device, VkFormat swapChainImageFormat);
+    VkSwapchainKHR createSwapChain(VkPhysicalDevice physicalDevice, VkDevice device, VkSurfaceKHR surface, GLFWwindow* window, VkSwapchainKHR oldSwapchain = VK_NULL_HANDLE);
+    std::vector<VkImage> createImages(VkDevice device, VkSwapchainKHR swapChain);
+    std::vector<VkImageView> createImageViews(VkDevice device, const std::vector<VkImage>& swapChainImages, VkFormat swapChainImageFormat);
 }
 
 VkSurfaceFormatKHR swapchain::chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR> &avaliableFormats) {
@@ -61,7 +61,7 @@ VkExtent2D swapchain::chooseSwapExtent(const VkSurfaceCapabilitiesKHR &capabilit
     return actualExtend;
 }
 
-std::tuple<VkSwapchainKHR, std::vector<VkImage>> swapchain::createSwapChain(VkPhysicalDevice physicalDevice, VkDevice device, VkSurfaceKHR surface, GLFWwindow* window) {
+VkSwapchainKHR swapchain::createSwapChain(VkPhysicalDevice physicalDevice, VkDevice device, VkSurfaceKHR surface, GLFWwindow* window, VkSwapchainKHR oldSwapchain) {
     graphic::QueueFamilyIndices indices = graphic::findQueueFamilies(physicalDevice, surface);
     graphic::SwapChainSupportDetails swapChainSupport = graphic::querySwapChainSupport(physicalDevice, surface);
 
@@ -98,24 +98,29 @@ std::tuple<VkSwapchainKHR, std::vector<VkImage>> swapchain::createSwapChain(VkPh
     createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
     createInfo.presentMode = presentMode;
     createInfo.clipped = VK_TRUE;
-    createInfo.oldSwapchain = VK_NULL_HANDLE;
+    createInfo.oldSwapchain = oldSwapchain;
 
     VkSwapchainKHR swapChain;
-    std::vector<VkImage> swapChainImages;
-    uint32_t _imageCount = 0;
 
     if (vkCreateSwapchainKHR(device, &createInfo, nullptr, &swapChain) != VK_SUCCESS) {
         throw std::runtime_error("cannot create swapchain");
     }
 
+    return swapChain;
+}
+
+std::vector<VkImage> swapchain::createImages(VkDevice device, VkSwapchainKHR swapChain) {
+    std::vector<VkImage> swapChainImages;
+    uint32_t _imageCount = 0;
+
     vkGetSwapchainImagesKHR(device, swapChain, &_imageCount, nullptr);
     swapChainImages.resize(_imageCount);
     vkGetSwapchainImagesKHR(device, swapChain, &_imageCount, swapChainImages.data());
 
-    return std::make_tuple(swapChain, swapChainImages);
+    return swapChainImages;
 }
 
-std::vector<VkImageView> swapchain::createImageViews(const std::vector<VkImage>& swapChainImages, VkDevice device, VkFormat swapChainImageFormat) {
+std::vector<VkImageView> swapchain::createImageViews(VkDevice device, const std::vector<VkImage>& swapChainImages, VkFormat swapChainImageFormat) {
     std::vector<VkImageView> imageViews(swapChainImages.size());
 
     for (size_t i = 0; i < swapChainImages.size(); i++) {

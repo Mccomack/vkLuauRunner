@@ -2,6 +2,7 @@ module;
 #include <cstdlib>
 #include <string>
 #include <string_view>
+#include <filesystem>
 
 #define OS_LIST     \
     X(Windows)      \
@@ -32,21 +33,25 @@ export namespace os {
 
     inline std::string_view name = OSname[os];
 
-    inline std::string appPath = []()->std::string {
+    inline std::filesystem::path appPath = []()->std::filesystem::path {
+#ifndef NDEBUG
+        return std::filesystem::current_path();
+#endif
+
         std::string tmp;
 
         if (os == Windows) {
             const char* appdata = std::getenv("APPDATA");
-            return std::string(appdata) + "\\vkLuauRunner\\";
+            return std::filesystem::path(std::string(appdata) + "\\vkLuauRunner\\");
         } else if (os == Linux) {
             const char* xdg = std::getenv("XDG_DATA_HOME");
-            if (xdg) return std::string(xdg) + "/vkLuauRunner/";
+            if (xdg) return std::filesystem::path(std::string(xdg) + "/vkLuauRunner/");
 
             const char* home = std::getenv("HOME");
-            return std::string(home) + "/.local/share/vkLuauRunner/";
+            return std::filesystem::path(std::string(home) + "/.local/share/vkLuauRunner/");
         } else if (os == macOS) {
             const char* home = std::getenv("HOME");
-            return std::string(home) + "/Library/Application Support/vkLuauRunner/";
+            return std::filesystem::path(std::string(home) + "/Library/Application Support/vkLuauRunner/");
         }
 
         return "";

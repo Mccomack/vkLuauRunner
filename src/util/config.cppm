@@ -6,20 +6,22 @@ module;
 #include <string_view>
 #include <nlohmann/json.hpp>
 
+import osinfo;
+
 namespace fs = std::filesystem;
 
 export module Config;
 
 export class Config {
     Config();
-    Config(std::string Path);
+    Config(fs::path Path);
     ~Config();
 
     Config(const Config&) = delete;
     Config& operator=(const Config&) = delete;
 
     bool loaded;
-    const std::string path;
+    const fs::path path;
 
     nlohmann::json j;
 public:
@@ -54,7 +56,7 @@ public:
 
 Config::Config() : loaded(false), path("config.json"), j(nullptr) {}
 
-Config::Config(std::string Path) : loaded(false), path(Path), j(nullptr) {}
+Config::Config(std::filesystem::path Path) : loaded(false), path(Path), j(nullptr) {}
 
 Config::~Config() {
     if (loaded) {

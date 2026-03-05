@@ -1,7 +1,5 @@
 #include <format>
-#include <iostream>
 #include <string>
-#include <stdexcept>
 #include <cstdlib>
 
 import osinfo;
@@ -19,13 +17,14 @@ int main() {
     config.Load();
 
     logger.Log(std::format("Current OS: {}", os::name));
-    logger.Log(std::format("appData folder path: {}", os::appPath));
 
 #ifdef NDEBUG
     logger.Log("Current build type: Release");
 #else
     logger.Log("Current build type: Debug");
 #endif
+
+    logger.Log(std::format("appData folder path: {}", os::appPath.generic_string()));
 
     //graphic::graphicLearning();
 

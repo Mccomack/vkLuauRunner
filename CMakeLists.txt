@@ -48,8 +48,25 @@ if(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
     endif()
 endif()
 
-file(GLOB_RECURSE SOURCES "src/*.cpp")
+# shader 컴파일
+file(GLOB_RECURSE GLSL_FILES "src/shaders/*.vert" "src/shaders/*.frag" "src/shaders/*.comp")
 
+foreach(GLSL ${GLSL_FILES})
+    get_filename_component(FILE_NAME ${GLSL} NAME)
+    set(SPV "${CMAKE_SOURCE_DIR}/build/shaders/${FILE_NAME}.spv")
+
+    add_custom_command(
+        OUTPUT ${SPV}
+        COMMAND glslc ${GLSL} -o ${SPV}
+        DEPENDS ${GLSL}
+    )
+
+    list(APPEND SPV_FILES ${SPV})
+endforeach()
+
+add_custom_target(shaders ALL DEPENDS ${SPV_FILES})
+
+file(GLOB_RECURSE SOURCES "src/*.cpp")
 file(GLOB_RECURSE MODULE_SOURCES "src/*.cppm" "src/*.ixx")
 
 if(NOT SOURCES AND NOT MODULE_SOURCES)

@@ -18,11 +18,11 @@ export module graphic;
 export import :validationLayer;
 export import :device;
 export import :swapchain;
+export import :pipeline;
+export import :framebuffer;
 export import :common;
 
 export namespace graphic {
-    void graphicLearning();
-
     namespace validationLayer {
         using namespace ::validationLayer;
     }
@@ -33,6 +33,14 @@ export namespace graphic {
 
     namespace swapchain {
         using namespace ::swapchain;
+    }
+
+    namespace pipeline {
+        using namespace ::pipeline;
+    }
+
+    namespace framebuffer {
+        using namespace ::framebuffer;
     }
 
     class triangle;
@@ -59,6 +67,10 @@ class graphic::triangle {
     VkFormat swapChainImageFormat;
     VkExtent2D swapChainExtent;
     std::vector<VkImageView> swapChainImageViews;
+    VkPipelineLayout pipelineLayout;
+    VkRenderPass renderPass;
+    VkPipeline graphicsPipeline;
+    std::vector<VkFramebuffer> swapChainFramebuffers;
 
     void createInstance();
     void createSurface();
@@ -74,32 +86,6 @@ public:
 
 namespace {
     Logger logger("graphic");
-}
-
-void graphic::graphicLearning() {
-    glfwInit();
-
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    GLFWwindow* window = glfwCreateWindow(800, 600, "Vulkan window", nullptr, nullptr);
-
-    uint32_t extensionCount = 0;
-    vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
-
-    logger.Log(std::format("{} extensions supported", extensionCount));
-
-    glm::mat4 matrix;
-    glm::vec4 vec;
-    auto test = matrix * vec;
-
-    while(!glfwWindowShouldClose(window)) {
-        glfwPollEvents();
-    }
-
-    glfwDestroyWindow(window);
-
-    glfwTerminate();
-
-    return;
 }
 
 void graphic::triangle::createInstance() {
@@ -176,8 +162,6 @@ void graphic::triangle::createInstance() {
 
         throw std::runtime_error("failed to create instance!"); // u stupid ass
     }
-
-    logger.Log("vkCreateInstance success", "Info");
 }
 
 void graphic::triangle::createSurface() {
@@ -212,15 +196,32 @@ void graphic::triangle::initVulkan() {
     graphicsQueue = std::get<1>(tmpdev);
     presentQueue = std::get<2>(tmpdev);
 
-    std::tuple<VkSwapchainKHR, std::vector<VkImage>> tmpswp = swapchain::createSwapChain(physicalDevice, device, surface, window);
-    swapChain = std::get<0>(tmpswp);
-    swapChainImages = std::get<1>(tmpswp);
+    swapChain = swapchain::createSwapChain(physicalDevice, device, surface, window);
+    swapChainImages = swapchain::createImages(device, swapChain);
 
     SwapChainSupportDetails swapchainSupport = querySwapChainSupport(physicalDevice, surface);
     swapChainImageFormat = swapchain::chooseSwapSurfaceFormat(swapchainSupport.formats).format;
     swapChainExtent = swapchain::chooseSwapExtent(swapchainSupport.capabilities, window);
 
-    swapChainImageViews = swapchain::createImageViews(swapChainImages, device, swapChainImageFormat);
+    swapChainImageViews = swapchain::createImageViews(device, swapChainImages, swapChainImageFormat);
+
+    std::tuple<VkShaderModule, VkShaderModule> tmpshd = pipeline::getShaderModule(device);
+    VkShaderModule vertShaderModule = std::get<0>(tmpshd);
+    VkShaderModule fragShaderModule = std::get<1>(tmpshd);
+
+    pipelineLayout = pipeline::createPipelineLayout(device, vertShaderModule, fragShaderModule);
+    renderPass = pipeline::createRenderPass(device, swapChainImageFormat);
+
+    graphicsPipeline = pipeline::createGraphicsPipeline(device, pipelineLayout, renderPass, vertShaderModule, fragShaderModule, swapChainExtent);
+    
+    vkDestroyShaderModule(device, vertShaderModule, nullptr);
+    vkDestroyShaderModule(device, fragShaderModule, nullptr);
+
+    swapChainFramebuffers.resize(swapChainImageViews.size());
+
+    for (size_t i = 0; i < swapChainImageViews.size(); i++) {
+        swapChainFramebuffers[i] = framebuffer::createFramebuffer(device, renderPass, swapChainImageViews[i], swapChainExtent);
+    }
 }
 
 void graphic::triangle::mainLoop() {
@@ -229,17 +230,22 @@ void graphic::triangle::mainLoop() {
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
     }
-
-    logger.Log("close", "Info");
 }
 
 void graphic::triangle::cleanup() {
+    for (VkFramebuffer framebuffer : swapChainFramebuffers) {
+        vkDestroyFramebuffer(device, framebuffer, nullptr);
+    }
+
+    vkDestroyPipeline(device, graphicsPipeline, nullptr);
+    vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
+    vkDestroyRenderPass(device, renderPass, nullptr);
+
     for (VkImageView imageView : swapChainImageViews) {
         vkDestroyImageView(device, imageView, nullptr);
     }
 
     vkDestroySwapchainKHR(device, swapChain, nullptr);
-
     vkDestroyDevice(device, nullptr);
 
     if (debugMessenger) {
