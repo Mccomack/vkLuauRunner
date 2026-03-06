@@ -20,5 +20,7 @@ cmake -S . -B "build/$buildType" -G "Ninja" -DCMAKE_BUILD_TYPE=$buildType
 
 cmake --build "build/$buildType"
 
+mkdir -p runtest
+
 ln -sfn "$buildType" "build/current"
 ln -sfn ../build/shaders runtest/shaders
