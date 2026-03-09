@@ -1,16 +1,20 @@
 module;
+#include <format>
 #include <tuple>
 #include <vector>
 #include <set>
 
 #include <vulkan/vulkan.hpp>
+#include <vulkan/vulkan_core.h>
 
 export module graphic:device;
 import :common;
+import Logger;
 
 export namespace device {
     const std::vector<const char*> deviceExtensions = {
-        VK_KHR_SWAPCHAIN_EXTENSION_NAME
+        VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+        VK_EXT_SWAPCHAIN_MAINTENANCE_1_EXTENSION_NAME
     };
 
     bool checkDeviceExtensionSupport(VkPhysicalDevice device);
@@ -18,6 +22,10 @@ export namespace device {
     
     VkPhysicalDevice pickPhysicalDevice(VkInstance instance, VkSurfaceKHR surface);
     std::tuple<VkDevice, VkQueue, VkQueue> createLogicalDevice(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface);
+}
+
+namespace {
+    Logger logger("graphic/device");
 }
 
 bool device::checkDeviceExtensionSupport(VkPhysicalDevice device) {
@@ -101,6 +109,10 @@ std::tuple<VkDevice, VkQueue, VkQueue> device::createLogicalDevice(VkPhysicalDev
     VkPhysicalDeviceFeatures deviceFeatures{};
     // add some things later
 
+    VkPhysicalDeviceSwapchainMaintenance1FeaturesEXT maintenance1Features{};
+    maintenance1Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SWAPCHAIN_MAINTENANCE_1_FEATURES_EXT;
+    maintenance1Features.swapchainMaintenance1 = VK_TRUE;
+
     VkDeviceCreateInfo createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 
@@ -108,6 +120,7 @@ std::tuple<VkDevice, VkQueue, VkQueue> device::createLogicalDevice(VkPhysicalDev
     createInfo.pQueueCreateInfos = queueCreateInfos.data();
 
     createInfo.pEnabledFeatures = &deviceFeatures;
+    createInfo.pNext = &maintenance1Features;
 
     std::vector<const char*> extensions(deviceExtensions);
 
@@ -124,6 +137,14 @@ std::tuple<VkDevice, VkQueue, VkQueue> device::createLogicalDevice(VkPhysicalDev
     // } else {
     //     createInfo.enabledLayerCount = 0;
     // }
+
+#ifndef NDEBUG
+    logger.Debug("Enabled device extensions: ");
+
+    for (const char* extensionName : extensions) {
+        logger.Debug(std::format("\t{}", extensionName));
+    }
+#endif
 
     if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS) {
         throw std::runtime_error("failed to create logical device!");

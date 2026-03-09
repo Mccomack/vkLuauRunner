@@ -48,7 +48,7 @@ std::string getFormattedCurrentTime() {
 }
 
 fs::path& Logger::getPath() {
-    static fs::path path = os::appPath;
+    static fs::path path = os::appPath / "logs";
 
     if (!fs::exists(path)) {
         fs::create_directory(path);

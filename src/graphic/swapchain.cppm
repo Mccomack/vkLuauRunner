@@ -106,6 +106,10 @@ VkSwapchainKHR swapchain::createSwapChain(VkPhysicalDevice physicalDevice, VkDev
         throw std::runtime_error("cannot create swapchain");
     }
 
+    if (oldSwapchain != VK_NULL_HANDLE) {
+        vkDestroySwapchainKHR(device, oldSwapchain, nullptr);
+    }
+
     return swapChain;
 }
 

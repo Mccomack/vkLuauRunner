@@ -43,7 +43,7 @@ export namespace os {
         std::filesystem::path path;
 
         if (os == Windows) {
-            const char* appdata = std::getenv("APPDATA");
+            const char* appdata = std::getenv("LOCALAPPDATA");
             path = std::filesystem::path(std::string(appdata) + "\\vkLuauRunner\\");
         } else if (os == Linux) {
             const char* xdg = std::getenv("XDG_DATA_HOME");
@@ -64,5 +64,4 @@ export namespace os {
 
         return path;
     }();
-    
 }

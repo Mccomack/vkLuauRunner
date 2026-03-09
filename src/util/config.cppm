@@ -2,15 +2,13 @@ module;
 #include <iostream>
 #include <fstream>
 #include <filesystem>
-#include <string>
 #include <string_view>
 #include <nlohmann/json.hpp>
-
-import osinfo;
 
 namespace fs = std::filesystem;
 
 export module Config;
+import osinfo;
 
 export class Config {
     Config();
@@ -54,7 +52,7 @@ public:
     }
 };
 
-Config::Config() : loaded(false), path("config.json"), j(nullptr) {}
+Config::Config() : loaded(false), path(os::appPath / "config.json"), j(nullptr) {}
 
 Config::Config(std::filesystem::path Path) : loaded(false), path(Path), j(nullptr) {}
 
