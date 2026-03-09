@@ -21,8 +21,13 @@ export namespace graphic {
         }
     };
 
+    const int MAX_FRAMES_IN_FLIGHT = 2;
+
     QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface);
     SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device, VkSurfaceKHR surface);
+
+    VkViewport newViewport(VkExtent2D swapchainExtent);
+    VkRect2D newScissor(VkExtent2D swapchainExtent);
 }
 
 graphic::QueueFamilyIndices graphic::findQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface) {
@@ -79,4 +84,24 @@ graphic::SwapChainSupportDetails graphic::querySwapChainSupport(VkPhysicalDevice
     }
 
     return details;
+}
+
+VkViewport graphic::newViewport(VkExtent2D swapchainExtent) {
+    VkViewport viewport{};
+    viewport.x = 0.0f;
+    viewport.y = 0.0f;
+    viewport.width = swapchainExtent.width;
+    viewport.height = swapchainExtent.height;
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = 1.0f;
+
+    return viewport;
+}
+
+VkRect2D graphic::newScissor(VkExtent2D swapchainExtent) {
+    VkRect2D scissor{};
+    scissor.offset = {0, 0};
+    scissor.extent = swapchainExtent;
+
+    return scissor;
 }

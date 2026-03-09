@@ -40,21 +40,29 @@ export namespace os {
 
         std::string tmp;
 
+        std::filesystem::path path;
+
         if (os == Windows) {
             const char* appdata = std::getenv("APPDATA");
-            return std::filesystem::path(std::string(appdata) + "\\vkLuauRunner\\");
+            path = std::filesystem::path(std::string(appdata) + "\\vkLuauRunner\\");
         } else if (os == Linux) {
             const char* xdg = std::getenv("XDG_DATA_HOME");
-            if (xdg) return std::filesystem::path(std::string(xdg) + "/vkLuauRunner/");
-
-            const char* home = std::getenv("HOME");
-            return std::filesystem::path(std::string(home) + "/.local/share/vkLuauRunner/");
+            if (xdg) {
+                path = std::filesystem::path(std::string(xdg) + "/vkLuauRunner/");
+            } else {
+                const char* home = std::getenv("HOME");
+                path = std::filesystem::path(std::string(home) + "/.local/share/vkLuauRunner/");
+            } ;
         } else if (os == macOS) {
             const char* home = std::getenv("HOME");
-            return std::filesystem::path(std::string(home) + "/Library/Application Support/vkLuauRunner/");
+            path = std::filesystem::path(std::string(home) + "/Library/Application Support/vkLuauRunner/");
         }
 
-        return "";
+        if (!std::filesystem::exists(path) || !std::filesystem::is_directory(path)) {
+            std::filesystem::create_directory(path);
+        }
+
+        return path;
     }();
     
 }

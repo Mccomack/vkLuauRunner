@@ -9,17 +9,16 @@ module;
 #include <optional>
 #include <chrono>
 
-import Config;
-
 namespace fs = std::filesystem;
 namespace ch = std::chrono;
 
 export module Logger;
+import osinfo;
 
 export class Logger {
     std::string_view name;
 
-    static std::string& getPath();
+    static fs::path& getPath();
     static std::string& getFileName();
     static std::ofstream& getFile();
 
@@ -48,9 +47,8 @@ std::string getFormattedCurrentTime() {
     return ss.str();
 }
 
-std::string& Logger::getPath() {
-    static Config& config = Config::getInstance();
-    static std::string path = config.Get<std::string>("LoggerPath", "./logs");
+fs::path& Logger::getPath() {
+    static fs::path path = os::appPath;
 
     if (!fs::exists(path)) {
         fs::create_directory(path);
@@ -72,7 +70,7 @@ std::string& Logger::getFileName() {
 }
 
 std::ofstream& Logger::getFile() {
-    static std::ofstream file(std::format("{}/{}", getPath(), getFileName()), std::ios::app);
+    static std::ofstream file(getPath() / getFileName(), std::ios::app);
 
     return file;
 }

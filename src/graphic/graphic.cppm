@@ -1,5 +1,6 @@
 module;
 #include <GLFW/glfw3.h>
+#include <stdexcept>
 #include <vulkan/vulkan_core.h>
 
 #define GLM_FORCE_RADIANS
@@ -20,6 +21,8 @@ export import :device;
 export import :swapchain;
 export import :pipeline;
 export import :framebuffer;
+export import :command;
+export import :synchronization;
 export import :common;
 
 export namespace graphic {
@@ -43,12 +46,22 @@ export namespace graphic {
         using namespace ::framebuffer;
     }
 
+    namespace command {
+        using namespace ::command;
+    }
+
+    namespace synchronization {
+        using namespace ::synchronization;
+    }
+
     class triangle;
 }
 
 class graphic::triangle {
     const uint32_t WIDTH = 800;
     const uint32_t HEIGHT = 600;
+
+    uint32_t currentFrame = 0;
 
     GLFWwindow* window;
 
@@ -67,13 +80,24 @@ class graphic::triangle {
     VkFormat swapChainImageFormat;
     VkExtent2D swapChainExtent;
     std::vector<VkImageView> swapChainImageViews;
+
     VkPipelineLayout pipelineLayout;
     VkRenderPass renderPass;
     VkPipeline graphicsPipeline;
+
     std::vector<VkFramebuffer> swapChainFramebuffers;
+
+    VkCommandPool commandPool;
+    std::vector<VkCommandBuffer> commandBuffers;
+
+    std::vector<VkSemaphore> imageAvaliableSemaphores;
+    std::vector<VkSemaphore> renderFineshedSemaphores;
+    std::vector<VkFence> inFlightFences;
 
     void createInstance();
     void createSurface();
+
+    void drawFrame();
     
     void initWindow();
     void initVulkan();
@@ -170,6 +194,53 @@ void graphic::triangle::createSurface() {
     }
 }
 
+void graphic::triangle::drawFrame() {
+    vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
+    vkResetFences(device, 1, &inFlightFences[currentFrame]);
+
+    uint32_t imageIndex;
+    vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, imageAvaliableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
+
+    vkResetCommandBuffer(commandBuffers[currentFrame], 0);
+    command::recordCommandBuffer(commandBuffers[currentFrame], renderPass, graphicsPipeline, swapChainFramebuffers[imageIndex], swapChainExtent);
+
+    VkSubmitInfo submitInfo{};
+    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+
+    VkSemaphore waitSemaphores[] = {imageAvaliableSemaphores[currentFrame]};
+    VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+    submitInfo.waitSemaphoreCount = 1;
+    submitInfo.pWaitSemaphores = waitSemaphores;
+    submitInfo.pWaitDstStageMask = waitStages;
+
+    submitInfo.commandBufferCount = 1;
+    submitInfo.pCommandBuffers = &commandBuffers[currentFrame];
+    
+    VkSemaphore signalSemaphores[] = {renderFineshedSemaphores[currentFrame]};
+    submitInfo.signalSemaphoreCount = 1;
+    submitInfo.pSignalSemaphores = signalSemaphores;
+
+    if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]) != VK_SUCCESS) {
+        throw std::runtime_error("cannot submit draw command buffer");
+    }
+
+    VkPresentInfoKHR presentInfo{};
+    presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+
+    presentInfo.waitSemaphoreCount = 1;
+    presentInfo.pWaitSemaphores = signalSemaphores;
+
+    VkSwapchainKHR swapChains[] = {swapChain};
+    presentInfo.swapchainCount = 1;
+    presentInfo.pSwapchains = swapChains;
+    presentInfo.pImageIndices = &imageIndex;
+    presentInfo.pResults = nullptr;
+
+    vkQueuePresentKHR(presentQueue, &presentInfo);
+    
+    currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
+}
+
 void graphic::triangle::initWindow() {
     glfwInit();
 
@@ -222,6 +293,20 @@ void graphic::triangle::initVulkan() {
     for (size_t i = 0; i < swapChainImageViews.size(); i++) {
         swapChainFramebuffers[i] = framebuffer::createFramebuffer(device, renderPass, swapChainImageViews[i], swapChainExtent);
     }
+
+    commandPool = command::createCommandPool(physicalDevice, device, surface);
+    commandBuffers = command::createCommandBuffer(device, commandPool);
+
+    imageAvaliableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
+    renderFineshedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
+    inFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
+
+    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+        imageAvaliableSemaphores[i] = synchronization::craeteSemaphore(device);
+        renderFineshedSemaphores[i] = synchronization::craeteSemaphore(device);
+
+        inFlightFences[i] = synchronization::createFence(device);
+    }
 }
 
 void graphic::triangle::mainLoop() {
@@ -229,10 +314,22 @@ void graphic::triangle::mainLoop() {
 
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
+        drawFrame();
     }
+
+    vkDeviceWaitIdle(device);
 }
 
 void graphic::triangle::cleanup() {
+    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+        vkDestroySemaphore(device, imageAvaliableSemaphores[i], nullptr);
+        vkDestroySemaphore(device, renderFineshedSemaphores[i], nullptr);
+
+        vkDestroyFence(device, inFlightFences[i], nullptr);
+    }
+
+    vkDestroyCommandPool(device, commandPool, nullptr);
+
     for (VkFramebuffer framebuffer : swapChainFramebuffers) {
         vkDestroyFramebuffer(device, framebuffer, nullptr);
     }

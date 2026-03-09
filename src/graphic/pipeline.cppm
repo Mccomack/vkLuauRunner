@@ -14,6 +14,7 @@ module;
 import osinfo;
 
 export module graphic:pipeline;
+import :common;
 
 export namespace pipeline {
     // VkShaderModule vertShaderModule;
@@ -21,9 +22,6 @@ export namespace pipeline {
 
     VkShaderModule createShaderModule(VkDevice device, const std::vector<char>& code);
     std::tuple<VkShaderModule, VkShaderModule> getShaderModule(VkDevice device);
-
-    VkViewport newViewport(VkExtent2D swapchainExtent);
-    VkRect2D newScissor(VkExtent2D swapchainExtent);
 
     VkPipelineLayout createPipelineLayout(VkDevice device, VkShaderModule vertShaderModule, VkShaderModule fragShaderModule);
     VkRenderPass createRenderPass(VkDevice device, VkFormat swapChainImageFormat);
@@ -90,26 +88,6 @@ std::tuple<VkShaderModule, VkShaderModule> pipeline::getShaderModule(VkDevice de
     return std::make_tuple(vertShaderModule, fragShaderModule);
 }
 
-VkViewport pipeline::newViewport(VkExtent2D swapchainExtent) {
-    VkViewport viewport{};
-    viewport.x = 0.0f;
-    viewport.y = 0.0f;
-    viewport.width = swapchainExtent.width;
-    viewport.height = swapchainExtent.height;
-    viewport.minDepth = 0.0f;
-    viewport.maxDepth = 1.0f;
-
-    return viewport;
-}
-
-VkRect2D pipeline::newScissor(VkExtent2D swapchainExtent) {
-    VkRect2D scissor{};
-    scissor.offset = {0, 0};
-    scissor.extent = swapchainExtent;
-
-    return scissor;
-}
-
 VkPipelineLayout pipeline::createPipelineLayout(VkDevice device, VkShaderModule vertShaderModule, VkShaderModule fragShaderModule) {
     VkPipelineLayout pipelineLayout;
 
@@ -144,6 +122,15 @@ VkRenderPass pipeline::createRenderPass(VkDevice device, VkFormat swapChainImage
     subpass.colorAttachmentCount = 1;
     subpass.pColorAttachments = &colorAttachmentRef;
 
+    VkSubpassDependency dependency{};
+    dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+    dependency.dstSubpass = 0;
+    dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    dependency.srcAccessMask = 0;
+    dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+
     VkRenderPass renderPass;
 
     VkRenderPassCreateInfo renderPassInfo{};
@@ -152,6 +139,8 @@ VkRenderPass pipeline::createRenderPass(VkDevice device, VkFormat swapChainImage
     renderPassInfo.pAttachments = &colorAttachment;
     renderPassInfo.subpassCount = 1;
     renderPassInfo.pSubpasses = &subpass;
+    renderPassInfo.dependencyCount = 1;
+    renderPassInfo.pDependencies = &dependency;
 
     if (vkCreateRenderPass(device, &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS) {
         throw std::runtime_error("cannot create VkRenderPass");
@@ -197,8 +186,8 @@ VkPipeline pipeline::createGraphicsPipeline(VkDevice device, VkPipelineLayout pi
     inputAssemblyInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
     inputAssemblyInfo.primitiveRestartEnable = VK_FALSE;
 
-    VkViewport viewport = newViewport(extent);
-    VkRect2D scissor = newScissor(extent);
+    VkViewport viewport = graphic::newViewport(extent);
+    VkRect2D scissor = graphic::newScissor(extent);
     
     VkPipelineViewportStateCreateInfo viewportStateInfo{};
     viewportStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
