@@ -1,4 +1,5 @@
 module;
+#include <array>
 #include <cstddef>
 #include <format>
 #include <iostream>
@@ -11,10 +12,11 @@ module;
 #include <vulkan/vulkan.hpp>
 #include <vulkan/vulkan_core.h>
 
-import osinfo;
+#include <glm/glm.hpp>
 
 export module graphic:pipeline;
 import :common;
+import osinfo;
 
 export namespace pipeline {
     // VkShaderModule vertShaderModule;
@@ -130,7 +132,6 @@ VkRenderPass pipeline::createRenderPass(VkDevice device, VkFormat swapChainImage
     dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
     dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 
-
     VkRenderPass renderPass;
 
     VkRenderPassCreateInfo renderPassInfo{};
@@ -174,12 +175,15 @@ VkPipeline pipeline::createGraphicsPipeline(VkDevice device, VkPipelineLayout pi
     dynamicStateInfo.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
     dynamicStateInfo.pDynamicStates = dynamicStates.data();
 
+    VkVertexInputBindingDescription bindingDescription = graphic::Vertex::getBindingDescription();
+    std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions = graphic::Vertex::getAttributeDescriptions();
+
     VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
     vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    vertexInputInfo.vertexBindingDescriptionCount = 0;
-    vertexInputInfo.pVertexBindingDescriptions = nullptr;
-    vertexInputInfo.vertexAttributeDescriptionCount = 0;
-    vertexInputInfo.pVertexAttributeDescriptions = nullptr;
+    vertexInputInfo.vertexBindingDescriptionCount = 1;
+    vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
+    vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
+    vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
 
     VkPipelineInputAssemblyStateCreateInfo inputAssemblyInfo{};
     inputAssemblyInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;

@@ -1,5 +1,6 @@
 module;
 #include <GLFW/glfw3.h>
+#include <cstddef>
 #include <stdexcept>
 #include <vulkan/vulkan_core.h>
 
@@ -13,8 +14,6 @@ module;
 #include <cstring>
 #include <format>
 
-import Logger;
-
 export module graphic;
 export import :validationLayer;
 export import :device;
@@ -23,7 +22,10 @@ export import :pipeline;
 export import :framebuffer;
 export import :command;
 export import :synchronization;
+export import :buffer;
 export import :common;
+
+import Logger;
 
 export namespace graphic {
     namespace validationLayer {
@@ -54,6 +56,10 @@ export namespace graphic {
         using namespace ::synchronization;
     }
 
+    namespace buffer {
+        using namespace ::buffer;
+    }
+
     class triangle;
 }
 
@@ -62,6 +68,12 @@ class graphic::triangle {
     const uint32_t HEIGHT = 600;
 
     uint32_t currentFrame = 0;
+
+    const std::vector<graphic::Vertex> vertices = {
+        {{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}}, 
+        {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}}, 
+        {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
+    };
 
     GLFWwindow* window;
 
@@ -88,6 +100,9 @@ class graphic::triangle {
     std::vector<VkFramebuffer> swapChainFramebuffers;
 
     VkCommandPool commandPool;
+
+    graphic::Buffer vertexBuffers;
+
     std::vector<VkCommandBuffer> commandBuffers;
 
     std::vector<VkSemaphore> imageAvaliableSemaphores;
@@ -253,6 +268,7 @@ void graphic::triangle::drawFrame() {
     if (result == VK_ERROR_OUT_OF_DATE_KHR) {
         framebufferResized = false;
         recreateSwapchain();
+
         return;
     } else if (result == VK_SUBOPTIMAL_KHR || framebufferResized) {
         VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
@@ -261,6 +277,7 @@ void graphic::triangle::drawFrame() {
         submitInfo.waitSemaphoreCount = 1;
         submitInfo.pWaitSemaphores = &imageAvaliableSemaphores[currentFrame];
         submitInfo.pWaitDstStageMask = &waitStage;
+
         vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
         vkQueueWaitIdle(graphicsQueue);
 
@@ -278,7 +295,18 @@ void graphic::triangle::drawFrame() {
     vkResetFences(device, 1, &inFlightFences[currentFrame]);
 
     vkResetCommandBuffer(commandBuffers[currentFrame], 0);
-    command::recordCommandBuffer(commandBuffers[currentFrame], renderPass, graphicsPipeline, swapChainFramebuffers[imageIndex], swapChainExtent);
+
+    RenderState renderState{};
+    renderState.renderPass = renderPass;
+    renderState.graphicsPipeline = graphicsPipeline;
+    renderState.vertexBuffer = vertexBuffers.buffer;
+    renderState.vertices = vertices;
+
+    FrameTarget frameTarget{};
+    frameTarget.framebuffer = swapChainFramebuffers[imageIndex];
+    frameTarget.extent = swapChainExtent;
+
+    command::recordCommandBuffer(commandBuffers[currentFrame], renderState, frameTarget);
 
     VkSubmitInfo submitInfo{};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -323,6 +351,7 @@ void graphic::triangle::drawFrame() {
     if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || framebufferResized) {
         framebufferResized = false;
         recreateSwapchain();
+
         return;
     } else if (result != VK_SUCCESS) {
         throw std::runtime_error("cannot present swapchain image");
@@ -391,6 +420,11 @@ void graphic::triangle::initVulkan() {
     }
 
     commandPool = command::createCommandPool(physicalDevice, device, surface);
+
+    VkDeviceSize size = sizeof(vertices[0]) * vertices.size();
+
+    vertexBuffers = buffer::createVertexBuffer(physicalDevice, device, commandPool, graphicsQueue, vertices.data(), size);
+
     commandBuffers = command::createCommandBuffer(device, commandPool);
 
     imageAvaliableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
@@ -443,6 +477,9 @@ void graphic::triangle::cleanup() {
         vkDestroyFence(device, inFlightFences[i], nullptr);
         vkDestroyFence(device, presentFences[i], nullptr);
     }
+
+    vkDestroyBuffer(device, vertexBuffers.buffer, nullptr);
+    vkFreeMemory(device, vertexBuffers.bufferMemory, nullptr);
 
     vkDestroyCommandPool(device, commandPool, nullptr);
 

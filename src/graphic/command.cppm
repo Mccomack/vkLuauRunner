@@ -1,4 +1,6 @@
 module;
+#include <cstdint>
+#include <span>
 #include <stdexcept>
 #include <vector>
 #include <vulkan/vulkan.hpp>
@@ -11,7 +13,7 @@ export namespace command {
     VkCommandPool createCommandPool(VkPhysicalDevice physicalDevice, VkDevice device, VkSurfaceKHR surface);
     std::vector<VkCommandBuffer> createCommandBuffer(VkDevice device, VkCommandPool commandPool);
 
-    void recordCommandBuffer(VkCommandBuffer commandBuffer, VkRenderPass renderPass, VkPipeline graphicsPipeline, VkFramebuffer framebuffer, VkExtent2D extent);
+    void recordCommandBuffer(VkCommandBuffer commandBuffer, const graphic::RenderState& renderState, const graphic::FrameTarget& frameTarget);
 }
 
 VkCommandPool command::createCommandPool(VkPhysicalDevice physicalDevice, VkDevice device, VkSurfaceKHR surface) {
@@ -47,7 +49,15 @@ std::vector<VkCommandBuffer> command::createCommandBuffer(VkDevice device, VkCom
     return commandBuffers;
 }
 
-void command::recordCommandBuffer(VkCommandBuffer commandBuffer, VkRenderPass renderPass, VkPipeline graphicsPipeline, VkFramebuffer framebuffer, VkExtent2D extent) {
+void command::recordCommandBuffer(VkCommandBuffer commandBuffer, const graphic::RenderState& renderState, const graphic::FrameTarget& frameTarget) {
+    VkRenderPass renderPass = renderState.renderPass;
+    VkPipeline graphicsPipeline = renderState.graphicsPipeline;
+    VkBuffer vertexBuffer = renderState.vertexBuffer;
+    std::span<const graphic::Vertex> vertices = renderState.vertices;
+
+    VkFramebuffer framebuffer = frameTarget.framebuffer;
+    VkExtent2D extent = frameTarget.extent;
+
     VkCommandBufferBeginInfo beginInfo{};
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 
@@ -70,13 +80,17 @@ void command::recordCommandBuffer(VkCommandBuffer commandBuffer, VkRenderPass re
 
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
 
+    VkBuffer vertexBuffers[] = {vertexBuffer};
+    VkDeviceSize offsets[] = {0};
+    vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+
     VkViewport viewport = graphic::newViewport(extent);
     vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 
     VkRect2D scissor = graphic::newScissor(extent);
     vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-    vkCmdDraw(commandBuffer, 3, 1, 0, 0);
+    vkCmdDraw(commandBuffer, static_cast<uint32_t>(vertices.size()), 1, 0, 0);
 
     vkCmdEndRenderPass(commandBuffer);
 
