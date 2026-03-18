@@ -61,7 +61,9 @@ export namespace graphic {
         VkRenderPass renderPass;
         VkPipeline graphicsPipeline;
         VkBuffer vertexBuffer;
+        VkBuffer indexBuffer;
         std::span<const Vertex> vertices;
+        std::span<const uint16_t> indices;
     };
 
     struct FrameTarget {

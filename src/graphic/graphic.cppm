@@ -70,9 +70,14 @@ class graphic::triangle {
     uint32_t currentFrame = 0;
 
     const std::vector<graphic::Vertex> vertices = {
-        {{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}}, 
-        {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}}, 
-        {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
+        {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}}, 
+        {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}}, 
+        {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
+        {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}
+    };
+
+    const std::vector<uint16_t> indices = {
+        0, 1, 2, 2, 3, 0
     };
 
     GLFWwindow* window;
@@ -101,6 +106,7 @@ class graphic::triangle {
 
     VkCommandPool commandPool;
 
+    graphic::Buffer indexBuffers;
     graphic::Buffer vertexBuffers;
 
     std::vector<VkCommandBuffer> commandBuffers;
@@ -300,7 +306,9 @@ void graphic::triangle::drawFrame() {
     renderState.renderPass = renderPass;
     renderState.graphicsPipeline = graphicsPipeline;
     renderState.vertexBuffer = vertexBuffers.buffer;
+    renderState.indexBuffer = indexBuffers.buffer;
     renderState.vertices = vertices;
+    renderState.indices = indices;
 
     FrameTarget frameTarget{};
     frameTarget.framebuffer = swapChainFramebuffers[imageIndex];
@@ -422,8 +430,10 @@ void graphic::triangle::initVulkan() {
     commandPool = command::createCommandPool(physicalDevice, device, surface);
 
     VkDeviceSize size = sizeof(vertices[0]) * vertices.size();
+    VkDeviceSize indSize = sizeof(indices[0]) * indices.size();
 
     vertexBuffers = buffer::createVertexBuffer(physicalDevice, device, commandPool, graphicsQueue, vertices.data(), size);
+    indexBuffers = buffer::createIndexBffer(physicalDevice, device, commandPool, graphicsQueue, indices.data(), indSize);
 
     commandBuffers = command::createCommandBuffer(device, commandPool);
 
@@ -477,6 +487,9 @@ void graphic::triangle::cleanup() {
         vkDestroyFence(device, inFlightFences[i], nullptr);
         vkDestroyFence(device, presentFences[i], nullptr);
     }
+
+    vkDestroyBuffer(device, indexBuffers.buffer, nullptr);
+    vkFreeMemory(device, indexBuffers.bufferMemory, nullptr);
 
     vkDestroyBuffer(device, vertexBuffers.buffer, nullptr);
     vkFreeMemory(device, vertexBuffers.bufferMemory, nullptr);

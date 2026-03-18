@@ -16,9 +16,10 @@ namespace {
 export namespace buffer {
     graphic::Buffer createBuffer(VkPhysicalDevice physicalDevice, VkDevice device, VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags memProperties);
 
-    graphic::Buffer createVertexBuffer(VkPhysicalDevice physicalDevice, VkDevice device, VkCommandPool commandPool, VkQueue graphicsQueue, const void* bufData, VkDeviceSize size);
-
     void copyBuffer(VkDevice device, VkCommandPool commandPool, VkQueue graphicsQueue, VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+
+    graphic::Buffer createVertexBuffer(VkPhysicalDevice physicalDevice, VkDevice device, VkCommandPool commandPool, VkQueue graphicsQueue, const void* bufData, VkDeviceSize size);
+    graphic::Buffer createIndexBffer(VkPhysicalDevice physicalDevice, VkDevice device, VkCommandPool commandPool, VkQueue graphicsQueue, const void* bufData, VkDeviceSize size);
 }
 
 graphic::Buffer buffer::createBuffer(VkPhysicalDevice physicalDevice, VkDevice device, VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags memProperties) {
@@ -50,24 +51,6 @@ graphic::Buffer buffer::createBuffer(VkPhysicalDevice physicalDevice, VkDevice d
     vkBindBufferMemory(device, buffer, bufferMemory, 0);
 
     return graphic::Buffer{buffer, bufferMemory};
-}
-
-graphic::Buffer buffer::createVertexBuffer(VkPhysicalDevice physicalDevice, VkDevice device, VkCommandPool commandPool, VkQueue graphicsQueue, const void* bufData, VkDeviceSize size) {
-    graphic::Buffer stagingBuffers = createBuffer(physicalDevice, device, size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-
-    void* data;
-    vkMapMemory(device, stagingBuffers.bufferMemory, 0, size, 0, &data);
-    memcpy(data, bufData, (size_t) size);
-    vkUnmapMemory(device, stagingBuffers.bufferMemory);
-
-    graphic::Buffer vertexBuffers = createBuffer(physicalDevice, device, size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-
-    copyBuffer(device, commandPool, graphicsQueue, stagingBuffers.buffer, vertexBuffers.buffer, size);
-
-    vkDestroyBuffer(device, stagingBuffers.buffer, nullptr);
-    vkFreeMemory(device, stagingBuffers.bufferMemory, nullptr);
-
-    return vertexBuffers;
 }
 
 void buffer::copyBuffer(VkDevice device, VkCommandPool commandPool, VkQueue graphicsQueue, VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) {
@@ -105,4 +88,40 @@ void buffer::copyBuffer(VkDevice device, VkCommandPool commandPool, VkQueue grap
     vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
 
 
+}
+
+graphic::Buffer buffer::createVertexBuffer(VkPhysicalDevice physicalDevice, VkDevice device, VkCommandPool commandPool, VkQueue graphicsQueue, const void* bufData, VkDeviceSize size) {
+    graphic::Buffer stagingBuffers = createBuffer(physicalDevice, device, size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+    void* data;
+    vkMapMemory(device, stagingBuffers.bufferMemory, 0, size, 0, &data);
+    memcpy(data, bufData, (size_t) size);
+    vkUnmapMemory(device, stagingBuffers.bufferMemory);
+
+    graphic::Buffer vertexBuffers = createBuffer(physicalDevice, device, size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+    copyBuffer(device, commandPool, graphicsQueue, stagingBuffers.buffer, vertexBuffers.buffer, size);
+
+    vkDestroyBuffer(device, stagingBuffers.buffer, nullptr);
+    vkFreeMemory(device, stagingBuffers.bufferMemory, nullptr);
+
+    return vertexBuffers;
+}
+
+graphic::Buffer buffer::createIndexBffer(VkPhysicalDevice physicalDevice, VkDevice device, VkCommandPool commandPool, VkQueue graphicsQueue, const void *indData, VkDeviceSize size) {
+    graphic::Buffer stagingBuffers = createBuffer(physicalDevice, device, size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+    void* data;
+    vkMapMemory(device, stagingBuffers.bufferMemory, 0, size, 0, &data);
+    memcpy(data, indData, (size_t) size);
+    vkUnmapMemory(device, stagingBuffers.bufferMemory);
+
+    graphic::Buffer indexBuffer = createBuffer(physicalDevice, device, size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+    copyBuffer(device, commandPool, graphicsQueue, stagingBuffers.buffer, indexBuffer.buffer, size);
+
+    vkDestroyBuffer(device, stagingBuffers.buffer, nullptr);
+    vkFreeMemory(device, stagingBuffers.bufferMemory, nullptr);
+
+    return indexBuffer;
 }

@@ -53,7 +53,9 @@ void command::recordCommandBuffer(VkCommandBuffer commandBuffer, const graphic::
     VkRenderPass renderPass = renderState.renderPass;
     VkPipeline graphicsPipeline = renderState.graphicsPipeline;
     VkBuffer vertexBuffer = renderState.vertexBuffer;
+    VkBuffer indexBuffer = renderState.indexBuffer;
     std::span<const graphic::Vertex> vertices = renderState.vertices;
+    std::span<const uint16_t> indices = renderState.indices;
 
     VkFramebuffer framebuffer = frameTarget.framebuffer;
     VkExtent2D extent = frameTarget.extent;
@@ -78,19 +80,21 @@ void command::recordCommandBuffer(VkCommandBuffer commandBuffer, const graphic::
 
     vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
+        vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
 
-    VkBuffer vertexBuffers[] = {vertexBuffer};
-    VkDeviceSize offsets[] = {0};
-    vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+        VkBuffer vertexBuffers[] = {vertexBuffer};
+        VkDeviceSize offsets[] = {0};
+        vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
 
-    VkViewport viewport = graphic::newViewport(extent);
-    vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+        vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT16);
 
-    VkRect2D scissor = graphic::newScissor(extent);
-    vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+        VkViewport viewport = graphic::newViewport(extent);
+        vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 
-    vkCmdDraw(commandBuffer, static_cast<uint32_t>(vertices.size()), 1, 0, 0);
+        VkRect2D scissor = graphic::newScissor(extent);
+        vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+
+        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
 
     vkCmdEndRenderPass(commandBuffer);
 
