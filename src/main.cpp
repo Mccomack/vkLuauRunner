@@ -28,7 +28,7 @@ int main() {
 
     //graphic::graphicLearning();
 
-    graphic::triangle helloTriangle;
+    graphic::app helloTriangle;
 
     try {
         helloTriangle.run();

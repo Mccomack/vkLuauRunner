@@ -60,10 +60,10 @@ export namespace graphic {
         using namespace ::buffer;
     }
 
-    class triangle;
+    class app;
 }
 
-class graphic::triangle {
+class graphic::app {
     const uint32_t WIDTH = 800;
     const uint32_t HEIGHT = 600;
 
@@ -140,7 +140,7 @@ namespace {
     Logger logger("graphic");
 }
 
-void graphic::triangle::createInstance() {
+void graphic::app::createInstance() {
     if (validationLayer::enableValidationLayers && !validationLayer::checkValidationLayerSupport()) {
         throw std::runtime_error("validation layers requested, but not available!");
     }
@@ -218,13 +218,13 @@ void graphic::triangle::createInstance() {
     }
 }
 
-void graphic::triangle::createSurface() {
+void graphic::app::createSurface() {
     if (glfwCreateWindowSurface(instance, window, nullptr, &surface) != VK_SUCCESS) {
         throw std::runtime_error("Cannot create window surface. ");
     }
 }
 
-void graphic::triangle::recreateSwapchain() {
+void graphic::app::recreateSwapchain() {
     int width = 0, height = 0;
     glfwGetFramebufferSize(window, &width, &height);
     while (width == 0 || height == 0) {
@@ -264,7 +264,7 @@ void graphic::triangle::recreateSwapchain() {
     }
 }
 
-void graphic::triangle::drawFrame() {
+void graphic::app::drawFrame() {
     vkWaitForFences(device, 1, &presentFences[currentFrame], VK_TRUE, UINT64_MAX);
     
 
@@ -369,12 +369,12 @@ void graphic::triangle::drawFrame() {
 }
 
 static void framebufferResizeCallback(GLFWwindow* window, int width, int height) {
-    graphic::triangle* app = reinterpret_cast<graphic::triangle*>(glfwGetWindowUserPointer(window));
+    graphic::app* app = reinterpret_cast<graphic::app*>(glfwGetWindowUserPointer(window));
 
     app->framebufferResized = true;
 }
 
-void graphic::triangle::initWindow() {
+void graphic::app::initWindow() {
     glfwInit();
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
@@ -384,7 +384,7 @@ void graphic::triangle::initWindow() {
     glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
 }
 
-void graphic::triangle::initVulkan() {
+void graphic::app::initVulkan() {
     createInstance();
 
     if (validationLayer::enableValidationLayers) {
@@ -455,7 +455,7 @@ void graphic::triangle::initVulkan() {
     }
 }
 
-void graphic::triangle::mainLoop() {
+void graphic::app::mainLoop() {
     logger.Log("mainLoop start", "Info");
 
     while (!glfwWindowShouldClose(window)) {
@@ -466,7 +466,7 @@ void graphic::triangle::mainLoop() {
     vkDeviceWaitIdle(device);
 }
 
-void graphic::triangle::cleanupSwapchain() {
+void graphic::app::cleanupSwapchain() {
     for (VkFramebuffer framebuffer : swapChainFramebuffers) {
         vkDestroyFramebuffer(device, framebuffer, nullptr);
     }
@@ -476,7 +476,7 @@ void graphic::triangle::cleanupSwapchain() {
     }
 }
 
-void graphic::triangle::cleanup() {
+void graphic::app::cleanup() {
     for (VkSemaphore semaphore : renderFinishedSemaphores) {
         vkDestroySemaphore(device, semaphore, nullptr);
     }
@@ -517,9 +517,9 @@ void graphic::triangle::cleanup() {
     glfwTerminate();
 }
 
-void graphic::triangle::run() {
-    graphic::triangle::initWindow();
-    graphic::triangle::initVulkan();
-    graphic::triangle::mainLoop();
-    graphic::triangle::cleanup();
+void graphic::app::run() {
+    graphic::app::initWindow();
+    graphic::app::initVulkan();
+    graphic::app::mainLoop();
+    graphic::app::cleanup();
 }
