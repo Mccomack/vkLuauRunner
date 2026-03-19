@@ -204,7 +204,7 @@ void graphic::app::createInstance() {
     logger.Debug("Enabled instance extensions: ");
 
     for (const char* extension : extensions) {
-        logger.Debug(std::format("\t{}", extension));
+        logger.Debug("\t{}", extension);
     }
 #endif
 
@@ -212,9 +212,7 @@ void graphic::app::createInstance() {
     VkResult result = vkCreateInstance(&createInfo, nullptr, &instance);
 
     if (result != VK_SUCCESS) {
-        logger.Log(std::format("vkCreateInstance error. Error Code: {}", static_cast<int>(result)), "Error");
-
-        throw std::runtime_error("failed to create instance!"); // u stupid ass
+        throw std::runtime_error(std::format("vkCreateInstance error. Error Code: {}", static_cast<int>(result))); // u stupid ass
     }
 }
 
