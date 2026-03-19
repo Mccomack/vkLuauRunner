@@ -204,7 +204,7 @@ void graphic::app::createInstance() {
     logger.Debug("Enabled instance extensions: ");
 
     for (const char* extension : extensions) {
-        logger.Debug("\t{}", extension);
+        logger.Debugf("\t{}", extension);
     }
 #endif
 

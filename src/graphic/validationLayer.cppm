@@ -4,9 +4,8 @@ module;
 #include <vector>
 #include <format>
 
-import Logger;
-
 export module graphic:validationLayer;
+import Logger;
 
 export namespace validationLayer {
     const std::vector<const char*> validationLayers = {
@@ -78,7 +77,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
     const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
     void* pUserData) {
     
-    logger.Debug(std::format("validation layer: {}", pCallbackData->pMessage));
+    logger.Debugf("validation layer: {}", pCallbackData->pMessage);
 
     return VK_FALSE;
 }

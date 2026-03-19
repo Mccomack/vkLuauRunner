@@ -33,12 +33,14 @@ public:
 
     void Log(std::string_view log);
     void Log(std::string_view log, std::string_view logLevel);
-    template <typename... Args>
-    void Log(std::format_string<Args...> fmt, Args&&... args) requires(sizeof...(args) > 0 && !std::is_convertible_v<std::tuple_element_t<0, std::tuple<Args...>>, std::string_view>);
-
+    
     void Debug(std::string_view log);
+
     template <typename... Args>
-    void Debug(std::format_string<Args...> fmt, Args&&... args) requires(sizeof...(args) > 0 && !std::is_convertible_v<std::tuple_element_t<0, std::tuple<Args...>>, std::string_view>);
+    void Logf(std::format_string<Args...> fmt, Args&&... args);
+
+    template <typename... Args>
+    void Debugf(std::format_string<Args...> fmt, Args&&... args);
 };
 
 std::string getFormattedCurrentTime() {
@@ -111,13 +113,6 @@ void Logger::Log(std::string_view log, std::string_view logLevel) {
     std::cout << formattedStr;
 }
 
-template <typename... Args>
-void Logger::Log(std::format_string<Args...> fmt, Args&&... args) requires(sizeof...(args) > 0 && !std::is_convertible_v<std::tuple_element_t<0, std::tuple<Args...>>, std::string_view>) {
-    std::string s = std::format(fmt, std::forward<Args>(args)...);
-
-    Log(s);
-}
-
 void Logger::Debug(std::string_view log) {
 #ifdef NDEBUG
     return;
@@ -127,7 +122,15 @@ void Logger::Debug(std::string_view log) {
 }
 
 template <typename... Args>
-void Logger::Debug(std::format_string<Args...> fmt, Args&&... args) requires(sizeof...(args) > 0 && !std::is_convertible_v<std::tuple_element_t<0, std::tuple<Args...>>, std::string_view>) {
+void Logger::Logf(std::format_string<Args...> fmt, Args&&... args) {
+    std::string s = std::format(fmt, std::forward<Args>(args)...);
+
+    Log(s);
+}
+
+
+template <typename... Args>
+void Logger::Debugf(std::format_string<Args...> fmt, Args&&... args) {
     std::string s = std::format(fmt, std::forward<Args>(args)...);
     
     Debug(s);

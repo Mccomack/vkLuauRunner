@@ -16,7 +16,7 @@ int main() {
     config.New();
     config.Load();
 
-    logger.Log(std::format("Current OS: {}", os::name));
+    logger.Logf("Current OS: {}", os::name);
 
 #ifdef NDEBUG
     logger.Log("Current build type: Release");
@@ -24,7 +24,7 @@ int main() {
     logger.Log("Current build type: Debug");
 #endif
 
-    logger.Log(std::format("appData folder path: {}", os::appPath.generic_string()));
+    logger.Logf("appData folder path: {}", os::appPath.generic_string());
 
     //graphic::graphicLearning();
 
