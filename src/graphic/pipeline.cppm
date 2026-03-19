@@ -64,28 +64,14 @@ VkShaderModule pipeline::createShaderModule(VkDevice device, const std::vector<c
 }
 
 std::tuple<VkShaderModule, VkShaderModule> pipeline::getShaderModule(VkDevice device) {
-    static VkDevice cachedDevice = VK_NULL_HANDLE;
-    static VkShaderModule vertShaderModule = VK_NULL_HANDLE;
-    static VkShaderModule fragShaderModule = VK_NULL_HANDLE;
-
-    if (cachedDevice == device) {
-        return std::make_tuple(vertShaderModule, fragShaderModule);
-    }
-
-    if (cachedDevice != VK_NULL_HANDLE) {
-        vkDestroyShaderModule(cachedDevice, vertShaderModule, nullptr);
-        vkDestroyShaderModule(cachedDevice, fragShaderModule, nullptr);
-    }
-
     std::filesystem::path shaderPath = os::appPath / "shaders";
     //std::cout << os::shaderPath / ""
 
     std::vector<char> vertShaderCode = readFile(shaderPath / "shader.vert.spv");
     std::vector<char> fragShaderCode = readFile(shaderPath / "shader.frag.spv");
 
-    cachedDevice = device;
-    vertShaderModule = createShaderModule(device, vertShaderCode);
-    fragShaderModule = createShaderModule(device, fragShaderCode);
+    VkShaderModule vertShaderModule = createShaderModule(device, vertShaderCode);
+    VkShaderModule fragShaderModule = createShaderModule(device, fragShaderCode);
 
     return std::make_tuple(vertShaderModule, fragShaderModule);
 }
