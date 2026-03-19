@@ -1,18 +1,14 @@
 {
+    "version": "0.2.0",
     "configurations": [
         {
-            "name": "C/C++: clang++ 활성 파일 빌드 및 디버그",
-            "type": "cppdbg",
+            "name": "LLDB Debug",
+            "type": "lldb",
             "request": "launch",
-            "program": "${fileDirname}/${fileBasenameNoExtension}",
+            "program": "${workspaceFolder}/build/Debug/program",
             "args": [],
-            "stopAtEntry": false,
-            "cwd": "${fileDirname}",
-            "environment": [],
-            "externalConsole": false,
-            "MIMode": "lldb",
-            "preLaunchTask": "C/C++: clang++ 활성 파일 빌드"
+            "cwd": "${workspaceFolder}/runtest",
+            "preLaunchTask": "cmake-build-debug"
         }
-    ],
-    "version": "2.0.0"
+    ]
 }
