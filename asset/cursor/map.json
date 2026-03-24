@@ -1,0 +1,14 @@
+{
+    "version": 1,
+    "cursorSets": [
+        {
+            "id": "default",
+            "name": "Default Cursor",
+            "cursors": {
+                "normal": {
+                    "filename": "normal."
+                }
+            }
+        }
+    ]
+}
