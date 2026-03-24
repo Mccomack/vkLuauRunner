@@ -12,6 +12,8 @@ module;
 
 export module osinfo;
 
+namespace fs = std::filesystem;
+
 export namespace os {
     #define X(name) name,
     enum OS { OS_LIST };
@@ -33,33 +35,33 @@ export namespace os {
 
     inline std::string_view name = OSname[os];
 
-    inline std::filesystem::path appPath = []()->std::filesystem::path {
+    inline fs::path appPath = []()->fs::path {
 #ifndef NDEBUG
-        return std::filesystem::current_path();
+        return fs::current_path();
 #endif
 
         std::string tmp;
 
-        std::filesystem::path path;
+        fs::path path;
 
         if (os == Windows) {
             const char* appdata = std::getenv("LOCALAPPDATA");
-            path = std::filesystem::path(std::string(appdata) + "\\vkLuauRunner\\");
+            path = fs::path(std::string(appdata) + "\\vkLuauRunner\\");
         } else if (os == Linux) {
             const char* xdg = std::getenv("XDG_DATA_HOME");
             if (xdg) {
-                path = std::filesystem::path(std::string(xdg) + "/vkLuauRunner/");
+                path = fs::path(std::string(xdg) + "/vkLuauRunner/");
             } else {
                 const char* home = std::getenv("HOME");
-                path = std::filesystem::path(std::string(home) + "/.local/share/vkLuauRunner/");
+                path = fs::path(std::string(home) + "/.local/share/vkLuauRunner/");
             } ;
         } else if (os == macOS) {
             const char* home = std::getenv("HOME");
-            path = std::filesystem::path(std::string(home) + "/Library/Application Support/vkLuauRunner/");
+            path = fs::path(std::string(home) + "/Library/Application Support/vkLuauRunner/");
         }
 
-        if (!std::filesystem::exists(path) || !std::filesystem::is_directory(path)) {
-            std::filesystem::create_directory(path);
+        if (!fs::exists(path) || !fs::is_directory(path)) {
+            fs::create_directory(path);
         }
 
         return path;

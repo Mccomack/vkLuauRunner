@@ -1,13 +1,12 @@
 #include <format>
-#include <string>
 #include <cstdlib>
+#include <exception>
 
 import osinfo;
+import appinfo;
 import Config;
 import Logger;
 import graphic;
-
-using std::string;
 
 int main() {
     Config& config = Config::getInstance();
@@ -16,6 +15,8 @@ int main() {
     config.New();
     config.Load();
 
+    logger.Logf("{} v{}", app::name, app::version);
+
     logger.Logf("Current OS: {}", os::name);
 
 #ifdef NDEBUG
@@ -23,6 +24,8 @@ int main() {
 #else
     logger.Log("Current build type: Debug");
 #endif
+
+    logger.Logf("Current git hash: {}", app::gitHash);
 
     logger.Logf("appData folder path: {}", os::appPath.generic_string());
 

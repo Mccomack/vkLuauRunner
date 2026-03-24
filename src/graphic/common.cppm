@@ -57,11 +57,20 @@ export namespace graphic {
         }
     };
 
+    struct UniformBufferObject {
+        glm::mat4 model;
+        glm::mat4 view;
+        glm::mat4 proj;
+    };
+
     struct RenderState {
         VkRenderPass renderPass;
         VkPipeline graphicsPipeline;
+        VkPipelineLayout pipelineLayout;
         VkBuffer vertexBuffer;
         VkBuffer indexBuffer;
+        VkDescriptorSet descriptorSet;
+
         std::span<const Vertex> vertices;
         std::span<const uint16_t> indices;
     };

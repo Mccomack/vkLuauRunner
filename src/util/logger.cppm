@@ -10,11 +10,11 @@ module;
 #include <chrono>
 #include <utility>
 
-namespace fs = std::filesystem;
-namespace ch = std::chrono;
-
 export module Logger;
 import osinfo;
+
+namespace fs = std::filesystem;
+namespace ch = std::chrono;
 
 export class Logger {
     std::string_view name;

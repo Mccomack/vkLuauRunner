@@ -1,18 +1,12 @@
 module;
-#include <GLFW/glfw3.h>
-#include <cstddef>
-#include <stdexcept>
 #include <vulkan/vulkan_core.h>
+
+#include <GLFW/glfw3.h>
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/vec4.hpp>
 #include <glm/mat4x4.hpp>
-
-#include <vector>
-#include <tuple>
-#include <cstring>
-#include <format>
 
 export module graphic;
 export import :validationLayer;
@@ -23,7 +17,11 @@ export import :framebuffer;
 export import :command;
 export import :synchronization;
 export import :buffer;
+export import :descriptor;
+export import :uniformBufferObject;
 export import :common;
+
+import vulkan;
 
 import Logger;
 
@@ -60,12 +58,20 @@ export namespace graphic {
         using namespace ::buffer;
     }
 
+    namespace descriptor {
+        using namespace ::descriptor;
+    }
+
+    namespace uniformBufferObejct {
+        using namespace ::uniformBufferObject;
+    }
+
     class app;
 }
 
 class graphic::app {
-    const uint32_t WIDTH = 800;
-    const uint32_t HEIGHT = 600;
+    static constexpr uint32_t WIDTH = 800;
+    static constexpr uint32_t HEIGHT = 600;
 
     uint32_t currentFrame = 0;
 
@@ -98,6 +104,10 @@ class graphic::app {
     VkExtent2D swapChainExtent;
     std::vector<VkImageView> swapChainImageViews;
 
+    VkDescriptorSetLayout descriptorSetLayout;
+    VkDescriptorPool descriptorPool;
+    std::vector<VkDescriptorSet> descriptorSets;
+
     VkPipelineLayout pipelineLayout;
     VkRenderPass renderPass;
     VkPipeline graphicsPipeline;
@@ -108,6 +118,10 @@ class graphic::app {
 
     graphic::Buffer indexBuffers;
     graphic::Buffer vertexBuffers;
+
+    std::vector<VkBuffer> uniformBuffers;
+    std::vector<VkDeviceMemory> uniformBufferMemories;
+    std::vector<void*> uniformBufferMapped;
 
     std::vector<VkCommandBuffer> commandBuffers;
 
@@ -296,15 +310,20 @@ void graphic::app::drawFrame() {
     vkResetFences(device, 1, &presentFences[currentFrame]);
 
     vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
+    
     vkResetFences(device, 1, &inFlightFences[currentFrame]);
 
     vkResetCommandBuffer(commandBuffers[currentFrame], 0);
 
+    uniformBufferObject::updateUniformBuffer(swapChainExtent, uniformBufferMapped[currentFrame]);
+
     RenderState renderState{};
     renderState.renderPass = renderPass;
     renderState.graphicsPipeline = graphicsPipeline;
+    renderState.pipelineLayout = pipelineLayout;
     renderState.vertexBuffer = vertexBuffers.buffer;
     renderState.indexBuffer = indexBuffers.buffer;
+    renderState.descriptorSet = descriptorSets[currentFrame];
     renderState.vertices = vertices;
     renderState.indices = indices;
 
@@ -407,11 +426,28 @@ void graphic::app::initVulkan() {
 
     swapChainImageViews = swapchain::createImageViews(device, swapChainImages, swapChainImageFormat);
 
+    commandPool = command::createCommandPool(physicalDevice, device, surface);
+
     std::tuple<VkShaderModule, VkShaderModule> tmpshd = pipeline::getShaderModule(device);
     VkShaderModule vertShaderModule = std::get<0>(tmpshd);
     VkShaderModule fragShaderModule = std::get<1>(tmpshd);
 
-    pipelineLayout = pipeline::createPipelineLayout(device, vertShaderModule, fragShaderModule);
+    VkDeviceSize size = sizeof(vertices[0]) * vertices.size();
+    VkDeviceSize indSize = sizeof(indices[0]) * indices.size();
+
+    vertexBuffers = buffer::createVertexBuffer(physicalDevice, device, commandPool, graphicsQueue, vertices.data(), size);
+    indexBuffers = buffer::createIndexBffer(physicalDevice, device, commandPool, graphicsQueue, indices.data(), indSize);
+
+    auto tmpubo = buffer::createUniformBuffer(physicalDevice, device, commandPool, graphicsQueue);
+    uniformBuffers = std::get<0>(tmpubo);
+    uniformBufferMemories = std::get<1>(tmpubo);
+    uniformBufferMapped = std::get<2>(tmpubo);
+
+    descriptorSetLayout = descriptor::createDescriptorSetLayout(device);
+    descriptorPool = descriptor::createDescriptorPool(device);
+    descriptorSets = descriptor::createDescriptorSets(device, descriptorSetLayout, descriptorPool, uniformBuffers);
+
+    pipelineLayout = pipeline::createPipelineLayout(device, descriptorSetLayout, vertShaderModule, fragShaderModule);
     renderPass = pipeline::createRenderPass(device, swapChainImageFormat);
 
     graphicsPipeline = pipeline::createGraphicsPipeline(device, pipelineLayout, renderPass, vertShaderModule, fragShaderModule, swapChainExtent);
@@ -424,14 +460,6 @@ void graphic::app::initVulkan() {
     for (size_t i = 0; i < swapChainImageViews.size(); i++) {
         swapChainFramebuffers[i] = framebuffer::createFramebuffer(device, renderPass, swapChainImageViews[i], swapChainExtent);
     }
-
-    commandPool = command::createCommandPool(physicalDevice, device, surface);
-
-    VkDeviceSize size = sizeof(vertices[0]) * vertices.size();
-    VkDeviceSize indSize = sizeof(indices[0]) * indices.size();
-
-    vertexBuffers = buffer::createVertexBuffer(physicalDevice, device, commandPool, graphicsQueue, vertices.data(), size);
-    indexBuffers = buffer::createIndexBffer(physicalDevice, device, commandPool, graphicsQueue, indices.data(), indSize);
 
     commandBuffers = command::createCommandBuffer(device, commandPool);
 
@@ -491,6 +519,14 @@ void graphic::app::cleanup() {
 
     vkDestroyBuffer(device, vertexBuffers.buffer, nullptr);
     vkFreeMemory(device, vertexBuffers.bufferMemory, nullptr);
+
+    for (size_t i = 0; i < graphic::MAX_FRAMES_IN_FLIGHT; i++) {
+        vkDestroyBuffer(device, uniformBuffers[i], nullptr);
+        vkFreeMemory(device, uniformBufferMemories[i], nullptr);
+    }
+
+    vkDestroyDescriptorPool(device, descriptorPool, nullptr);
+    vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
 
     vkDestroyCommandPool(device, commandPool, nullptr);
 

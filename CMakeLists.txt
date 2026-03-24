@@ -1,24 +1,31 @@
-cmake_minimum_required(VERSION 3.29)
+cmake_minimum_required(VERSION 3.30)
+
+set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "451f2fe2-a8a2-47c3-bc32-94786d8fc91b")
+set(CMAKE_CXX_MODULE_STD ON)
 
 if(APPLE)
     set(CMAKE_C_COMPILER "/opt/homebrew/opt/llvm/bin/clang")
     set(CMAKE_CXX_COMPILER "/opt/homebrew/opt/llvm/bin/clang++")
 
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+
     set(CMAKE_EXE_LINKER_FLAGS "-L/opt/homebrew/opt/llvm/lib")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -stdlib=libc++")
 
     include_directories("/opt/homebrew/opt/llvm/include")
+
+    set(CMAKE_CXX_STDLIB_MODULES_JSON "/opt/homebrew/opt/llvm/lib/c++/libc++.modules.json")
 
     execute_process(
         COMMAND xcrun --show-sdk-path
         OUTPUT_VARIABLE MACOS_SDK_PATH
         OUTPUT_STRIP_TRAILING_WHITESPACE
     )
+
     set(CMAKE_OSX_SYSROOT ${MACOS_SDK_PATH})
 endif()
 
-set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "d0edc3af-4c50-42ea-a356-e2862fe7a444")
-
-set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
+set(CMAKE_CXX_SCAN_FOR_MODULES ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 project(MyCpp3DGame VERSION 0.0.1)
@@ -82,14 +89,59 @@ if(MODULE_SOURCES)
 
     set_target_properties(program PROPERTIES CXX_SCAN_FOR_MODULES ON)
 
-    foreach(module_file ${MODULE_SOURCES})
-        set_source_files_properties(${module_file} PROPERTIES
-            COMPILE_FLAGS "-x c++-module"
-        )
-    endforeach()
+    # foreach(module_file ${MODULE_SOURCES})
+    #     set_source_files_properties(${module_file} PROPERTIES
+    #         COMPILE_FLAGS "-x c++-module"
+    #     )
+    # endforeach()
 endif()
 
+# git hash 정의
+execute_process(
+    COMMAND git rev-parse --short HEAD
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    OUTPUT_VARIABLE GIT_HASH
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+target_compile_definitions(program PRIVATE 
+    GIT_HASH="${GIT_HASH}"
+)
+
+# version 정의
+target_compile_definitions(program PRIVATE
+    APP_VERSION="${PROJECT_VERSION}"
+    APP_VERSION_MAJOR=${PROJECT_VERSION_MAJOR}
+    APP_VERSION_MINOR=${PROJECT_VERSION_MINOR}
+    APP_VERSION_PATCH=${PROJECT_VERSION_PATCH}
+)
+
 find_package(Vulkan REQUIRED)
+
+# Vulkan hpp
+add_library(VulkanHppModule)
+add_library(Vulkan::cppm ALIAS VulkanHppModule)
+
+target_compile_definitions(VulkanHppModule PUBLIC
+    VULKAN_HPP_DISPATCH_LOADER_DYNAMIC=1
+    VULKAN_HPP_NO_STRUCT_CONSTRUCTORS=1
+    VULKAN_HPP_CPPM_MODULE
+)
+target_include_directories(VulkanHppModule PUBLIC "${Vulkan_INCLUDE_DIR}")
+target_link_libraries(VulkanHppModule PUBLIC Vulkan::Vulkan)
+
+set_target_properties(VulkanHppModule PROPERTIES
+    CXX_STANDARD 23
+    CXX_MODULE_STD ON          # import std 자동 처리
+)
+
+file(GLOB VULKAN_CPPM_FILES "${Vulkan_INCLUDE_DIR}/vulkan/*.cppm")
+
+target_sources(VulkanHppModule PUBLIC
+    FILE_SET CXX_MODULES
+    BASE_DIRS "${Vulkan_INCLUDE_DIR}"
+    FILES ${VULKAN_CPPM_FILES}
+)
 
 add_subdirectory(external/glfw)
 add_subdirectory(external/luau)
@@ -107,6 +159,7 @@ target_compile_features(program PRIVATE cxx_std_23)
 
 target_link_libraries(program PRIVATE 
     Vulkan::Vulkan
+    VulkanHppModule
     glfw
 
     Luau.VM
@@ -123,4 +176,7 @@ target_compile_options(program PRIVATE
     $<$<AND:$<CXX_COMPILER_ID:MSVC>,$<CONFIG:Debug>>:/Zi /Od>
 )
 
-target_compile_definitions(program PRIVATE GLFW_INCLUDE_VULKAN)
+target_compile_definitions(program PRIVATE 
+    GLFW_INCLUDE_VULKAN
+    VULKAN_HPP_CPPM_MODULE
+)

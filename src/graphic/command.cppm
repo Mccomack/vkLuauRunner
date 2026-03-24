@@ -52,8 +52,10 @@ std::vector<VkCommandBuffer> command::createCommandBuffer(VkDevice device, VkCom
 void command::recordCommandBuffer(VkCommandBuffer commandBuffer, const graphic::RenderState& renderState, const graphic::FrameTarget& frameTarget) {
     VkRenderPass renderPass = renderState.renderPass;
     VkPipeline graphicsPipeline = renderState.graphicsPipeline;
+    VkPipelineLayout pipelineLayout = renderState.pipelineLayout;
     VkBuffer vertexBuffer = renderState.vertexBuffer;
     VkBuffer indexBuffer = renderState.indexBuffer;
+    VkDescriptorSet descriptorSet = renderState.descriptorSet;
     std::span<const graphic::Vertex> vertices = renderState.vertices;
     std::span<const uint16_t> indices = renderState.indices;
 
@@ -93,6 +95,8 @@ void command::recordCommandBuffer(VkCommandBuffer commandBuffer, const graphic::
 
         VkRect2D scissor = graphic::newScissor(extent);
         vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+
+        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, 0, nullptr);
 
         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
 

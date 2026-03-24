@@ -25,7 +25,7 @@ export namespace pipeline {
     VkShaderModule createShaderModule(VkDevice device, const std::vector<char>& code);
     std::tuple<VkShaderModule, VkShaderModule> getShaderModule(VkDevice device);
 
-    VkPipelineLayout createPipelineLayout(VkDevice device, VkShaderModule vertShaderModule, VkShaderModule fragShaderModule);
+    VkPipelineLayout createPipelineLayout(VkDevice device, VkDescriptorSetLayout descriptorSetLayout, VkShaderModule vertShaderModule, VkShaderModule fragShaderModule);
     VkRenderPass createRenderPass(VkDevice device, VkFormat swapChainImageFormat);
 
     VkPipeline createGraphicsPipeline(VkDevice device, VkPipelineLayout pipelineLayout, VkRenderPass renderPass, VkShaderModule vertShaderModule, VkShaderModule fragShaderModule, VkExtent2D extent);
@@ -76,13 +76,13 @@ std::tuple<VkShaderModule, VkShaderModule> pipeline::getShaderModule(VkDevice de
     return std::make_tuple(vertShaderModule, fragShaderModule);
 }
 
-VkPipelineLayout pipeline::createPipelineLayout(VkDevice device, VkShaderModule vertShaderModule, VkShaderModule fragShaderModule) {
+VkPipelineLayout pipeline::createPipelineLayout(VkDevice device, VkDescriptorSetLayout descriptorSetLayout, VkShaderModule vertShaderModule, VkShaderModule fragShaderModule) {
     VkPipelineLayout pipelineLayout;
 
     VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    pipelineLayoutInfo.setLayoutCount = 0;
-    pipelineLayoutInfo.pSetLayouts = nullptr;
+    pipelineLayoutInfo.setLayoutCount = 1;
+    pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
     pipelineLayoutInfo.pushConstantRangeCount = 0;
     pipelineLayoutInfo.pPushConstantRanges = nullptr;
 
@@ -194,7 +194,7 @@ VkPipeline pipeline::createGraphicsPipeline(VkDevice device, VkPipelineLayout pi
     rasterizationStateInfo.polygonMode = VK_POLYGON_MODE_FILL;
     rasterizationStateInfo.lineWidth = 1.0f;
     rasterizationStateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
-    rasterizationStateInfo.frontFace = VK_FRONT_FACE_CLOCKWISE;
+    rasterizationStateInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 
     rasterizationStateInfo.depthBiasEnable = VK_FALSE;
     rasterizationStateInfo.depthBiasConstantFactor = 0.0f;

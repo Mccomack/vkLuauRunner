@@ -2,6 +2,8 @@ module;
 #include <cstddef>
 #include <cstring>
 #include <stdexcept>
+#include <tuple>
+#include <vector>
 #include <vulkan/vulkan.hpp>
 #include <vulkan/vulkan_core.h>
 
@@ -20,6 +22,7 @@ export namespace buffer {
 
     graphic::Buffer createVertexBuffer(VkPhysicalDevice physicalDevice, VkDevice device, VkCommandPool commandPool, VkQueue graphicsQueue, const void* bufData, VkDeviceSize size);
     graphic::Buffer createIndexBffer(VkPhysicalDevice physicalDevice, VkDevice device, VkCommandPool commandPool, VkQueue graphicsQueue, const void* bufData, VkDeviceSize size);
+    std::tuple<std::vector<VkBuffer>, std::vector<VkDeviceMemory>, std::vector<void*>> createUniformBuffer(VkPhysicalDevice physicalDevice, VkDevice device, VkCommandPool commandPool, VkQueue graphicsQueue);
 }
 
 graphic::Buffer buffer::createBuffer(VkPhysicalDevice physicalDevice, VkDevice device, VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags memProperties) {
@@ -124,4 +127,23 @@ graphic::Buffer buffer::createIndexBffer(VkPhysicalDevice physicalDevice, VkDevi
     vkFreeMemory(device, stagingBuffers.bufferMemory, nullptr);
 
     return indexBuffer;
+}
+
+std::tuple<std::vector<VkBuffer>, std::vector<VkDeviceMemory>, std::vector<void*>> buffer::createUniformBuffer(VkPhysicalDevice physicalDevice, VkDevice device, VkCommandPool commandPool, VkQueue graphicsQueue) {
+    std::vector<VkBuffer> uniformBuffers(graphic::MAX_FRAMES_IN_FLIGHT);
+    std::vector<VkDeviceMemory> uniformBufferMemories(graphic::MAX_FRAMES_IN_FLIGHT);
+    std::vector<void*> uniformBufferMapped(graphic::MAX_FRAMES_IN_FLIGHT);
+
+    VkDeviceSize bufferSize = sizeof(graphic::UniformBufferObject);
+
+    for (size_t i = 0; i < graphic::MAX_FRAMES_IN_FLIGHT; i++) {
+        graphic::Buffer uniformBuffer = createBuffer(physicalDevice, device, bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+        uniformBuffers[i] = uniformBuffer.buffer;
+        uniformBufferMemories[i] = uniformBuffer.bufferMemory;
+        
+        vkMapMemory(device, uniformBuffer.bufferMemory, 0, bufferSize, 0, &uniformBufferMapped[i]);
+    }
+
+    return std::make_tuple(uniformBuffers, uniformBufferMemories, uniformBufferMapped);
 }
