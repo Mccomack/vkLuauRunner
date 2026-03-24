@@ -1,4 +1,5 @@
 module;
+#include <iomanip>
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -12,6 +13,7 @@ module;
 
 export module Logger;
 import osinfo;
+import appinfo;
 
 namespace fs = std::filesystem;
 namespace ch = std::chrono;
@@ -43,15 +45,24 @@ public:
     void Debugf(std::format_string<Args...> fmt, Args&&... args);
 };
 
-std::string getFormattedCurrentTime() {
+std::stringstream getFormattedTime() {
     auto now = ch::system_clock::now();
     auto time = ch::system_clock::to_time_t(now);
 
     std::stringstream ss;
-
     ss << std::put_time(std::localtime(&time), "%Y-%m-%dT%H:%M:%S");
 
-    return ss.str();
+    return ss;
+}
+
+std::stringstream getFormattedTimeMicrosecond() {
+    auto now = ch::system_clock::now();
+    auto us = ch::duration_cast<ch::microseconds>(now.time_since_epoch()) % 1000000;
+
+    std::stringstream ss = getFormattedTime();
+    ss << '.' << std::setfill('0') << std::setw(6) << us.count();
+
+    return ss;
 }
 
 fs::path& Logger::getPath() {
@@ -71,7 +82,7 @@ std::string& Logger::getFileName() {
     std::string buildType = "Debug";
 #endif
 
-    static std::string fileName = std::format("{}_my3DGame_{}_last.log", getFormattedCurrentTime(), buildType);
+    static std::string fileName = std::format("{}_{}_{}_last.log", getFormattedTime().str(), app::name, buildType);
 
     return fileName;
 }
@@ -83,7 +94,7 @@ std::ofstream& Logger::getFile() {
 }
 
 std::string Logger::getCurrentTime() {
-    return getFormattedCurrentTime();
+    return getFormattedTimeMicrosecond().str();
 }
 
 std::string Logger::format(std::string_view log, std::optional<std::string_view> logLevel) {
