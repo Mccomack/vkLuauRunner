@@ -16,6 +16,7 @@ int main() {
     config.Load();
 
     logger.Logf("{} v{}", app::name, app::version);
+    logger.Logf("Git hash: {}", app::gitHash);
 
     logger.Logf("Current OS: {}", os::name);
 
@@ -24,8 +25,6 @@ int main() {
 #else
     logger.Log("Current build type: Debug");
 #endif
-
-    logger.Logf("Current git hash: {}", app::gitHash);
 
     logger.Logf("appData folder path: {}", os::appPath.generic_string());
 
