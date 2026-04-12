@@ -1,4 +1,5 @@
 module;
+#include "vulkan/vulkan.hpp"
 #include <GLFW/glfw3.h>
 
 #include <vector>
@@ -6,6 +7,8 @@ module;
 
 export module graphic:validationLayer;
 import Logger;
+
+import vulkan;
 
 export namespace validationLayer {
     const std::vector<const char*> validationLayers = {
@@ -19,7 +22,7 @@ export namespace validationLayer {
     #endif
 
     bool checkValidationLayerSupport();
-    void pushRequiredExtensions(std::vector<const char*> &extensions);
+    void pushRequiredInstanceExtensions(std::vector<const char*> &extensions);
 
     // static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
     //     VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, 
@@ -28,12 +31,9 @@ export namespace validationLayer {
     //     void* pUserData
     // );
 
-    void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
+    void populateDebugMessengerCreateInfo(vk::DebugUtilsMessengerCreateInfoEXT& createInfo);
 
-    VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger);
-    void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator);
-
-    VkDebugUtilsMessengerEXT createDebugMessenger(VkInstance instance);
+    vk::DebugUtilsMessengerEXT createDebugMessenger(const vk::raii::Instance& instance);
 };
 
 namespace {
@@ -65,60 +65,49 @@ bool validationLayer::checkValidationLayerSupport() {
     return true;
 }
 
-void validationLayer::pushRequiredExtensions(std::vector<const char*> &extensions) {
+void validationLayer::pushRequiredInstanceExtensions(std::vector<const char*> &extensions) {
     if (enableValidationLayers) {
-        extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+        extensions.push_back(vk::EXTDebugUtilsExtensionName);
     }
 }
 
-VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
-    VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, 
-    VkDebugUtilsMessageTypeFlagsEXT messageType, 
-    const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+VKAPI_ATTR vk::Bool32 VKAPI_CALL debugCallback(
+    vk::DebugUtilsMessageSeverityFlagBitsEXT messageSeverity, 
+    vk::DebugUtilsMessageTypeFlagsEXT messageType, 
+    const vk::DebugUtilsMessengerCallbackDataEXT* pCallbackData,
     void* pUserData) {
     
     logger.Debugf("validation layer: {}", pCallbackData->pMessage);
 
-    return VK_FALSE;
+    return vk::False;
 }
 
-void validationLayer::populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo) {
-    createInfo = {};
-    createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-    createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-    createInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-    createInfo.pfnUserCallback = debugCallback;
+void validationLayer::populateDebugMessengerCreateInfo(vk::DebugUtilsMessengerCreateInfoEXT& createInfo) {
+    vk::DebugUtilsMessageSeverityFlagsEXT severityFlags{
+        vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose | 
+        //vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo | 
+        vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning | 
+        vk::DebugUtilsMessageSeverityFlagBitsEXT::eError
+    };
+
+    vk::DebugUtilsMessageTypeFlagsEXT messageTypeFlags{
+        vk::DebugUtilsMessageTypeFlagBitsEXT::eDeviceAddressBinding | 
+        vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral | 
+        vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance | 
+        vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation
+    };
+
+    createInfo.messageSeverity = severityFlags,
+    createInfo.messageType = messageTypeFlags,
+    createInfo.pfnUserCallback = &debugCallback;
 }
 
-VkResult validationLayer::CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger) {
-    auto func = (PFN_vkCreateDebugUtilsMessengerEXT) vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
+vk::DebugUtilsMessengerEXT validationLayer::createDebugMessenger(const vk::raii::Instance &instance) {
+    if (!enableValidationLayers)
+        return nullptr;
 
-    if (func == nullptr) {
-        return VK_ERROR_EXTENSION_NOT_PRESENT;
-    }
-
-    return func(instance, pCreateInfo, pAllocator, pDebugMessenger);
-}
-
-void validationLayer::DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator) {
-    auto func = (PFN_vkDestroyDebugUtilsMessengerEXT) vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
-
-    if (func == nullptr) {
-        return;
-    }
-
-    func(instance, debugMessenger, pAllocator);
-}
-
-VkDebugUtilsMessengerEXT validationLayer::createDebugMessenger(VkInstance instance) {
-    VkDebugUtilsMessengerEXT debugMessenger;
-
-    VkDebugUtilsMessengerCreateInfoEXT createInfo{};
+    vk::DebugUtilsMessengerCreateInfoEXT createInfo{};
     populateDebugMessengerCreateInfo(createInfo);
-
-    if (CreateDebugUtilsMessengerEXT(instance, &createInfo, nullptr, &debugMessenger) != VK_SUCCESS) {
-        throw std::runtime_error("failed to set up debug messenger!");
-    }
-
-    return debugMessenger;
+   
+    return instance.createDebugUtilsMessengerEXT(createInfo);
 }

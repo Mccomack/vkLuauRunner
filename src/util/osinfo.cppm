@@ -1,5 +1,6 @@
 module;
 #include <cstdlib>
+#include <format>
 #include <string>
 #include <string_view>
 #include <filesystem>
@@ -11,6 +12,7 @@ module;
     X(Unknown)      \
 
 export module osinfo;
+import appinfo;
 
 namespace fs = std::filesystem;
 
@@ -44,20 +46,28 @@ export namespace os {
 
         fs::path path;
 
-        if (os == Windows) {
-            const char* appdata = std::getenv("LOCALAPPDATA");
-            path = fs::path(std::string(appdata) + "\\vkLuauRunner\\");
-        } else if (os == Linux) {
-            const char* xdg = std::getenv("XDG_DATA_HOME");
-            if (xdg) {
-                path = fs::path(std::string(xdg) + "/vkLuauRunner/");
-            } else {
+        switch (os) {
+            case Windows: {
+                const char* appdata = std::getenv("LOCALAPPDATA");
+                path = fs::path(std::format("{}\\{}\\", std::string(appdata), app::name));
+                break;
+            }
+            case Linux: {
+                const char* xdg = std::getenv("XDG_DATA_HOME");
+                if (xdg) {
+                    path = fs::path(std::format("{}/{}/", std::string(xdg), app::name));
+                } else {
+                    const char* home = std::getenv("HOME");
+                    path = fs::path(std::format("{}/.local/share/{}/", std::string(home), app::name));
+                } ;
+                break;
+            }
+            case macOS: {
                 const char* home = std::getenv("HOME");
-                path = fs::path(std::string(home) + "/.local/share/vkLuauRunner/");
-            } ;
-        } else if (os == macOS) {
-            const char* home = std::getenv("HOME");
-            path = fs::path(std::string(home) + "/Library/Application Support/vkLuauRunner/");
+                path = fs::path(std::format("{}/Library/Application Support/{}/", std::string(home), app::name));
+                break;
+            }
+            default: return fs::path("/");
         }
 
         if (!fs::exists(path) || !fs::is_directory(path)) {

@@ -11,65 +11,91 @@ export module graphic:device;
 import :common;
 import Logger;
 
+import vulkan;
+
 export namespace device {
     const std::vector<const char*> deviceExtensions = {
-        VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-        VK_EXT_SWAPCHAIN_MAINTENANCE_1_EXTENSION_NAME
+        vk::KHRSwapchainExtensionName,
+        vk::EXTSwapchainMaintenance1ExtensionName
     };
 
-    bool checkDeviceExtensionSupport(VkPhysicalDevice device);
-    bool isDeviceSuitable(VkPhysicalDevice device, VkSurfaceKHR surface);
+    bool checkDeviceExtensionSupport(const vk::raii::PhysicalDevice& physicalDevice);
+    bool checkDeviceFeatureSupport(const vk::raii::PhysicalDevice& physicalDevice);
+    bool isDeviceSuitable(const vk::raii::PhysicalDevice& physicalDevice, const vk::raii::SurfaceKHR& surface);
     
-    VkPhysicalDevice pickPhysicalDevice(VkInstance instance, VkSurfaceKHR surface);
-    std::tuple<VkDevice, VkQueue, VkQueue> createLogicalDevice(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface);
+    vk::raii::PhysicalDevice pickPhysicalDevice(const vk::raii::Instance& instance, const vk::raii::SurfaceKHR& surface);
+    std::tuple<vk::raii::Device, vk::raii::Queue, vk::raii::Queue> createLogicalDevice(const vk::raii::PhysicalDevice& physicalDevice, const vk::raii::SurfaceKHR& surface);
 }
 
 namespace {
     Logger logger("graphic/device");
 }
 
-bool device::checkDeviceExtensionSupport(VkPhysicalDevice device) {
-    uint32_t extensionCount;
-    vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
-
-    std::vector<VkExtensionProperties> availableExtensions(extensionCount);
-    vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, availableExtensions.data());
+bool device::checkDeviceExtensionSupport(const vk::raii::PhysicalDevice& physicalDevice) {
+    std::vector<vk::ExtensionProperties> availableExtensions = physicalDevice.enumerateDeviceExtensionProperties();
 
     std::set<std::string> requiredExtensions(deviceExtensions.begin(), deviceExtensions.end());
 
-    for (const VkExtensionProperties& extension : availableExtensions) {
+    for (const vk::ExtensionProperties& extension : availableExtensions) {
         requiredExtensions.erase(extension.extensionName);
     }
 
     return requiredExtensions.empty();
 }
 
-bool device::isDeviceSuitable(VkPhysicalDevice device, VkSurfaceKHR surface) {
-    graphic::QueueFamilyIndices indices = graphic::findQueueFamilies(device, surface);
+bool device::checkDeviceFeatureSupport(const vk::raii::PhysicalDevice &physicalDevice) {
+    vk::StructureChain<
+        vk::PhysicalDeviceFeatures2, 
+        vk::PhysicalDeviceVulkan13Features, 
+        vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT,
+        vk::PhysicalDeviceSwapchainMaintenance1FeaturesEXT
+    > features = physicalDevice.template getFeatures2<
+        vk::PhysicalDeviceFeatures2, 
+        vk::PhysicalDeviceVulkan13Features, 
+        vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT,
+        vk::PhysicalDeviceSwapchainMaintenance1FeaturesEXT
+    >();
 
-    bool extensionsSupported = checkDeviceExtensionSupport(device);
+    bool supportsRequiredFeatures = features.template get<vk::PhysicalDeviceVulkan13Features>().dynamicRendering && 
+        features.template get<vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT>().extendedDynamicState && 
+        features.template get<vk::PhysicalDeviceSwapchainMaintenance1FeaturesEXT>().swapchainMaintenance1;
+
+    return supportsRequiredFeatures;
+}
+
+bool device::isDeviceSuitable(const vk::raii::PhysicalDevice& physicalDevice, const vk::raii::SurfaceKHR& surface) {
+    if (physicalDevice.getProperties().apiVersion < VK_API_VERSION_1_4) {
+        return false;
+    }
+
+    graphic::QueueFamilyIndices indices = graphic::findQueueFamilies(physicalDevice, surface);
+    if (!indices.isComplete()) {
+        return false;
+    }
+
+    bool extensionsSupported = checkDeviceExtensionSupport(physicalDevice);
+    bool featuresSupported = checkDeviceFeatureSupport(physicalDevice);
+    if (!(extensionsSupported && featuresSupported)) {
+        return false;
+    }
 
     bool swapChainAdequate = false;
     if (extensionsSupported) {
-        graphic::SwapChainSupportDetails swapChainSupport = graphic::querySwapChainSupport(device, surface);
+        graphic::SwapChainSupportDetails swapChainSupport = graphic::querySwapChainSupport(physicalDevice, surface);
         swapChainAdequate = !swapChainSupport.formats.empty() && !swapChainSupport.presentModes.empty();
     }
 
-    return indices.isComplete() && extensionsSupported && swapChainAdequate;
+    return swapChainAdequate;
 }
 
-VkPhysicalDevice device::pickPhysicalDevice(VkInstance instance, VkSurfaceKHR surface) {
-    VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+vk::raii::PhysicalDevice device::pickPhysicalDevice(const vk::raii::Instance& instance, const vk::raii::SurfaceKHR& surface) {
+    vk::raii::PhysicalDevice physicalDevice = nullptr;
 
-    uint32_t deviceCount = 0;
-    vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
+    std::vector<vk::raii::PhysicalDevice> devices = instance.enumeratePhysicalDevices();
 
-    if (deviceCount == 0) {
-        throw std::runtime_error("Cannot find GPUs with Vulkan support. ");
+    if (devices.empty()) {
+        throw std::runtime_error("Cannot find GPUs with vulkan support. ");
     }
-
-    std::vector<VkPhysicalDevice> devices(deviceCount);
-    vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
 
     for (const auto& device: devices) {
         if (isDeviceSuitable(device, surface)) {
@@ -78,43 +104,43 @@ VkPhysicalDevice device::pickPhysicalDevice(VkInstance instance, VkSurfaceKHR su
         }
     }
 
-    if (physicalDevice == VK_NULL_HANDLE) {
+    if (physicalDevice == nullptr) {
         throw std::runtime_error("Cannot find a suitable device. ");
     }
     
     return physicalDevice;
 }
 
-std::tuple<VkDevice, VkQueue, VkQueue> device::createLogicalDevice(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface) {
-    VkDevice device;
-    VkQueue graphicsQueue;
-    VkQueue presentQueue;
+std::tuple<vk::raii::Device, vk::raii::Queue, vk::raii::Queue> device::createLogicalDevice(const vk::raii::PhysicalDevice& physicalDevice, const vk::raii::SurfaceKHR& surface) {
+    vk::raii::Device device = nullptr;
+    vk::raii::Queue graphicsQueue = nullptr;
+    vk::raii::Queue presentQueue = nullptr;
 
     graphic::QueueFamilyIndices indices = graphic::findQueueFamilies(physicalDevice, surface);
 
-    std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
+    std::vector<vk::DeviceQueueCreateInfo> queueCreateInfos;
     std::set<uint32_t> uniqueQueueFamilies = {indices.graphicsFamily.value(), indices.presentFamily.value()};
 
     // what the hell is this
     float queuePriority = 1.0f;
     for (uint32_t queueFamily : uniqueQueueFamilies) {
-        VkDeviceQueueCreateInfo queueCreateInfo{};
-        queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-        queueCreateInfo.queueFamilyIndex = queueFamily;
-        queueCreateInfo.queueCount = 1;
-        queueCreateInfo.pQueuePriorities = &queuePriority;
+        vk::DeviceQueueCreateInfo queueCreateInfo{
+            .queueFamilyIndex = queueFamily,
+            .queueCount = 1,
+            .pQueuePriorities = &queuePriority
+        };
+
         queueCreateInfos.push_back(queueCreateInfo);
     }
 
-    VkPhysicalDeviceFeatures deviceFeatures{};
+    vk::PhysicalDeviceFeatures deviceFeatures{};
     // add some things later
 
-    VkPhysicalDeviceSwapchainMaintenance1FeaturesEXT maintenance1Features{};
-    maintenance1Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SWAPCHAIN_MAINTENANCE_1_FEATURES_EXT;
-    maintenance1Features.swapchainMaintenance1 = VK_TRUE;
+    vk::PhysicalDeviceSwapchainMaintenance1FeaturesEXT maintenance1Features{
+        .swapchainMaintenance1 = VK_TRUE
+    };
 
-    VkDeviceCreateInfo createInfo{};
-    createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+    vk::DeviceCreateInfo createInfo{};
 
     createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
     createInfo.pQueueCreateInfos = queueCreateInfos.data();
@@ -125,7 +151,10 @@ std::tuple<VkDevice, VkQueue, VkQueue> device::createLogicalDevice(VkPhysicalDev
     std::vector<const char*> extensions(deviceExtensions);
 
     // macOS settings
-    extensions.push_back("VK_KHR_portability_subset");
+    for (const auto& ext : physicalDevice.enumerateDeviceExtensionProperties()) {
+        if (std::string_view(ext.extensionName) == "VK_KHR_portability_subset")
+            extensions.push_back("VK_KHR_portability_subset");
+    }
     
     createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
     createInfo.ppEnabledExtensionNames = extensions.data();
@@ -146,14 +175,12 @@ std::tuple<VkDevice, VkQueue, VkQueue> device::createLogicalDevice(VkPhysicalDev
     }
 #endif
 
-    if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS) {
-        throw std::runtime_error("failed to create logical device!");
-    }
+    device = vk::raii::Device(physicalDevice, createInfo);
 
-    vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &graphicsQueue);
-    vkGetDeviceQueue(device, indices.presentFamily.value(), 0, &presentQueue);
+    graphicsQueue = vk::raii::Queue(device, indices.graphicsFamily.value(), 0);
+    presentQueue = vk::raii::Queue(device, indices.presentFamily.value(), 0);
 
-    std::tuple<VkDevice, VkQueue, VkQueue> tup = std::make_tuple(device, graphicsQueue, presentQueue);
+    std::tuple<vk::raii::Device, vk::raii::Queue, vk::raii::Queue> tup = std::make_tuple(std::move(device), std::move(graphicsQueue), std::move(presentQueue));
 
     return tup;
 }

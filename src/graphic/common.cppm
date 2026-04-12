@@ -12,11 +12,13 @@ module;
 
 export module graphic:common;
 
+import vulkan;
+
 export namespace graphic {
     struct SwapChainSupportDetails {
-        VkSurfaceCapabilitiesKHR capabilities;
-        std::vector<VkSurfaceFormatKHR> formats;
-        std::vector<VkPresentModeKHR> presentModes;
+        vk::SurfaceCapabilitiesKHR capabilities;
+        std::vector<vk::SurfaceFormatKHR> formats;
+        std::vector<vk::PresentModeKHR> presentModes;
     };
 
     struct QueueFamilyIndices {
@@ -32,25 +34,25 @@ export namespace graphic {
         glm::vec2 pos;
         glm::vec3 color;
 
-        static VkVertexInputBindingDescription getBindingDescription() {
-            VkVertexInputBindingDescription bindingDescription{};
+        static vk::VertexInputBindingDescription getBindingDescription() {
+            vk::VertexInputBindingDescription bindingDescription{};
             bindingDescription.binding = 0;
             bindingDescription.stride = sizeof(Vertex);
-            bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+            bindingDescription.inputRate = vk::VertexInputRate::eVertex;
 
             return bindingDescription;
         }
 
-        static std::array<VkVertexInputAttributeDescription, 2> getAttributeDescriptions() {
-            std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions{};
+        static std::array<vk::VertexInputAttributeDescription, 2> getAttributeDescriptions() {
+            std::array<vk::VertexInputAttributeDescription, 2> attributeDescriptions{};
             attributeDescriptions[0].binding = 0;
             attributeDescriptions[0].location = 0;
-            attributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT;
+            attributeDescriptions[0].format = vk::Format::eR32G32Sfloat;
             attributeDescriptions[0].offset = offsetof(Vertex, pos);
 
             attributeDescriptions[1].binding = 0;
             attributeDescriptions[1].location = 1;
-            attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
+            attributeDescriptions[1].format = vk::Format::eR32G32B32Sfloat;
             attributeDescriptions[1].offset = offsetof(Vertex, color);
 
             return attributeDescriptions;
@@ -63,56 +65,51 @@ export namespace graphic {
         alignas(16) glm::mat4 proj;
     };
 
-    struct RenderState {
-        VkRenderPass renderPass;
-        VkPipeline graphicsPipeline;
-        VkPipelineLayout pipelineLayout;
-        VkBuffer vertexBuffer;
-        VkBuffer indexBuffer;
-        VkDescriptorSet descriptorSet;
+    struct RenderStateView {
+        const vk::raii::RenderPass& renderPass;
+        const vk::raii::Pipeline& graphicsPipeline;
+        const vk::raii::PipelineLayout& pipelineLayout;
+        const vk::raii::Buffer& vertexBuffer;
+        const vk::raii::Buffer& indexBuffer;
+        const vk::raii::DescriptorSet& descriptorSet;
 
         std::span<const Vertex> vertices;
         std::span<const uint16_t> indices;
     };
 
-    struct FrameTarget {
-        VkFramebuffer framebuffer;
-        VkExtent2D extent;
+    struct FrameTargetView {
+        const vk::raii::Framebuffer& framebuffer;
+        vk::Extent2D extent;
     };
 
     struct Buffer {
-        VkBuffer buffer;
-        VkDeviceMemory bufferMemory;
+        vk::raii::Buffer buffer;
+        vk::raii::DeviceMemory bufferMemory;
     };
 
     const int MAX_FRAMES_IN_FLIGHT = 2;
 
-    QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface);
-    SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device, VkSurfaceKHR surface);
+    QueueFamilyIndices findQueueFamilies(const vk::raii::PhysicalDevice& physicalDevice, const vk::raii::SurfaceKHR& surface);
+    SwapChainSupportDetails querySwapChainSupport(const vk::raii::PhysicalDevice& physicalDevice, const vk::raii::SurfaceKHR& surface);
 
-    uint32_t findMemoryType(VkPhysicalDevice physicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags properties);
+    uint32_t findMemoryType(const vk::raii::PhysicalDevice& physicalDevice, uint32_t typeFilter, vk::MemoryPropertyFlags properties);
 
-    VkViewport newViewport(VkExtent2D swapchainExtent);
-    VkRect2D newScissor(VkExtent2D swapchainExtent);
+    vk::Viewport newViewport(vk::Extent2D swapchainExtent);
+    vk::Rect2D newScissor(vk::Extent2D swapchainExtent);
 }
 
-graphic::QueueFamilyIndices graphic::findQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface) {
+graphic::QueueFamilyIndices graphic::findQueueFamilies(const vk::raii::PhysicalDevice& physicalDevice, const vk::raii::SurfaceKHR& surface) {
     graphic::QueueFamilyIndices indices;
 
-    uint32_t queueFamilyCount = 0;
-    vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
-
-    std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
-    vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
+    std::vector<vk::QueueFamilyProperties> queueFamilies = physicalDevice.getQueueFamilyProperties();
 
     int i = 0;
-    for (const VkQueueFamilyProperties& queueFamily : queueFamilies) {
-        if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+    for (const vk::QueueFamilyProperties& queueFamily : queueFamilies) {
+        if (queueFamily.queueFlags & vk::QueueFlagBits::eGraphics) {
             indices.graphicsFamily = i;
         }
 
-        VkBool32 presentSupport = false;
-        vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentSupport);
+        vk::Bool32 presentSupport = physicalDevice.getSurfaceSupportKHR(i, surface);
 
         if (presentSupport) {
             indices.presentFamily = i;
@@ -128,33 +125,18 @@ graphic::QueueFamilyIndices graphic::findQueueFamilies(VkPhysicalDevice device, 
     return indices;
 }
 
-graphic::SwapChainSupportDetails graphic::querySwapChainSupport(VkPhysicalDevice device, VkSurfaceKHR surface) {
-    SwapChainSupportDetails details;
-
-    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface, &details.capabilities);
-
-    uint32_t formatCount;
-    vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, nullptr);
-
-    if (formatCount != 0) {
-        details.formats.resize(formatCount);
-        vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, details.formats.data());
-    }
-
-    uint32_t presentModeCount;
-    vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentModeCount, nullptr);
-
-    if (presentModeCount != 0) {
-        details.presentModes.resize(presentModeCount);
-        vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentModeCount, details.presentModes.data());
-    }
+graphic::SwapChainSupportDetails graphic::querySwapChainSupport(const vk::raii::PhysicalDevice& physicalDevice, const vk::raii::SurfaceKHR& surface) {
+    SwapChainSupportDetails details{
+        .capabilities = physicalDevice.getSurfaceCapabilitiesKHR(*surface),
+        .formats = physicalDevice.getSurfaceFormatsKHR(*surface),
+        .presentModes = physicalDevice.getSurfacePresentModesKHR(*surface)
+    };
 
     return details;
 }
 
-uint32_t graphic::findMemoryType(VkPhysicalDevice physicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags properties) {
-    VkPhysicalDeviceMemoryProperties memProperties;
-    vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
+uint32_t graphic::findMemoryType(const vk::raii::PhysicalDevice& physicalDevice, uint32_t typeFilter, vk::MemoryPropertyFlags properties) {
+    vk::PhysicalDeviceMemoryProperties memProperties = physicalDevice.getMemoryProperties();
 
     for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
         if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
@@ -165,22 +147,24 @@ uint32_t graphic::findMemoryType(VkPhysicalDevice physicalDevice, uint32_t typeF
     throw std::runtime_error("cannot find SIUUUUUUUitable memory type");
 }
 
-VkViewport graphic::newViewport(VkExtent2D swapchainExtent) {
-    VkViewport viewport{};
-    viewport.x = 0.0f;
-    viewport.y = 0.0f;
-    viewport.width = swapchainExtent.width;
-    viewport.height = swapchainExtent.height;
-    viewport.minDepth = 0.0f;
-    viewport.maxDepth = 1.0f;
+vk::Viewport graphic::newViewport(vk::Extent2D swapchainExtent) {
+    vk::Viewport viewport{
+        .x = 0.0f,
+        .y = 0.0f,
+        .width = static_cast<float>(swapchainExtent.width),
+        .height = static_cast<float>(swapchainExtent.height),
+        .minDepth = 0.0f,
+        .maxDepth = 1.0f,
+    };
 
     return viewport;
 }
 
-VkRect2D graphic::newScissor(VkExtent2D swapchainExtent) {
-    VkRect2D scissor{};
-    scissor.offset = {0, 0};
-    scissor.extent = swapchainExtent;
+vk::Rect2D graphic::newScissor(vk::Extent2D swapchainExtent) {
+    vk::Rect2D scissor{
+        .offset = {0, 0},
+        .extent = swapchainExtent,
+    };
 
     return scissor;
 }
