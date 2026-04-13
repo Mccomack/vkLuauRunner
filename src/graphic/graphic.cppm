@@ -102,11 +102,11 @@ class graphic::app {
     vk::raii::Queue graphicsQueue;
     vk::raii::Queue presentQueue;
 
-    VkSwapchainKHR swapChain;
-    std::vector<VkImage> swapChainImages;
-    VkFormat swapChainImageFormat;
-    VkExtent2D swapChainExtent;
-    std::vector<VkImageView> swapChainImageViews;
+    vk::raii::SwapchainKHR swapChain;
+    std::vector<vk::Image> swapChainImages;
+    vk::SurfaceFormatKHR swapChainSurfaceFormat;
+    vk::Extent2D swapChainExtent;
+    std::vector<vk::raii::ImageView> swapChainImageViews;
 
     VkDescriptorSetLayout descriptorSetLayout;
     VkDescriptorPool descriptorPool;
@@ -118,7 +118,7 @@ class graphic::app {
 
     std::vector<VkFramebuffer> swapChainFramebuffers;
 
-    VkCommandPool commandPool;
+    vk::raii::CommandPool commandPool;
 
     graphic::Buffer indexBuffers;
     graphic::Buffer vertexBuffers;
@@ -262,18 +262,18 @@ void graphic::app::recreateSwapchain() {
         glfwWaitEvents();
     }
 
-    vkDeviceWaitIdle(device);
+    device.waitIdle();
 
     cleanupSwapchain();
 
     swapChain = swapchain::createSwapChain(physicalDevice, device, surface, window, swapChain);
 
     SwapChainSupportDetails swapchainSupport = querySwapChainSupport(physicalDevice, surface);
-    swapChainImageFormat = swapchain::chooseSwapSurfaceFormat(swapchainSupport.formats).format;
+    swapChainSurfaceFormat = swapchain::chooseSwapSurfaceFormat(swapchainSupport.formats);
     swapChainExtent = swapchain::chooseSwapExtent(swapchainSupport.capabilities, window);
 
     swapChainImages = swapchain::createImages(device, swapChain);
-    swapChainImageViews = swapchain::createImageViews(device, swapChainImages, swapChainImageFormat);
+    swapChainImageViews = swapchain::createImageViews(device, swapChainImages, swapChainSurfaceFormat);
 
     swapChainFramebuffers.resize(swapChainImageViews.size());
 
@@ -439,16 +439,16 @@ void graphic::app::initVulkan() {
     swapChainImages = swapchain::createImages(device, swapChain);
 
     SwapChainSupportDetails swapchainSupport = querySwapChainSupport(physicalDevice, surface);
-    swapChainImageFormat = swapchain::chooseSwapSurfaceFormat(swapchainSupport.formats).format;
+    swapChainSurfaceFormat = swapchain::chooseSwapSurfaceFormat(swapchainSupport.formats);
     swapChainExtent = swapchain::chooseSwapExtent(swapchainSupport.capabilities, window);
 
-    swapChainImageViews = swapchain::createImageViews(device, swapChainImages, swapChainImageFormat);
+    swapChainImageViews = swapchain::createImageViews(device, swapChainImages, swapChainSurfaceFormat);
 
     commandPool = command::createCommandPool(physicalDevice, device, surface);
 
     std::tuple<VkShaderModule, VkShaderModule> tmpshd = pipeline::getShaderModule(device);
-    VkShaderModule vertShaderModule = std::get<0>(tmpshd);
-    VkShaderModule fragShaderModule = std::get<1>(tmpshd);
+    vk::raii::ShaderModule vertShaderModule = std::get<0>(tmpshd);
+    vk::raii::ShaderModule fragShaderModule = std::get<1>(tmpshd);
 
     VkDeviceSize size = sizeof(vertices[0]) * vertices.size();
     VkDeviceSize indSize = sizeof(indices[0]) * indices.size();

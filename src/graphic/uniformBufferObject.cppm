@@ -12,10 +12,10 @@ import :common;
 import std;
 
 export namespace uniformBufferObject {
-    void updateUniformBuffer(VkExtent2D swapchainExtent, void* uniformBufferMapped);
+    void updateUniformBuffer(vk::Extent2D swapchainExtent, void* uniformBufferMapped);
 }
 
-void uniformBufferObject::updateUniformBuffer(VkExtent2D swapchainExtent, void* uniformBufferMapped) {
+void uniformBufferObject::updateUniformBuffer(vk::Extent2D swapchainExtent, void* uniformBufferMapped) {
     static std::chrono::time_point startTime = std::chrono::high_resolution_clock::now();
 
     std::chrono::time_point currentTime = std::chrono::high_resolution_clock::now();

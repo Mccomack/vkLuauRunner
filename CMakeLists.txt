@@ -57,6 +57,7 @@ endif()
 
 # shader 컴파일
 file(GLOB_RECURSE GLSL_FILES "src/shaders/*.vert" "src/shaders/*.frag" "src/shaders/*.comp")
+file(GLOB_RECURSE SLANG_FILES "src/shaders/*.slang")
 
 foreach(GLSL ${GLSL_FILES})
     get_filename_component(FILE_NAME ${GLSL} NAME)
@@ -66,6 +67,19 @@ foreach(GLSL ${GLSL_FILES})
         OUTPUT ${SPV}
         COMMAND glslc ${GLSL} -o ${SPV}
         DEPENDS ${GLSL}
+    )
+
+    list(APPEND SPV_FILES ${SPV})
+endforeach()
+
+foreach(SLANG ${SLANG_FILES})
+    get_filename_component(FILE_NAME ${SLANG} NAME)
+    set(SPV "${CMAKE_SOURCE_DIR}/build/shaders/${FILE_NAME}.spv")
+
+    add_custom_command(
+        OUTPUT ${SPV}
+        COMMAND slangc ${SLANG} -target spirv -profile spirv_1_4 -emit-spirv-directly -fvk-use-entrypoint-name -entry vertMain -entry fragMain -o ${SPV}
+        DEPENDS ${SLANG}
     )
 
     list(APPEND SPV_FILES ${SPV})

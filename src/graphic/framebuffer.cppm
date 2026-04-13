@@ -5,26 +5,21 @@ module;
 #include <vulkan/vulkan_core.h>
 
 export module graphic:framebuffer;
+import vulkan;
 
 namespace framebuffer {
-    VkFramebuffer createFramebuffer(VkDevice device, VkRenderPass renderPass, VkImageView imageView, VkExtent2D extent);
+    vk::raii::Framebuffer createFramebuffer(const vk::raii::Device& device, const vk::raii::RenderPass& renderPass, const vk::raii::ImageView& imageView, vk::Extent2D extent);
 }
 
-VkFramebuffer framebuffer::createFramebuffer(VkDevice device, VkRenderPass renderPass, VkImageView imageView, VkExtent2D extent) {
-    VkFramebuffer framebuffer;
+vk::raii::Framebuffer framebuffer::createFramebuffer(const vk::raii::Device& device, const vk::raii::RenderPass& renderPass, const vk::raii::ImageView& imageView, vk::Extent2D extent) {
+    vk::FramebufferCreateInfo framebufferInfo{
+        .renderPass = renderPass,
+        .attachmentCount = 1,
+        .pAttachments = &imageView,
+        .width = extent.width,
+        .height = extent.height,
+        .layers = 1
+    };
 
-    VkFramebufferCreateInfo framebufferInfo{};
-    framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-    framebufferInfo.renderPass = renderPass;
-    framebufferInfo.attachmentCount = 1;
-    framebufferInfo.pAttachments = &imageView;
-    framebufferInfo.width = extent.width;
-    framebufferInfo.height = extent.height;
-    framebufferInfo.layers = 1;
-
-    if (vkCreateFramebuffer(device, &framebufferInfo, nullptr, &framebuffer) != VK_SUCCESS) {
-        throw std::runtime_error("cannot create VkFramebuffer");
-    }
-
-    return framebuffer;
+    return vk::raii::Framebuffer(device, framebufferInfo);
 }

@@ -22,13 +22,13 @@ export namespace pipeline {
     // VkShaderModule vertShaderModule;
     // VkShaderModule fragShaderModule;
 
-    VkShaderModule createShaderModule(VkDevice device, const std::vector<char>& code);
-    std::tuple<VkShaderModule, VkShaderModule> getShaderModule(VkDevice device);
+    vk::raii::ShaderModule createShaderModule(const vk::raii::Device& device, const std::vector<char>& code);
+    std::tuple<vk::raii::ShaderModule, vk::raii::ShaderModule> getShaderModule(const vk::raii::Device& device);
 
-    VkPipelineLayout createPipelineLayout(VkDevice device, VkDescriptorSetLayout descriptorSetLayout, VkShaderModule vertShaderModule, VkShaderModule fragShaderModule);
-    VkRenderPass createRenderPass(VkDevice device, VkFormat swapChainImageFormat);
+    VkPipelineLayout createPipelineLayout(const vk::raii::Device& device, VkDescriptorSetLayout descriptorSetLayout, const vk::raii::ShaderModule& vertShaderModule, const vk::raii::ShaderModule& fragShaderModule);
+    VkRenderPass createRenderPass(const vk::raii::Device& device, VkFormat swapChainImageFormat);
 
-    VkPipeline createGraphicsPipeline(VkDevice device, VkPipelineLayout pipelineLayout, VkRenderPass renderPass, VkShaderModule vertShaderModule, VkShaderModule fragShaderModule, VkExtent2D extent);
+    VkPipeline createGraphicsPipeline(const vk::raii::Device& device, VkPipelineLayout pipelineLayout, VkRenderPass renderPass, VkShaderModule vertShaderModule, VkShaderModule fragShaderModule, VkExtent2D extent);
 }
 
 static std::vector<char> readFile(const std::filesystem::path& filename) {
@@ -49,34 +49,29 @@ static std::vector<char> readFile(const std::filesystem::path& filename) {
     return buffer;
 }
 
-VkShaderModule pipeline::createShaderModule(VkDevice device, const std::vector<char> &code) {
-    VkShaderModuleCreateInfo createInfo{};
-    createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-    createInfo.codeSize = code.size();
-    createInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
+vk::raii::ShaderModule pipeline::createShaderModule(const vk::raii::Device& device, const std::vector<char> &code) {
+    vk::ShaderModuleCreateInfo createInfo{
+        .codeSize = code.size(),
+        .pCode = reinterpret_cast<const uint32_t*>(code.data())
+    };
 
-    VkShaderModule shaderModule;
-    if (vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule) != VK_SUCCESS) {
-        throw std::runtime_error("cannot create VkShaderModule");
-    }
-
-    return shaderModule;
+    return vk::raii::ShaderModule(device, createInfo);
 }
 
-std::tuple<VkShaderModule, VkShaderModule> pipeline::getShaderModule(VkDevice device) {
+std::tuple<vk::raii::ShaderModule, vk::raii::ShaderModule> pipeline::getShaderModule(const vk::raii::Device& device) {
     std::filesystem::path shaderPath = os::appPath / "shaders";
     //std::cout << os::shaderPath / ""
 
     std::vector<char> vertShaderCode = readFile(shaderPath / "shader.vert.spv");
     std::vector<char> fragShaderCode = readFile(shaderPath / "shader.frag.spv");
 
-    VkShaderModule vertShaderModule = createShaderModule(device, vertShaderCode);
-    VkShaderModule fragShaderModule = createShaderModule(device, fragShaderCode);
+    vk::raii::ShaderModule vertShaderModule = createShaderModule(device, vertShaderCode);
+    vk::raii::ShaderModule fragShaderModule = createShaderModule(device, fragShaderCode);
 
     return std::make_tuple(vertShaderModule, fragShaderModule);
 }
 
-VkPipelineLayout pipeline::createPipelineLayout(VkDevice device, VkDescriptorSetLayout descriptorSetLayout, VkShaderModule vertShaderModule, VkShaderModule fragShaderModule) {
+VkPipelineLayout pipeline::createPipelineLayout(const vk::raii::Device& device, VkDescriptorSetLayout descriptorSetLayout, const vk::raii::ShaderModule& vertShaderModule, const vk::raii::ShaderModule& fragShaderModule) {
     VkPipelineLayout pipelineLayout;
 
     VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
@@ -93,7 +88,7 @@ VkPipelineLayout pipeline::createPipelineLayout(VkDevice device, VkDescriptorSet
     return pipelineLayout;
 }
 
-VkRenderPass pipeline::createRenderPass(VkDevice device, VkFormat swapChainImageFormat) {
+VkRenderPass pipeline::createRenderPass(const vk::raii::Device& device, VkFormat swapChainImageFormat) {
     VkAttachmentDescription colorAttachment{};
     colorAttachment.format = swapChainImageFormat;
     colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
@@ -136,18 +131,18 @@ VkRenderPass pipeline::createRenderPass(VkDevice device, VkFormat swapChainImage
     return renderPass;
 }
 
-VkPipeline pipeline::createGraphicsPipeline(VkDevice device, VkPipelineLayout pipelineLayout, VkRenderPass renderPass, VkShaderModule vertShaderModule, VkShaderModule fragShaderModule, VkExtent2D extent) {
+VkPipeline pipeline::createGraphicsPipeline(const vk::raii::Device& device, VkPipelineLayout pipelineLayout, VkRenderPass renderPass, VkShaderModule vertShaderModule, VkShaderModule fragShaderModule, VkExtent2D extent) {
     VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
     vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
     vertShaderStageInfo.module = vertShaderModule;
-    vertShaderStageInfo.pName = "main";
+    vertShaderStageInfo.pName = "vertMain";
 
     VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
     fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
     fragShaderStageInfo.module = fragShaderModule;
-    fragShaderStageInfo.pName = "main";
+    fragShaderStageInfo.pName = "fragMain";
 
     VkPipelineShaderStageCreateInfo shaderStages[] = {vertShaderStageInfo, fragShaderStageInfo};
 

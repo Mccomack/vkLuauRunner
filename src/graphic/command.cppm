@@ -10,46 +10,36 @@ export module graphic:command;
 import :common;
 
 export namespace command {
-    VkCommandPool createCommandPool(VkPhysicalDevice physicalDevice, VkDevice device, VkSurfaceKHR surface);
-    std::vector<VkCommandBuffer> createCommandBuffer(VkDevice device, VkCommandPool commandPool);
+    vk::raii::CommandPool createCommandPool(const vk::raii::PhysicalDevice& physicalDevice, const vk::raii::Device& device, const vk::raii::SurfaceKHR& surface);
+    std::vector<vk::raii::CommandBuffer> createCommandBuffer(const vk::raii::Device& device, const vk::raii::CommandPool& commandPool);
 
-    void recordCommandBuffer(VkCommandBuffer commandBuffer, const graphic::RenderState& renderState, const graphic::FrameTarget& frameTarget);
+    void recordCommandBuffer(const vk::raii::CommandBuffer& commandBuffer, const graphic::RenderStateView& renderState, const graphic::FrameTargetView& frameTarget);
 }
 
-VkCommandPool command::createCommandPool(VkPhysicalDevice physicalDevice, VkDevice device, VkSurfaceKHR surface) {
+vk::raii::CommandPool command::createCommandPool(const vk::raii::PhysicalDevice& physicalDevice, const vk::raii::Device& device, const vk::raii::SurfaceKHR& surface) {
     graphic::QueueFamilyIndices queueFamilyIndices = graphic::findQueueFamilies(physicalDevice, surface);
 
-    VkCommandPool commandPool;
+    vk::CommandPoolCreateInfo commandPoolInfo{
+        .flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
+        .queueFamilyIndex = queueFamilyIndices.graphicsFamily.value()
+    };
 
-    VkCommandPoolCreateInfo commandPoolInfo{};
-    commandPoolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-    commandPoolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-    commandPoolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
-
-    if (vkCreateCommandPool(device, &commandPoolInfo, nullptr, &commandPool) != VK_SUCCESS) {
-        throw std::runtime_error("cannot create VkCommandPool");
-    }
+    vk::raii::CommandPool commandPool(device, commandPoolInfo);
 
     return commandPool;
 }
 
-std::vector<VkCommandBuffer> command::createCommandBuffer(VkDevice device, VkCommandPool commandPool) {
-    std::vector<VkCommandBuffer> commandBuffers(graphic::MAX_FRAMES_IN_FLIGHT);
+std::vector<vk::raii::CommandBuffer> command::createCommandBuffer(const vk::raii::Device& device, const vk::raii::CommandPool& commandPool) {
+    vk::CommandBufferAllocateInfo allocInfo{
+        .commandPool = *commandPool,
+        .level = vk::CommandBufferLevel::ePrimary,
+        .commandBufferCount = static_cast<uint32_t>(graphic::MAX_FRAMES_IN_FLIGHT)
+    };
 
-    VkCommandBufferAllocateInfo allocInfo{};
-    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    allocInfo.commandBufferCount = static_cast<uint32_t>(graphic::MAX_FRAMES_IN_FLIGHT);
-    allocInfo.commandPool = commandPool;
-    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-
-    if (vkAllocateCommandBuffers(device, &allocInfo, commandBuffers.data()) != VK_SUCCESS) {
-        throw std::runtime_error("cannot create VkCommandBuffer");
-    }
-
-    return commandBuffers;
+    return vk::raii::CommandBuffers(device, allocInfo);
 }
 
-void command::recordCommandBuffer(VkCommandBuffer commandBuffer, const graphic::RenderState& renderState, const graphic::FrameTarget& frameTarget) {
+void command::recordCommandBuffer(const vk::raii::CommandBuffer& commandBuffer, const graphic::RenderStateView& renderState, const graphic::FrameTargetView& frameTarget) {
     VkRenderPass renderPass = renderState.renderPass;
     VkPipeline graphicsPipeline = renderState.graphicsPipeline;
     VkPipelineLayout pipelineLayout = renderState.pipelineLayout;

@@ -16,7 +16,7 @@ namespace {
 }
 
 export namespace buffer {
-    graphic::Buffer createBuffer(VkPhysicalDevice physicalDevice, VkDevice device, VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags memProperties);
+    graphic::Buffer createBuffer(const vk::raii::PhysicalDevice& physicalDevice, const vk::raii::Device& device, VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags memProperties);
 
     void copyBuffer(VkDevice device, VkCommandPool commandPool, VkQueue graphicsQueue, VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
