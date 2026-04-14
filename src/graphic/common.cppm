@@ -162,7 +162,10 @@ vk::Viewport graphic::newViewport(vk::Extent2D swapchainExtent) {
 
 vk::Rect2D graphic::newScissor(vk::Extent2D swapchainExtent) {
     vk::Rect2D scissor{
-        .offset = {0, 0},
+        .offset = vk::Offset2D{
+            0, 
+            0
+        },
         .extent = swapchainExtent,
     };
 

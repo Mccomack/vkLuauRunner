@@ -11,139 +11,121 @@ export module graphic:buffer;
 import :common;
 import Logger;
 
+import vulkan;
+
 namespace {
     Logger logger("graphic/buffer");
 }
 
 export namespace buffer {
-    graphic::Buffer createBuffer(const vk::raii::PhysicalDevice& physicalDevice, const vk::raii::Device& device, VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags memProperties);
+    graphic::Buffer createBuffer(const vk::raii::PhysicalDevice& physicalDevice, const vk::raii::Device& device, vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags memProperties);
 
-    void copyBuffer(VkDevice device, VkCommandPool commandPool, VkQueue graphicsQueue, VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+    void copyBuffer(const vk::raii::Device& device, const vk::raii::CommandPool& commandPool, const vk::raii::Queue& graphicsQueue, const vk::raii::Buffer& srcBuffer, const vk::raii::Buffer& dstBuffer, vk::DeviceSize size);
 
-    graphic::Buffer createVertexBuffer(VkPhysicalDevice physicalDevice, VkDevice device, VkCommandPool commandPool, VkQueue graphicsQueue, const void* bufData, VkDeviceSize size);
-    graphic::Buffer createIndexBffer(VkPhysicalDevice physicalDevice, VkDevice device, VkCommandPool commandPool, VkQueue graphicsQueue, const void* bufData, VkDeviceSize size);
-    std::tuple<std::vector<VkBuffer>, std::vector<VkDeviceMemory>, std::vector<void*>> createUniformBuffer(VkPhysicalDevice physicalDevice, VkDevice device, VkCommandPool commandPool, VkQueue graphicsQueue);
+    graphic::Buffer createVertexBuffer(const vk::raii::PhysicalDevice& physicalDevice, const vk::raii::Device& device, const vk::raii::CommandPool& commandPool, const vk::raii::Queue& graphicsQueue, const void* bufData, vk::DeviceSize size);
+    graphic::Buffer createIndexBffer(const vk::raii::PhysicalDevice& physicalDevice, const vk::raii::Device& device, const vk::raii::CommandPool& commandPool, const vk::raii::Queue& graphicsQueue, const void* bufData, vk::DeviceSize size);
+    std::tuple<std::vector<vk::raii::Buffer>, std::vector<vk::raii::DeviceMemory>, std::vector<void*>> createUniformBuffer(const vk::raii::PhysicalDevice& physicalDevice, const vk::raii::Device& device, const vk::raii::CommandPool& commandPool, const vk::raii::Queue& graphicsQueue);
 }
 
-graphic::Buffer buffer::createBuffer(VkPhysicalDevice physicalDevice, VkDevice device, VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags memProperties) {
-    VkBuffer buffer;
-    VkDeviceMemory bufferMemory;
+graphic::Buffer buffer::createBuffer(const vk::raii::PhysicalDevice& physicalDevice, const vk::raii::Device& device, vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags memProperties) {
+    vk::BufferCreateInfo bufferInfo{
+        .size = size,
+        .usage = usage,
+        .sharingMode = vk::SharingMode::eExclusive
+    };
 
-    VkBufferCreateInfo bufferInfo{};
-    bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-    bufferInfo.size = size;
-    bufferInfo.usage = usage;
-    bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    vk::raii::Buffer buffer(device, bufferInfo);
 
-    if (vkCreateBuffer(device, &bufferInfo, nullptr, &buffer) != VK_SUCCESS) {
-        throw std::runtime_error("cannot create VkBuffer");
-    }
+    vk::MemoryRequirements memRequirements = buffer.getMemoryRequirements();
 
-    VkMemoryRequirements memRequirements;
-    vkGetBufferMemoryRequirements(device, buffer, &memRequirements);
+    vk::MemoryAllocateInfo allocInfo{
+        .allocationSize = memRequirements.size,
+        .memoryTypeIndex = graphic::findMemoryType(physicalDevice, memRequirements.memoryTypeBits, memProperties)
+    };
 
-    VkMemoryAllocateInfo allocInfo{};
-    allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-    allocInfo.allocationSize = memRequirements.size;
-    allocInfo.memoryTypeIndex = graphic::findMemoryType(physicalDevice, memRequirements.memoryTypeBits, memProperties);
+    vk::raii::DeviceMemory bufferMemory(device, allocInfo);
+    buffer.bindMemory(bufferMemory, 0);
 
-    if (vkAllocateMemory(device, &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS) {
-        throw std::runtime_error("cannot allocate VkDeviceMemory(buffer memory)");
-    }
-
-    vkBindBufferMemory(device, buffer, bufferMemory, 0);
-
-    return graphic::Buffer{buffer, bufferMemory};
+    return graphic::Buffer{std::move(buffer), std::move(bufferMemory)};
 }
 
-void buffer::copyBuffer(VkDevice device, VkCommandPool commandPool, VkQueue graphicsQueue, VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) {
-    VkCommandBufferAllocateInfo allocInfo{};
-    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    allocInfo.level =  VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    allocInfo.commandPool = commandPool;
-    allocInfo.commandBufferCount = 1;
+void buffer::copyBuffer(const vk::raii::Device& device, const vk::raii::CommandPool& commandPool, const vk::raii::Queue& graphicsQueue, const vk::raii::Buffer& srcBuffer, const vk::raii::Buffer& dstBuffer, vk::DeviceSize size) {
+    vk::CommandBufferAllocateInfo allocInfo{
+        .commandPool = commandPool,
+        .level =  vk::CommandBufferLevel::ePrimary,
+        .commandBufferCount = 1
+    };
+    vk::raii::CommandBuffer commandBuffer = std::move(device.allocateCommandBuffers(allocInfo).front());
 
-    VkCommandBuffer commandBuffer;
-    vkAllocateCommandBuffers(device, &allocInfo, &commandBuffer);
+    vk::CommandBufferBeginInfo beginInfo{.flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit};
+    commandBuffer.begin(beginInfo);
 
-    VkCommandBufferBeginInfo beginInfo{};
-    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+    vk::BufferCopy copyRegion{
+        .srcOffset = 0,
+        .dstOffset = 0,
+        .size = size
+    };
+    commandBuffer.copyBuffer(*srcBuffer, *dstBuffer, copyRegion);
 
-    vkBeginCommandBuffer(commandBuffer, &beginInfo);
+    commandBuffer.end();
 
-    VkBufferCopy copyRegion{};
-    copyRegion.srcOffset = 0;
-    copyRegion.dstOffset = 0;
-    copyRegion.size = size;
-    vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
+    vk::SubmitInfo submitInfo{
+        .commandBufferCount = 1,
+        .pCommandBuffers = &*commandBuffer
+    };
 
-    vkEndCommandBuffer(commandBuffer);
-
-    VkSubmitInfo submitInfo{};
-    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    submitInfo.commandBufferCount = 1;
-    submitInfo.pCommandBuffers = &commandBuffer;
-
-    vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
-    vkQueueWaitIdle(graphicsQueue);
-
-    vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
-
-
+    graphicsQueue.submit(submitInfo, nullptr);
+    graphicsQueue.waitIdle();
 }
 
-graphic::Buffer buffer::createVertexBuffer(VkPhysicalDevice physicalDevice, VkDevice device, VkCommandPool commandPool, VkQueue graphicsQueue, const void* bufData, VkDeviceSize size) {
-    graphic::Buffer stagingBuffers = createBuffer(physicalDevice, device, size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+graphic::Buffer buffer::createVertexBuffer(const vk::raii::PhysicalDevice& physicalDevice, const vk::raii::Device& device, const vk::raii::CommandPool& commandPool, const vk::raii::Queue& graphicsQueue, const void* bufData, vk::DeviceSize size) {
+    graphic::Buffer stagingBuffers = createBuffer(physicalDevice, device, size, vk::BufferUsageFlagBits::eTransferSrc, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
 
-    void* data;
-    vkMapMemory(device, stagingBuffers.bufferMemory, 0, size, 0, &data);
+    void* data = stagingBuffers.bufferMemory.mapMemory(0, size);
     memcpy(data, bufData, (size_t) size);
-    vkUnmapMemory(device, stagingBuffers.bufferMemory);
+    stagingBuffers.bufferMemory.unmapMemory();
 
-    graphic::Buffer vertexBuffers = createBuffer(physicalDevice, device, size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    graphic::Buffer vertexBuffers = createBuffer(physicalDevice, device, size, vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eVertexBuffer, vk::MemoryPropertyFlagBits::eDeviceLocal);
 
     copyBuffer(device, commandPool, graphicsQueue, stagingBuffers.buffer, vertexBuffers.buffer, size);
 
-    vkDestroyBuffer(device, stagingBuffers.buffer, nullptr);
-    vkFreeMemory(device, stagingBuffers.bufferMemory, nullptr);
+    // vkDestroyBuffer(device, stagingBuffers.buffer, nullptr);
+    // vkFreeMemory(device, stagingBuffers.bufferMemory, nullptr);
 
     return vertexBuffers;
 }
 
-graphic::Buffer buffer::createIndexBffer(VkPhysicalDevice physicalDevice, VkDevice device, VkCommandPool commandPool, VkQueue graphicsQueue, const void *indData, VkDeviceSize size) {
-    graphic::Buffer stagingBuffers = createBuffer(physicalDevice, device, size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+graphic::Buffer buffer::createIndexBffer(const vk::raii::PhysicalDevice& physicalDevice, const vk::raii::Device& device, const vk::raii::CommandPool& commandPool, const vk::raii::Queue& graphicsQueue, const void *indData, vk::DeviceSize size) {
+    graphic::Buffer stagingBuffers = createBuffer(physicalDevice, device, size, vk::BufferUsageFlagBits::eTransferSrc, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
 
-    void* data;
-    vkMapMemory(device, stagingBuffers.bufferMemory, 0, size, 0, &data);
+    void* data = stagingBuffers.bufferMemory.mapMemory(0, size);
     memcpy(data, indData, (size_t) size);
-    vkUnmapMemory(device, stagingBuffers.bufferMemory);
+    stagingBuffers.bufferMemory.unmapMemory();
 
-    graphic::Buffer indexBuffer = createBuffer(physicalDevice, device, size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    graphic::Buffer indexBuffer = createBuffer(physicalDevice, device, size, vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eIndexBuffer, vk::MemoryPropertyFlagBits::eDeviceLocal);
 
     copyBuffer(device, commandPool, graphicsQueue, stagingBuffers.buffer, indexBuffer.buffer, size);
 
-    vkDestroyBuffer(device, stagingBuffers.buffer, nullptr);
-    vkFreeMemory(device, stagingBuffers.bufferMemory, nullptr);
+    // vkDestroyBuffer(device, stagingBuffers.buffer, nullptr);
+    // vkFreeMemory(device, stagingBuffers.bufferMemory, nullptr);
 
     return indexBuffer;
 }
 
-std::tuple<std::vector<VkBuffer>, std::vector<VkDeviceMemory>, std::vector<void*>> buffer::createUniformBuffer(VkPhysicalDevice physicalDevice, VkDevice device, VkCommandPool commandPool, VkQueue graphicsQueue) {
-    std::vector<VkBuffer> uniformBuffers(graphic::MAX_FRAMES_IN_FLIGHT);
-    std::vector<VkDeviceMemory> uniformBufferMemories(graphic::MAX_FRAMES_IN_FLIGHT);
-    std::vector<void*> uniformBufferMapped(graphic::MAX_FRAMES_IN_FLIGHT);
+std::tuple<std::vector<vk::raii::Buffer>, std::vector<vk::raii::DeviceMemory>, std::vector<void*>> buffer::createUniformBuffer(const vk::raii::PhysicalDevice& physicalDevice, const vk::raii::Device& device, const vk::raii::CommandPool& commandPool, const vk::raii::Queue& graphicsQueue) {
+    std::vector<vk::raii::Buffer> uniformBuffers;
+    std::vector<vk::raii::DeviceMemory> uniformBufferMemories;
+    std::vector<void*> uniformBufferMapped;
 
-    VkDeviceSize bufferSize = sizeof(graphic::UniformBufferObject);
+    vk::DeviceSize bufferSize = sizeof(graphic::UniformBufferObject);
 
     for (size_t i = 0; i < graphic::MAX_FRAMES_IN_FLIGHT; i++) {
-        graphic::Buffer uniformBuffer = createBuffer(physicalDevice, device, bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+        graphic::Buffer uniformBuffer = createBuffer(physicalDevice, device, bufferSize, vk::BufferUsageFlagBits::eUniformBuffer, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
 
-        uniformBuffers[i] = uniformBuffer.buffer;
-        uniformBufferMemories[i] = uniformBuffer.bufferMemory;
-        
-        vkMapMemory(device, uniformBuffer.bufferMemory, 0, bufferSize, 0, &uniformBufferMapped[i]);
+        uniformBuffers.push_back(std::move(uniformBuffer.buffer));
+        uniformBufferMemories.push_back(std::move(uniformBuffer.bufferMemory));
+        uniformBufferMapped.push_back(uniformBuffer.bufferMemory.mapMemory(0, bufferSize));
     }
 
-    return std::make_tuple(uniformBuffers, uniformBufferMemories, uniformBufferMapped);
+    return std::make_tuple(std::move(uniformBuffers), std::move(uniformBufferMemories), uniformBufferMapped);
 }

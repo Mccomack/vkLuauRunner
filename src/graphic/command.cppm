@@ -8,6 +8,7 @@ module;
 
 export module graphic:command;
 import :common;
+import vulkan;
 
 export namespace command {
     vk::raii::CommandPool createCommandPool(const vk::raii::PhysicalDevice& physicalDevice, const vk::raii::Device& device, const vk::raii::SurfaceKHR& surface);
@@ -40,59 +41,65 @@ std::vector<vk::raii::CommandBuffer> command::createCommandBuffer(const vk::raii
 }
 
 void command::recordCommandBuffer(const vk::raii::CommandBuffer& commandBuffer, const graphic::RenderStateView& renderState, const graphic::FrameTargetView& frameTarget) {
-    VkRenderPass renderPass = renderState.renderPass;
-    VkPipeline graphicsPipeline = renderState.graphicsPipeline;
-    VkPipelineLayout pipelineLayout = renderState.pipelineLayout;
-    VkBuffer vertexBuffer = renderState.vertexBuffer;
-    VkBuffer indexBuffer = renderState.indexBuffer;
-    VkDescriptorSet descriptorSet = renderState.descriptorSet;
-    std::span<const graphic::Vertex> vertices = renderState.vertices;
-    std::span<const uint16_t> indices = renderState.indices;
+    // VkRenderPass renderPass = renderState.renderPass;
+    // VkPipeline graphicsPipeline = renderState.graphicsPipeline;
+    // VkPipelineLayout pipelineLayout = renderState.pipelineLayout;
+    // VkBuffer vertexBuffer = renderState.vertexBuffer;
+    // VkBuffer indexBuffer = renderState.indexBuffer;
+    // VkDescriptorSet descriptorSet = renderState.descriptorSet;
+    // std::span<const graphic::Vertex> vertices = renderState.vertices;
+    // std::span<const uint16_t> indices = renderState.indices;
 
-    VkFramebuffer framebuffer = frameTarget.framebuffer;
-    VkExtent2D extent = frameTarget.extent;
+    // VkFramebuffer framebuffer = frameTarget.framebuffer;
+    // VkExtent2D extent = frameTarget.extent;
 
-    VkCommandBufferBeginInfo beginInfo{};
-    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    commandBuffer.begin(vk::CommandBufferBeginInfo{});
 
-    if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS) {
-        throw std::runtime_error("cannot begin record command buffer");
-    }
+    vk::ClearValue clearColor{ vk::ClearColorValue{0.0f, 0.0f, 0.0f, 1.0f} };
 
-    VkRenderPassBeginInfo renderPassInfo{};
-    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    renderPassInfo.renderPass = renderPass;
-    renderPassInfo.framebuffer = framebuffer;
-    renderPassInfo.renderArea.offset = {0, 0};
-    renderPassInfo.renderArea.extent = extent;
+    vk::RenderPassBeginInfo renderPassInfo{
+        .renderPass = *renderState.renderPass,
+        .framebuffer = *frameTarget.framebuffer,
 
-    VkClearValue clearColor{{0.0f, 0.0f, 0.0f, 1.0f}};
-    renderPassInfo.clearValueCount = 1;
-    renderPassInfo.pClearValues = &clearColor;
+        .renderArea = vk::Rect2D{
+            .offset = {0, 0},
+            .extent = frameTarget.extent
+        },
 
-    vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+        .clearValueCount = 1,
+        .pClearValues = &clearColor
+    };
 
-        vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
+    commandBuffer.beginRenderPass(renderPassInfo, vk::SubpassContents::eInline);
 
-        VkBuffer vertexBuffers[] = {vertexBuffer};
-        VkDeviceSize offsets[] = {0};
-        vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+        commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *renderState.graphicsPipeline);
 
-        vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT16);
+        vk::DeviceSize offsets[] = {0};
+        commandBuffer.bindVertexBuffers(0, {*renderState.vertexBuffer}, offsets);
+        //vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
 
-        VkViewport viewport = graphic::newViewport(extent);
-        vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+        commandBuffer.bindIndexBuffer({*renderState.indexBuffer}, 0, vk::IndexTypeValue<decltype(renderState.indices)::value_type>::value);
+        //vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT16);
 
-        VkRect2D scissor = graphic::newScissor(extent);
-        vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+        vk::Viewport viewport = graphic::newViewport(frameTarget.extent);
+        commandBuffer.setViewport(0, viewport);
+        //vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 
-        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, 0, nullptr);
+        vk::Rect2D scissor = graphic::newScissor(frameTarget.extent);
+        commandBuffer.setScissor(0, scissor);
+        //vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
+        commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, *renderState.pipelineLayout, 0, {*renderState.descriptorSet}, {});
+        //vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, 0, nullptr);
 
-    vkCmdEndRenderPass(commandBuffer);
+        commandBuffer.drawIndexed(static_cast<uint32_t>(renderState.indices.size()), 1, 0, 0, 0);
+        //vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
 
-    if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
-        throw std::runtime_error("cannot record VkCommandBuffer");
-    }
+    commandBuffer.endRenderPass();
+    //vkCmdEndRenderPass(commandBuffer);
+
+    commandBuffer.end();
+    // if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
+    //     throw std::runtime_error("cannot record VkCommandBuffer");
+    // }
 }

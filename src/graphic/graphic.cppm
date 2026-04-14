@@ -116,23 +116,23 @@ class graphic::app {
     VkRenderPass renderPass;
     VkPipeline graphicsPipeline;
 
-    std::vector<VkFramebuffer> swapChainFramebuffers;
+    std::vector<vk::raii::Framebuffer> swapChainFramebuffers;
 
     vk::raii::CommandPool commandPool;
 
     graphic::Buffer indexBuffers;
     graphic::Buffer vertexBuffers;
 
-    std::vector<VkBuffer> uniformBuffers;
-    std::vector<VkDeviceMemory> uniformBufferMemories;
+    std::vector<vk::raii::Buffer> uniformBuffers;
+    std::vector<vk::raii::DeviceMemory> uniformBufferMemories;
     std::vector<void*> uniformBufferMapped;
 
-    std::vector<VkCommandBuffer> commandBuffers;
+    std::vector<vk::raii::CommandBuffer> commandBuffers;
 
-    std::vector<VkSemaphore> imageAvaliableSemaphores;
-    std::vector<VkSemaphore> renderFinishedSemaphores;
-    std::vector<VkFence> inFlightFences;
-    std::vector<VkFence> presentFences;
+    std::vector<vk::raii::Semaphore> imageAvaliableSemaphores;
+    std::vector<vk::raii::Semaphore> renderFinishedSemaphores;
+    std::vector<vk::raii::Fence> inFlightFences;
+    std::vector<vk::raii::Fence> presentFences;
 
     void createInstance();
     void createSurface();
@@ -450,8 +450,8 @@ void graphic::app::initVulkan() {
     vk::raii::ShaderModule vertShaderModule = std::get<0>(tmpshd);
     vk::raii::ShaderModule fragShaderModule = std::get<1>(tmpshd);
 
-    VkDeviceSize size = sizeof(vertices[0]) * vertices.size();
-    VkDeviceSize indSize = sizeof(indices[0]) * indices.size();
+    vk::DeviceSize size = sizeof(vertices[0]) * vertices.size();
+    vk::DeviceSize indSize = sizeof(indices[0]) * indices.size();
 
     vertexBuffers = buffer::createVertexBuffer(physicalDevice, device, commandPool, graphicsQueue, vertices.data(), size);
     indexBuffers = buffer::createIndexBffer(physicalDevice, device, commandPool, graphicsQueue, indices.data(), indSize);
@@ -470,8 +470,8 @@ void graphic::app::initVulkan() {
 
     graphicsPipeline = pipeline::createGraphicsPipeline(device, pipelineLayout, renderPass, vertShaderModule, fragShaderModule, swapChainExtent);
     
-    vkDestroyShaderModule(device, vertShaderModule, nullptr);
-    vkDestroyShaderModule(device, fragShaderModule, nullptr);
+    // vkDestroyShaderModule(device, vertShaderModule, nullptr);
+    // vkDestroyShaderModule(device, fragShaderModule, nullptr);
 
     swapChainFramebuffers.resize(swapChainImageViews.size());
 
@@ -485,17 +485,17 @@ void graphic::app::initVulkan() {
     renderFinishedSemaphores.resize(swapChainImages.size());
 
     for (size_t i = 0; i < swapChainImages.size(); i++) {
-        renderFinishedSemaphores[i] = synchronization::craeteSemaphore(device);
+        renderFinishedSemaphores[i] = std::move(synchronization::craeteSemaphore(device));
     }
 
     inFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
     presentFences.resize(MAX_FRAMES_IN_FLIGHT);
 
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-        imageAvaliableSemaphores[i] = synchronization::craeteSemaphore(device);
+        imageAvaliableSemaphores[i] = std::move(synchronization::craeteSemaphore(device));
 
-        inFlightFences[i] = synchronization::createFence(device);
-        presentFences[i] = synchronization::createFence(device);
+        inFlightFences[i] = std::move(synchronization::createFence(device));
+        presentFences[i] = std::move(synchronization::createFence(device));
     }
 }
 

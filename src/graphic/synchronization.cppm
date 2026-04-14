@@ -4,35 +4,25 @@ module;
 #include <vulkan/vulkan_core.h>
 
 export module graphic:synchronization;
+import vulkan;
 
 export namespace synchronization {
-    VkSemaphore craeteSemaphore(VkDevice device);
-    VkFence createFence(VkDevice device);
+    vk::raii::Semaphore craeteSemaphore(const vk::raii::Device& device);
+    vk::raii::Fence createFence(const vk::raii::Device& device);
 }
 
-VkSemaphore synchronization::craeteSemaphore(VkDevice device) {
-    VkSemaphore semaphore;
+vk::raii::Semaphore synchronization::craeteSemaphore(const vk::raii::Device& device) {
+    vk::SemaphoreCreateInfo semaphoreInfo{};
 
-    VkSemaphoreCreateInfo semaphoreInfo{};
-    semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-
-    if (vkCreateSemaphore(device, &semaphoreInfo, nullptr, &semaphore) != VK_SUCCESS) {
-        throw std::runtime_error("cannot create VkSemaphore");
-    }
+    vk::raii::Semaphore semaphore(device, semaphoreInfo);
 
     return semaphore;
 }
 
-VkFence synchronization::createFence(VkDevice device) {
-    VkFence fence;
+vk::raii::Fence synchronization::createFence(const vk::raii::Device& device) {
+    vk::FenceCreateInfo fenceInfo{ .flags = vk::FenceCreateFlagBits::eSignaled };
 
-    VkFenceCreateInfo fenceInfo{};
-    fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-    fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-
-    if (vkCreateFence(device, &fenceInfo, nullptr, &fence) != VK_SUCCESS) {
-        throw std::runtime_error("cannot create VkFence");
-    }
+    vk::raii::Fence fence(device, fenceInfo);
 
     return fence;
 }

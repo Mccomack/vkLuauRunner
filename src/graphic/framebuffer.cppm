@@ -15,7 +15,7 @@ vk::raii::Framebuffer framebuffer::createFramebuffer(const vk::raii::Device& dev
     vk::FramebufferCreateInfo framebufferInfo{
         .renderPass = renderPass,
         .attachmentCount = 1,
-        .pAttachments = &imageView,
+        .pAttachments = &*imageView,
         .width = extent.width,
         .height = extent.height,
         .layers = 1
