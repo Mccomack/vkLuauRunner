@@ -1,6 +1,8 @@
 module;
 #include "vulkan/vulkan.hpp"
 #include <algorithm>
+#include <cassert>
+#include <stdexcept>
 #include <vulkan/vulkan_core.h>
 
 #include <GLFW/glfw3.h>
@@ -108,13 +110,13 @@ class graphic::app {
     vk::Extent2D swapChainExtent;
     std::vector<vk::raii::ImageView> swapChainImageViews;
 
-    VkDescriptorSetLayout descriptorSetLayout;
-    VkDescriptorPool descriptorPool;
-    std::vector<VkDescriptorSet> descriptorSets;
+    vk::raii::DescriptorSetLayout descriptorSetLayout;
+    vk::raii::DescriptorPool descriptorPool;
+    std::vector<vk::raii::DescriptorSet> descriptorSets;
 
-    VkPipelineLayout pipelineLayout;
-    VkRenderPass renderPass;
-    VkPipeline graphicsPipeline;
+    vk::raii::PipelineLayout pipelineLayout;
+    vk::raii::RenderPass renderPass;
+    vk::raii::Pipeline graphicsPipeline;
 
     std::vector<vk::raii::Framebuffer> swapChainFramebuffers;
 
@@ -282,9 +284,9 @@ void graphic::app::recreateSwapchain() {
     }
 
     if (swapChainImages.size() != renderFinishedSemaphores.size()) {
-        for (size_t i = 0; i < imageAvaliableSemaphores.size(); i++) {
-            vkDestroySemaphore(device, renderFinishedSemaphores[i], nullptr);
-        }
+        // for (size_t i = 0; i < imageAvaliableSemaphores.size(); i++) {
+        //     vkDestroySemaphore(device, renderFinishedSemaphores[i], nullptr);
+        // }
 
         renderFinishedSemaphores.resize(swapChainImages.size());
 
@@ -295,108 +297,104 @@ void graphic::app::recreateSwapchain() {
 }
 
 void graphic::app::drawFrame() {
-    vkWaitForFences(device, 1, &presentFences[currentFrame], VK_TRUE, UINT64_MAX);
+    auto result = device.waitForFences(*presentFences[currentFrame], vk::True, UINT64_MAX);
+    if (result != vk::Result::eSuccess) {
+        throw std::runtime_error("cannot wait for fence(presentFence)");
+    }
     
-
-    uint32_t imageIndex;
-    VkResult result = vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, imageAvaliableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
-
-    if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+    auto [result, imageIndex] = swapchain.acquireNextImage(UINT64_MAX, *imageAvaliableSemaphores[currentFrame], nullptr);
+    if (result == vk::Result::eErrorOutOfDateKHR) {
         framebufferResized = false;
         recreateSwapchain();
 
         return;
-    } else if (result == VK_SUBOPTIMAL_KHR || framebufferResized) {
-        VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-        VkSubmitInfo submitInfo{};
-        submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-        submitInfo.waitSemaphoreCount = 1;
-        submitInfo.pWaitSemaphores = &imageAvaliableSemaphores[currentFrame];
-        submitInfo.pWaitDstStageMask = &waitStage;
+    } else if (result == vk::Result::eSuboptimalKHR || framebufferResized) {
+        vk::PipelineStageFlags waitStage = vk::PipelineStageFlagBits::eBottomOfPipe;
+        vk::SubmitInfo submitInfo{
+            .waitSemaphoreCount = 1,
+            .pWaitSemaphores = &*imageAvaliableSemaphores[currentFrame],
+            .pWaitDstStageMask = &waitStage
+        };
 
-        vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
-        vkQueueWaitIdle(graphicsQueue);
+        graphicsQueue.submit(submitInfo, nullptr);
+        graphicsQueue.waitIdle();
 
         framebufferResized = false;
         recreateSwapchain();
 
         return;
-    } else if (result != VK_SUCCESS) {
+    } else if (result != vk::Result::eSuccess) {
+        assert(result == vk::Result::eTimeout || result == vk::Result::eNotReady);
+
         throw std::runtime_error("cannot acquire swapchain image");
     }
 
-    vkResetFences(device, 1, &presentFences[currentFrame]);
-
-    vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
+    device.resetFences(*presentFences[currentFrame]);
     
-    vkResetFences(device, 1, &inFlightFences[currentFrame]);
-
-    vkResetCommandBuffer(commandBuffers[currentFrame], 0);
+    device.waitForFences(*inFlightFences[currentFrame], vk::True, UINT64_MAX);
+    device.resetFences(*inFlightFences[currentFrame]);
+    
+    commandBuffers[currentFrame].reset();
 
     uniformBufferObject::updateUniformBuffer(swapChainExtent, uniformBufferMapped[currentFrame]);
 
-    RenderState renderState{};
-    renderState.renderPass = renderPass;
-    renderState.graphicsPipeline = graphicsPipeline;
-    renderState.pipelineLayout = pipelineLayout;
-    renderState.vertexBuffer = vertexBuffers.buffer;
-    renderState.indexBuffer = indexBuffers.buffer;
-    renderState.descriptorSet = descriptorSets[currentFrame];
-    renderState.vertices = vertices;
-    renderState.indices = indices;
+    RenderStateView renderState{
+        .renderPass = renderPass,
+        .graphicsPipeline = graphicsPipeline,
+        .pipelineLayout = pipelineLayout,
+        .vertexBuffer = vertexBuffers.buffer,
+        .indexBuffer = indexBuffers.buffer,
+        .descriptorSet = descriptorSets[currentFrame],
+        .vertices = vertices,
+        .indices = indices
+    };
 
-    FrameTarget frameTarget{};
-    frameTarget.framebuffer = swapChainFramebuffers[imageIndex];
-    frameTarget.extent = swapChainExtent;
+    FrameTargetView frameTarget{
+        .framebuffer = swapChainFramebuffers[imageIndex],
+        .extent = swapChainExtent
+    };
 
     command::recordCommandBuffer(commandBuffers[currentFrame], renderState, frameTarget);
 
-    VkSubmitInfo submitInfo{};
-    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    vk::Semaphore waitSemaphores[] = {*imageAvaliableSemaphores[currentFrame]};
+    vk::PipelineStageFlags waitStages[] = {vk::PipelineStageFlagBits::eColorAttachmentOutput};
+    vk::Semaphore signalSemaphores[] = {*renderFinishedSemaphores[imageIndex]};
 
-    VkSemaphore waitSemaphores[] = {imageAvaliableSemaphores[currentFrame]};
-    VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
-    submitInfo.waitSemaphoreCount = 1;
-    submitInfo.pWaitSemaphores = waitSemaphores;
-    submitInfo.pWaitDstStageMask = waitStages;
+    vk::SubmitInfo submitInfo{
+        .waitSemaphoreCount = 1,
+        .pWaitSemaphores = waitSemaphores,
+        .pWaitDstStageMask = waitStages,
+        .commandBufferCount = 1,
+        .pCommandBuffers = &*commandBuffers[currentFrame],
+        .signalSemaphoreCount = 1,
+        .pSignalSemaphores = signalSemaphores
+    };
+    graphicsQueue.submit(submitInfo, *inFlightFences[currentFrame]);
 
-    submitInfo.commandBufferCount = 1;
-    submitInfo.pCommandBuffers = &commandBuffers[currentFrame];
-    
-    VkSemaphore signalSemaphores[] = {renderFinishedSemaphores[imageIndex]};
-    submitInfo.signalSemaphoreCount = 1;
-    submitInfo.pSignalSemaphores = signalSemaphores;
+    vk::SwapchainKHR swapChains[] = {*swapChain};
 
-    if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]) != VK_SUCCESS) {
-        throw std::runtime_error("cannot submit draw command buffer");
-    }
+    vk::SwapchainPresentFenceInfoKHR presentFenceInfo{
+        .swapchainCount = 1,
+        .pFences = &*presentFences[currentFrame]
+    };
 
-    VkPresentInfoKHR presentInfo{};
-    presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+    vk::PresentInfoKHR presentInfo{
+        .waitSemaphoreCount = 1,
+        .pWaitSemaphores = signalSemaphores,
+        .swapchainCount = 1,
+        .pSwapchains = swapChains,
+        .pImageIndices = &imageIndex,
+        .pResults = nullptr,
+        .pNext = &presentFenceInfo
+    };
 
-    presentInfo.waitSemaphoreCount = 1;
-    presentInfo.pWaitSemaphores = signalSemaphores;
-
-    VkSwapchainKHR swapChains[] = {swapChain};
-    presentInfo.swapchainCount = 1;
-    presentInfo.pSwapchains = swapChains;
-    presentInfo.pImageIndices = &imageIndex;
-    presentInfo.pResults = nullptr;
-
-    VkSwapchainPresentFenceInfoKHR presentFenceInfo{};
-    presentFenceInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_PRESENT_FENCE_INFO_EXT;
-    presentFenceInfo.swapchainCount = 1;
-    presentFenceInfo.pFences = &presentFences[currentFrame];
-
-    presentInfo.pNext = &presentFenceInfo;
-
-    result = vkQueuePresentKHR(presentQueue, &presentInfo);
-    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || framebufferResized) {
+    result = presentQueue.presentKHR(presentInfo);
+    if (result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR || framebufferResized) {
         framebufferResized = false;
         recreateSwapchain();
 
         return;
-    } else if (result != VK_SUCCESS) {
+    } else if (result != vk::Result::eSuccess) {
         throw std::runtime_error("cannot present swapchain image");
     }
     
@@ -430,10 +428,7 @@ void graphic::app::initVulkan() {
 
     physicalDevice = device::pickPhysicalDevice(instance, surface);
     
-    std::tuple<vk::raii::Device, vk::raii::Queue, vk::raii::Queue> tmpdev = device::createLogicalDevice(physicalDevice, surface, context);
-    device = std::get<0>(tmpdev);
-    graphicsQueue = std::get<1>(tmpdev);
-    presentQueue = std::get<2>(tmpdev);
+    [device, graphicsQueue, presentQueue] = device::createLogicalDevice(physicalDevice, surface, context);
 
     swapChain = swapchain::createSwapChain(physicalDevice, device, surface, window);
     swapChainImages = swapchain::createImages(device, swapChain);
@@ -446,9 +441,7 @@ void graphic::app::initVulkan() {
 
     commandPool = command::createCommandPool(physicalDevice, device, surface);
 
-    std::tuple<VkShaderModule, VkShaderModule> tmpshd = pipeline::getShaderModule(device);
-    vk::raii::ShaderModule vertShaderModule = std::get<0>(tmpshd);
-    vk::raii::ShaderModule fragShaderModule = std::get<1>(tmpshd);
+    [vertShaderModule, fragShaderModule] = pipeline::getShaderModule(device);
 
     vk::DeviceSize size = sizeof(vertices[0]) * vertices.size();
     vk::DeviceSize indSize = sizeof(indices[0]) * indices.size();
@@ -507,59 +500,59 @@ void graphic::app::mainLoop() {
         drawFrame();
     }
 
-    vkDeviceWaitIdle(device);
+    device.waitIdle();
 }
 
 void graphic::app::cleanupSwapchain() {
-    for (VkFramebuffer framebuffer : swapChainFramebuffers) {
-        vkDestroyFramebuffer(device, framebuffer, nullptr);
-    }
+    // for (VkFramebuffer framebuffer : swapChainFramebuffers) {
+    //     vkDestroyFramebuffer(device, framebuffer, nullptr);
+    // }
 
-    for (VkImageView imageView : swapChainImageViews) {
-        vkDestroyImageView(device, imageView, nullptr);
-    }
+    // for (VkImageView imageView : swapChainImageViews) {
+    //     vkDestroyImageView(device, imageView, nullptr);
+    // }
 }
 
 void graphic::app::cleanup() {
-    for (VkSemaphore semaphore : renderFinishedSemaphores) {
-        vkDestroySemaphore(device, semaphore, nullptr);
-    }
+    // for (VkSemaphore semaphore : renderFinishedSemaphores) {
+    //     vkDestroySemaphore(device, semaphore, nullptr);
+    // }
 
-    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-        vkDestroySemaphore(device, imageAvaliableSemaphores[i], nullptr);
+    // for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+    //     vkDestroySemaphore(device, imageAvaliableSemaphores[i], nullptr);
 
-        vkDestroyFence(device, inFlightFences[i], nullptr);
-        vkDestroyFence(device, presentFences[i], nullptr);
-    }
+    //     vkDestroyFence(device, inFlightFences[i], nullptr);
+    //     vkDestroyFence(device, presentFences[i], nullptr);
+    // }
 
-    vkDestroyBuffer(device, indexBuffers.buffer, nullptr);
-    vkFreeMemory(device, indexBuffers.bufferMemory, nullptr);
+    // vkDestroyBuffer(device, indexBuffers.buffer, nullptr);
+    // vkFreeMemory(device, indexBuffers.bufferMemory, nullptr);
 
-    vkDestroyBuffer(device, vertexBuffers.buffer, nullptr);
-    vkFreeMemory(device, vertexBuffers.bufferMemory, nullptr);
+    // vkDestroyBuffer(device, vertexBuffers.buffer, nullptr);
+    // vkFreeMemory(device, vertexBuffers.bufferMemory, nullptr);
 
-    for (size_t i = 0; i < graphic::MAX_FRAMES_IN_FLIGHT; i++) {
-        vkDestroyBuffer(device, uniformBuffers[i], nullptr);
-        vkFreeMemory(device, uniformBufferMemories[i], nullptr);
-    }
+    // for (size_t i = 0; i < graphic::MAX_FRAMES_IN_FLIGHT; i++) {
+    //     vkDestroyBuffer(device, uniformBuffers[i], nullptr);
+    //     vkFreeMemory(device, uniformBufferMemories[i], nullptr);
+    // }
 
-    vkDestroyDescriptorPool(device, descriptorPool, nullptr);
-    vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
+    // vkDestroyDescriptorPool(device, descriptorPool, nullptr);
+    // vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
 
-    vkDestroyCommandPool(device, commandPool, nullptr);
+    // vkDestroyCommandPool(device, commandPool, nullptr);
 
-    vkDestroyPipeline(device, graphicsPipeline, nullptr);
-    vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
-    vkDestroyRenderPass(device, renderPass, nullptr);
+    // vkDestroyPipeline(device, graphicsPipeline, nullptr);
+    // vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
+    // vkDestroyRenderPass(device, renderPass, nullptr);
 
-    cleanupSwapchain();
-    vkDestroySwapchainKHR(device, swapChain, nullptr);
+    // cleanupSwapchain();
+    // vkDestroySwapchainKHR(device, swapChain, nullptr);
 
-    vkDestroyDevice(device, nullptr);
+    // vkDestroyDevice(device, nullptr);
 
-    if (debugMessenger) {
-        //validationLayer::DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
-    }
+    // if (debugMessenger) {
+    //     //validationLayer::DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
+    // }
 
     //vkDestroySurfaceKHR(instance, surface, nullptr);
     //vkDestroyInstance(instance, nullptr);
