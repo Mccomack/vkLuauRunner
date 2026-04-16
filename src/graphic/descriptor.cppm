@@ -1,12 +1,10 @@
 module;
 #include <cstdint>
-#include <vector>
-#include <stdexcept>
-#include <vulkan/vulkan.hpp>
-#include <vulkan/vulkan_core.h>
 
 export module graphic:descriptor;
 import :common;
+
+import std;
 
 import vulkan;
 
@@ -50,7 +48,7 @@ vk::raii::DescriptorPool descriptor::createDescriptorPool(const vk::raii::Device
     return vk::raii::DescriptorPool(device, poolInfo);
 }
 
-std::vector<vk::raii::DescriptorSet> createDescriptorSets(const vk::raii::Device& device, const vk::raii::DescriptorSetLayout& descriptorSetLayout, const vk::raii::DescriptorPool& descriptorPool, const std::vector<vk::raii::Buffer>& uniformBuffers) {
+std::vector<vk::raii::DescriptorSet> descriptor::createDescriptorSets(const vk::raii::Device& device, const vk::raii::DescriptorSetLayout& descriptorSetLayout, const vk::raii::DescriptorPool& descriptorPool, const std::vector<vk::raii::Buffer>& uniformBuffers) {
     std::vector<vk::DescriptorSetLayout> layouts(graphic::MAX_FRAMES_IN_FLIGHT, *descriptorSetLayout);
 
     vk::DescriptorSetAllocateInfo allocInfo{

@@ -1,13 +1,11 @@
 module;
 #include <cstdint>
-#include <span>
-#include <stdexcept>
-#include <vector>
-#include <vulkan/vulkan.hpp>
-#include <vulkan/vulkan_core.h>
 
 export module graphic:command;
 import :common;
+
+import std;
+
 import vulkan;
 
 export namespace command {
@@ -41,18 +39,6 @@ std::vector<vk::raii::CommandBuffer> command::createCommandBuffer(const vk::raii
 }
 
 void command::recordCommandBuffer(const vk::raii::CommandBuffer& commandBuffer, const graphic::RenderStateView& renderState, const graphic::FrameTargetView& frameTarget) {
-    // VkRenderPass renderPass = renderState.renderPass;
-    // VkPipeline graphicsPipeline = renderState.graphicsPipeline;
-    // VkPipelineLayout pipelineLayout = renderState.pipelineLayout;
-    // VkBuffer vertexBuffer = renderState.vertexBuffer;
-    // VkBuffer indexBuffer = renderState.indexBuffer;
-    // VkDescriptorSet descriptorSet = renderState.descriptorSet;
-    // std::span<const graphic::Vertex> vertices = renderState.vertices;
-    // std::span<const uint16_t> indices = renderState.indices;
-
-    // VkFramebuffer framebuffer = frameTarget.framebuffer;
-    // VkExtent2D extent = frameTarget.extent;
-
     commandBuffer.begin(vk::CommandBufferBeginInfo{});
 
     vk::ClearValue clearColor{ vk::ClearColorValue{0.0f, 0.0f, 0.0f, 1.0f} };
@@ -76,30 +62,20 @@ void command::recordCommandBuffer(const vk::raii::CommandBuffer& commandBuffer, 
 
         vk::DeviceSize offsets[] = {0};
         commandBuffer.bindVertexBuffers(0, {*renderState.vertexBuffer}, offsets);
-        //vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
 
         commandBuffer.bindIndexBuffer({*renderState.indexBuffer}, 0, vk::IndexTypeValue<decltype(renderState.indices)::value_type>::value);
-        //vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT16);
 
         vk::Viewport viewport = graphic::newViewport(frameTarget.extent);
         commandBuffer.setViewport(0, viewport);
-        //vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 
         vk::Rect2D scissor = graphic::newScissor(frameTarget.extent);
         commandBuffer.setScissor(0, scissor);
-        //vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
         commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, *renderState.pipelineLayout, 0, {*renderState.descriptorSet}, {});
-        //vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, 0, nullptr);
 
         commandBuffer.drawIndexed(static_cast<uint32_t>(renderState.indices.size()), 1, 0, 0, 0);
-        //vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
 
     commandBuffer.endRenderPass();
-    //vkCmdEndRenderPass(commandBuffer);
 
     commandBuffer.end();
-    // if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
-    //     throw std::runtime_error("cannot record VkCommandBuffer");
-    // }
 }

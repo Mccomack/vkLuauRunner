@@ -87,6 +87,7 @@ endforeach()
 
 add_custom_target(shaders ALL DEPENDS ${SPV_FILES})
 
+# 소스코드
 file(GLOB_RECURSE SOURCES "src/*.cpp")
 file(GLOB_RECURSE MODULE_SOURCES "src/*.cppm" "src/*.ixx")
 

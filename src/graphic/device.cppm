@@ -1,15 +1,12 @@
 module;
-#include <format>
-#include <tuple>
-#include <vector>
-#include <set>
-
-#include <vulkan/vulkan.hpp>
-#include <vulkan/vulkan_core.h>
+#include <cstdint>
 
 export module graphic:device;
 import :common;
+import osinfo;
 import Logger;
+
+import std;
 
 import vulkan;
 
@@ -56,15 +53,29 @@ bool device::checkDeviceFeatureSupport(const vk::raii::PhysicalDevice &physicalD
         vk::PhysicalDeviceSwapchainMaintenance1FeaturesEXT
     >();
 
-    bool supportsRequiredFeatures = features.template get<vk::PhysicalDeviceVulkan13Features>().dynamicRendering && 
-        features.template get<vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT>().extendedDynamicState && 
-        features.template get<vk::PhysicalDeviceSwapchainMaintenance1FeaturesEXT>().swapchainMaintenance1;
+    bool dynamicRendering = features.template get<vk::PhysicalDeviceVulkan13Features>().dynamicRendering;
+    bool extDynamicState  = features.template get<vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT>().extendedDynamicState;
+    bool swapMaintenance1 = features.template get<vk::PhysicalDeviceSwapchainMaintenance1FeaturesEXT>().swapchainMaintenance1;
+
+    bool supportsRequiredFeatures = dynamicRendering && extDynamicState && swapMaintenance1;
+
+    logger.Debugf("dynamicRendering: {}, extendedDynamicState: {}, swapchainMaintenance1: {}", 
+        dynamicRendering, extDynamicState, swapMaintenance1);
 
     return supportsRequiredFeatures;
 }
 
 bool device::isDeviceSuitable(const vk::raii::PhysicalDevice& physicalDevice, const vk::raii::SurfaceKHR& surface) {
-    if (physicalDevice.getProperties().apiVersion < VK_API_VERSION_1_4) {
+    auto props = physicalDevice.getProperties();
+
+    logger.Debugf("Device: {}, API: {}.{}.{}", 
+        props.deviceName.data(),
+        vk::apiVersionMajor(props.apiVersion),
+        vk::apiVersionMinor(props.apiVersion),
+        vk::apiVersionPatch(props.apiVersion)
+    );
+
+    if (props.apiVersion < vk::ApiVersion14) {
         return false;
     }
 
@@ -137,7 +148,7 @@ std::tuple<vk::raii::Device, vk::raii::Queue, vk::raii::Queue> device::createLog
     // add some things later
 
     vk::PhysicalDeviceSwapchainMaintenance1FeaturesEXT maintenance1Features{
-        .swapchainMaintenance1 = VK_TRUE
+        .swapchainMaintenance1 = vk::True
     };
 
     vk::DeviceCreateInfo createInfo{};
@@ -151,9 +162,8 @@ std::tuple<vk::raii::Device, vk::raii::Queue, vk::raii::Queue> device::createLog
     std::vector<const char*> extensions(deviceExtensions);
 
     // macOS settings
-    for (const auto& ext : physicalDevice.enumerateDeviceExtensionProperties()) {
-        if (std::string_view(ext.extensionName) == "VK_KHR_portability_subset")
-            extensions.push_back("VK_KHR_portability_subset");
+    if (os::os == os::macOS) {
+        extensions.push_back("VK_KHR_portability_subset");
     }
     
     createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
@@ -171,7 +181,7 @@ std::tuple<vk::raii::Device, vk::raii::Queue, vk::raii::Queue> device::createLog
     logger.Debug("Enabled device extensions: ");
 
     for (const char* extensionName : extensions) {
-        logger.Debug(std::format("\t{}", extensionName));
+        logger.Debugf("\t{}", extensionName);
     }
 #endif
 

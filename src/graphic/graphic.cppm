@@ -1,12 +1,6 @@
 module;
-#include "vulkan/vulkan.hpp"
-#include <algorithm>
-#include <cassert>
-#include <stdexcept>
-#include <vulkan/vulkan_core.h>
 
 #include <GLFW/glfw3.h>
-#include <vulkan/vulkan_raii.hpp>
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -14,6 +8,7 @@ module;
 #include <glm/mat4x4.hpp>
 
 export module graphic;
+
 export import :validationLayer;
 export import :device;
 export import :swapchain;
@@ -26,9 +21,12 @@ export import :descriptor;
 export import :uniformBufferObject;
 export import :common;
 
-import vulkan;
-
+import osinfo;
 import Logger;
+
+import std;
+
+import vulkan;
 
 export namespace graphic {
     namespace validationLayer {
@@ -100,27 +98,27 @@ class graphic::app {
     vk::DebugUtilsMessengerEXT debugMessenger = nullptr;
 
     vk::raii::PhysicalDevice physicalDevice = nullptr;
-    vk::raii::Device device;
-    vk::raii::Queue graphicsQueue;
-    vk::raii::Queue presentQueue;
+    vk::raii::Device device = nullptr;
+    vk::raii::Queue graphicsQueue = nullptr;
+    vk::raii::Queue presentQueue = nullptr;
 
-    vk::raii::SwapchainKHR swapChain;
+    vk::raii::SwapchainKHR swapChain = nullptr;
     std::vector<vk::Image> swapChainImages;
     vk::SurfaceFormatKHR swapChainSurfaceFormat;
     vk::Extent2D swapChainExtent;
     std::vector<vk::raii::ImageView> swapChainImageViews;
 
-    vk::raii::DescriptorSetLayout descriptorSetLayout;
-    vk::raii::DescriptorPool descriptorPool;
+    vk::raii::DescriptorSetLayout descriptorSetLayout = nullptr;
+    vk::raii::DescriptorPool descriptorPool = nullptr;
     std::vector<vk::raii::DescriptorSet> descriptorSets;
 
-    vk::raii::PipelineLayout pipelineLayout;
-    vk::raii::RenderPass renderPass;
-    vk::raii::Pipeline graphicsPipeline;
+    vk::raii::PipelineLayout pipelineLayout = nullptr;
+    vk::raii::RenderPass renderPass = nullptr;
+    vk::raii::Pipeline graphicsPipeline = nullptr;
 
     std::vector<vk::raii::Framebuffer> swapChainFramebuffers;
 
-    vk::raii::CommandPool commandPool;
+    vk::raii::CommandPool commandPool = nullptr;
 
     graphic::Buffer indexBuffers;
     graphic::Buffer vertexBuffers;
@@ -198,7 +196,7 @@ void graphic::app::createInstance() {
     }
 
     createInfo.enabledLayerCount = static_cast<uint32_t>(requiredLayers.size());
-    createInfo.ppEnabledLayerNames = requiredExtensions.data();
+    createInfo.ppEnabledLayerNames = requiredLayers.data();
 
     // vaildation layer support
     if (validationLayer::enableValidationLayers) {
@@ -228,18 +226,20 @@ void graphic::app::createInstance() {
     requiredExtensions.push_back(vk::EXTSurfaceMaintenance1ExtensionName);
 
     // macOS Settings
-    requiredExtensions.push_back(vk::KHRPortabilityEnumerationExtensionName);
-    requiredExtensions.push_back(vk::KHRGetPhysicalDeviceProperties2ExtensionName);
+    if (os::os == os::macOS) {
+        requiredExtensions.push_back(vk::KHRPortabilityEnumerationExtensionName);
+        requiredExtensions.push_back(vk::KHRGetPhysicalDeviceProperties2ExtensionName);
 
-    //createInfo.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
+        createInfo.flags |= vk::InstanceCreateFlagBits::eEnumeratePortabilityKHR;
+    }
 
     // put instance extensions
-    createInfo.enabledExtensionCount = (uint32_t) extensions.size();
-    createInfo.ppEnabledExtensionNames = extensions.data();
+    createInfo.enabledExtensionCount = (uint32_t) requiredExtensions.size();
+    createInfo.ppEnabledExtensionNames = requiredExtensions.data();
 
     logger.Debug("Enabled instance extensions: ");
 
-    for (const char* extension : extensions) {
+    for (const char* extension : requiredExtensions) {
         logger.Debugf("\t{}", extension);
     }
 
@@ -274,13 +274,15 @@ void graphic::app::recreateSwapchain() {
     swapChainSurfaceFormat = swapchain::chooseSwapSurfaceFormat(swapchainSupport.formats);
     swapChainExtent = swapchain::chooseSwapExtent(swapchainSupport.capabilities, window);
 
+    cleanupSwapchain();
+
     swapChainImages = swapchain::createImages(device, swapChain);
     swapChainImageViews = swapchain::createImageViews(device, swapChainImages, swapChainSurfaceFormat);
 
-    swapChainFramebuffers.resize(swapChainImageViews.size());
-
     for (size_t i = 0; i < swapChainImageViews.size(); i++) {
-        swapChainFramebuffers[i] = framebuffer::createFramebuffer(device, renderPass, swapChainImageViews[i], swapChainExtent);
+        swapChainFramebuffers.push_back(
+            std::move(framebuffer::createFramebuffer(device, renderPass, swapChainImageViews[i], swapChainExtent))
+        );
     }
 
     if (swapChainImages.size() != renderFinishedSemaphores.size()) {
@@ -288,21 +290,23 @@ void graphic::app::recreateSwapchain() {
         //     vkDestroySemaphore(device, renderFinishedSemaphores[i], nullptr);
         // }
 
-        renderFinishedSemaphores.resize(swapChainImages.size());
+        renderFinishedSemaphores.clear();
 
         for (size_t i = 0; i < swapChainImages.size(); i++) {
-            renderFinishedSemaphores[i] = synchronization::craeteSemaphore(device);
+            renderFinishedSemaphores.push_back(std::move(synchronization::craeteSemaphore(device)));
         }
     }
 }
 
 void graphic::app::drawFrame() {
-    auto result = device.waitForFences(*presentFences[currentFrame], vk::True, UINT64_MAX);
-    if (result != vk::Result::eSuccess) {
-        throw std::runtime_error("cannot wait for fence(presentFence)");
+    {
+        auto result = device.waitForFences(*presentFences[currentFrame], vk::True, UINT64_MAX);
+        if (result != vk::Result::eSuccess) {
+            throw std::runtime_error("cannot wait for fence(presentFence)");
+        }
     }
     
-    auto [result, imageIndex] = swapchain.acquireNextImage(UINT64_MAX, *imageAvaliableSemaphores[currentFrame], nullptr);
+    auto [result, imageIndex] = swapChain.acquireNextImage(UINT64_MAX, *imageAvaliableSemaphores[currentFrame], nullptr);
     if (result == vk::Result::eErrorOutOfDateKHR) {
         framebufferResized = false;
         recreateSwapchain();
@@ -331,7 +335,7 @@ void graphic::app::drawFrame() {
 
     device.resetFences(*presentFences[currentFrame]);
     
-    device.waitForFences(*inFlightFences[currentFrame], vk::True, UINT64_MAX);
+    std::ignore = device.waitForFences(*inFlightFences[currentFrame], vk::True, UINT64_MAX);
     device.resetFences(*inFlightFences[currentFrame]);
     
     commandBuffers[currentFrame].reset();
@@ -379,13 +383,13 @@ void graphic::app::drawFrame() {
     };
 
     vk::PresentInfoKHR presentInfo{
+        .pNext = &presentFenceInfo,
         .waitSemaphoreCount = 1,
         .pWaitSemaphores = signalSemaphores,
         .swapchainCount = 1,
         .pSwapchains = swapChains,
         .pImageIndices = &imageIndex,
-        .pResults = nullptr,
-        .pNext = &presentFenceInfo
+        .pResults = nullptr
     };
 
     result = presentQueue.presentKHR(presentInfo);
@@ -428,7 +432,7 @@ void graphic::app::initVulkan() {
 
     physicalDevice = device::pickPhysicalDevice(instance, surface);
     
-    [device, graphicsQueue, presentQueue] = device::createLogicalDevice(physicalDevice, surface, context);
+    std::tie(device, graphicsQueue, presentQueue) = device::createLogicalDevice(physicalDevice, surface);
 
     swapChain = swapchain::createSwapChain(physicalDevice, device, surface, window);
     swapChainImages = swapchain::createImages(device, swapChain);
@@ -441,7 +445,7 @@ void graphic::app::initVulkan() {
 
     commandPool = command::createCommandPool(physicalDevice, device, surface);
 
-    [vertShaderModule, fragShaderModule] = pipeline::getShaderModule(device);
+    auto [vertShaderModule, fragShaderModule] = pipeline::getShaderModule(device);
 
     vk::DeviceSize size = sizeof(vertices[0]) * vertices.size();
     vk::DeviceSize indSize = sizeof(indices[0]) * indices.size();
@@ -449,46 +453,33 @@ void graphic::app::initVulkan() {
     vertexBuffers = buffer::createVertexBuffer(physicalDevice, device, commandPool, graphicsQueue, vertices.data(), size);
     indexBuffers = buffer::createIndexBffer(physicalDevice, device, commandPool, graphicsQueue, indices.data(), indSize);
 
-    auto tmpubo = buffer::createUniformBuffer(physicalDevice, device, commandPool, graphicsQueue);
-    uniformBuffers = std::get<0>(tmpubo);
-    uniformBufferMemories = std::get<1>(tmpubo);
-    uniformBufferMapped = std::get<2>(tmpubo);
+    std::tie(uniformBuffers, uniformBufferMemories, uniformBufferMapped) =
+        buffer::createUniformBuffer(physicalDevice, device, commandPool, graphicsQueue);
 
     descriptorSetLayout = descriptor::createDescriptorSetLayout(device);
     descriptorPool = descriptor::createDescriptorPool(device);
     descriptorSets = descriptor::createDescriptorSets(device, descriptorSetLayout, descriptorPool, uniformBuffers);
 
     pipelineLayout = pipeline::createPipelineLayout(device, descriptorSetLayout, vertShaderModule, fragShaderModule);
-    renderPass = pipeline::createRenderPass(device, swapChainImageFormat);
+    renderPass = pipeline::createRenderPass(device, swapChainSurfaceFormat.format);
 
     graphicsPipeline = pipeline::createGraphicsPipeline(device, pipelineLayout, renderPass, vertShaderModule, fragShaderModule, swapChainExtent);
-    
-    // vkDestroyShaderModule(device, vertShaderModule, nullptr);
-    // vkDestroyShaderModule(device, fragShaderModule, nullptr);
-
-    swapChainFramebuffers.resize(swapChainImageViews.size());
 
     for (size_t i = 0; i < swapChainImageViews.size(); i++) {
-        swapChainFramebuffers[i] = framebuffer::createFramebuffer(device, renderPass, swapChainImageViews[i], swapChainExtent);
+        swapChainFramebuffers.push_back(std::move(framebuffer::createFramebuffer(device, renderPass, swapChainImageViews[i], swapChainExtent)));
     }
 
     commandBuffers = command::createCommandBuffer(device, commandPool);
 
-    imageAvaliableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
-    renderFinishedSemaphores.resize(swapChainImages.size());
-
     for (size_t i = 0; i < swapChainImages.size(); i++) {
-        renderFinishedSemaphores[i] = std::move(synchronization::craeteSemaphore(device));
+        renderFinishedSemaphores.push_back(std::move(synchronization::craeteSemaphore(device)));
     }
 
-    inFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
-    presentFences.resize(MAX_FRAMES_IN_FLIGHT);
-
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-        imageAvaliableSemaphores[i] = std::move(synchronization::craeteSemaphore(device));
+        imageAvaliableSemaphores.push_back(std::move(synchronization::craeteSemaphore(device)));
 
-        inFlightFences[i] = std::move(synchronization::createFence(device));
-        presentFences[i] = std::move(synchronization::createFence(device));
+        inFlightFences.push_back(std::move(synchronization::createFence(device)));
+        presentFences.push_back(std::move(synchronization::createFence(device)));
     }
 }
 
@@ -504,13 +495,9 @@ void graphic::app::mainLoop() {
 }
 
 void graphic::app::cleanupSwapchain() {
-    // for (VkFramebuffer framebuffer : swapChainFramebuffers) {
-    //     vkDestroyFramebuffer(device, framebuffer, nullptr);
-    // }
+    swapChainFramebuffers.clear();
 
-    // for (VkImageView imageView : swapChainImageViews) {
-    //     vkDestroyImageView(device, imageView, nullptr);
-    // }
+    swapChainImageViews.clear();
 }
 
 void graphic::app::cleanup() {

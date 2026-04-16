@@ -1,15 +1,11 @@
 module;
-#include <cstddef>
 #include <cstring>
-#include <stdexcept>
-#include <tuple>
-#include <vector>
-#include <vulkan/vulkan.hpp>
-#include <vulkan/vulkan_core.h>
 
 export module graphic:buffer;
 import :common;
 import Logger;
+
+import std;
 
 import vulkan;
 
@@ -89,9 +85,6 @@ graphic::Buffer buffer::createVertexBuffer(const vk::raii::PhysicalDevice& physi
 
     copyBuffer(device, commandPool, graphicsQueue, stagingBuffers.buffer, vertexBuffers.buffer, size);
 
-    // vkDestroyBuffer(device, stagingBuffers.buffer, nullptr);
-    // vkFreeMemory(device, stagingBuffers.bufferMemory, nullptr);
-
     return vertexBuffers;
 }
 
@@ -106,9 +99,6 @@ graphic::Buffer buffer::createIndexBffer(const vk::raii::PhysicalDevice& physica
 
     copyBuffer(device, commandPool, graphicsQueue, stagingBuffers.buffer, indexBuffer.buffer, size);
 
-    // vkDestroyBuffer(device, stagingBuffers.buffer, nullptr);
-    // vkFreeMemory(device, stagingBuffers.bufferMemory, nullptr);
-
     return indexBuffer;
 }
 
@@ -117,14 +107,14 @@ std::tuple<std::vector<vk::raii::Buffer>, std::vector<vk::raii::DeviceMemory>, s
     std::vector<vk::raii::DeviceMemory> uniformBufferMemories;
     std::vector<void*> uniformBufferMapped;
 
-    vk::DeviceSize bufferSize = sizeof(graphic::UniformBufferObject);
-
     for (size_t i = 0; i < graphic::MAX_FRAMES_IN_FLIGHT; i++) {
+        vk::DeviceSize bufferSize = sizeof(graphic::UniformBufferObject);
+
         graphic::Buffer uniformBuffer = createBuffer(physicalDevice, device, bufferSize, vk::BufferUsageFlagBits::eUniformBuffer, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
 
         uniformBuffers.push_back(std::move(uniformBuffer.buffer));
         uniformBufferMemories.push_back(std::move(uniformBuffer.bufferMemory));
-        uniformBufferMapped.push_back(uniformBuffer.bufferMemory.mapMemory(0, bufferSize));
+        uniformBufferMapped.push_back(uniformBufferMemories[i].mapMemory(0, bufferSize));
     }
 
     return std::make_tuple(std::move(uniformBuffers), std::move(uniformBufferMemories), uniformBufferMapped);

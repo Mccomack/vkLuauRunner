@@ -1,16 +1,9 @@
 module;
-#include "glm/ext/vector_float3.hpp"
-#include <array>
-#include <cstddef>
-#include <span>
-#include <stdexcept>
-#include <vector>
-#include <optional>
-#include <vulkan/vulkan.hpp>
 #include <glm/glm.hpp>
-#include <vulkan/vulkan_core.h>
 
 export module graphic:common;
+
+import std;
 
 import vulkan;
 
@@ -83,8 +76,8 @@ export namespace graphic {
     };
 
     struct Buffer {
-        vk::raii::Buffer buffer;
-        vk::raii::DeviceMemory bufferMemory;
+        vk::raii::Buffer buffer = nullptr;
+        vk::raii::DeviceMemory bufferMemory = nullptr;
     };
 
     const int MAX_FRAMES_IN_FLIGHT = 2;

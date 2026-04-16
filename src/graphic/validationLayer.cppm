@@ -1,12 +1,12 @@
 module;
-#include "vulkan/vulkan.hpp"
 #include <GLFW/glfw3.h>
 
-#include <vector>
-#include <format>
+#include <cstring>
 
 export module graphic:validationLayer;
 import Logger;
+
+import std;
 
 import vulkan;
 
@@ -91,7 +91,6 @@ void validationLayer::populateDebugMessengerCreateInfo(vk::DebugUtilsMessengerCr
     };
 
     vk::DebugUtilsMessageTypeFlagsEXT messageTypeFlags{
-        vk::DebugUtilsMessageTypeFlagBitsEXT::eDeviceAddressBinding | 
         vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral | 
         vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance | 
         vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation

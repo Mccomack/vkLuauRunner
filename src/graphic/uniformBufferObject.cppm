@@ -1,15 +1,15 @@
 module;
-#include "glm/ext/matrix_clip_space.hpp"
 #define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-
-#include <vulkan/vulkan.hpp>
+#include <glm/ext/matrix_clip_space.hpp>
 
 export module graphic:uniformBufferObject;
 import :common;
 
 import std;
+
+import vulkan;
 
 export namespace uniformBufferObject {
     void updateUniformBuffer(vk::Extent2D swapchainExtent, void* uniformBufferMapped);
