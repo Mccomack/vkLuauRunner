@@ -11,7 +11,7 @@ module;
 #include <chrono>
 #include <utility>
 
-export module Logger;
+export module logger;
 import osinfo;
 import appinfo;
 

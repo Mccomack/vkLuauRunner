@@ -9,20 +9,20 @@ module;
 
 export module graphic;
 
-export import :validationLayer;
-export import :device;
-export import :swapchain;
-export import :pipeline;
-export import :framebuffer;
-export import :command;
-export import :synchronization;
-export import :buffer;
-export import :descriptor;
-export import :uniformBufferObject;
-export import :common;
+import :validationLayer;
+import :device;
+import :swapchain;
+import :pipeline;
+import :framebuffer;
+import :command;
+import :synchronization;
+import :buffer;
+import :descriptor;
+import :uniformBufferObject;
+import :common;
 
 import osinfo;
-import Logger;
+import logger;
 
 import std;
 

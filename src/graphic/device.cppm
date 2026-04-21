@@ -4,7 +4,7 @@ module;
 export module graphic:device;
 import :common;
 import osinfo;
-import Logger;
+import logger;
 
 import std;
 

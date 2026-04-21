@@ -11,5 +11,11 @@
     "clangd.arguments": [
         "--compile-commands-dir=${workspaceFolder}/build/current",
         "--log=verbose"
-    ]
+    ],
+    "luau-lsp.platform.type": "standard",
+    "luau-lsp.completion.autocompleteEnd": true,
+    "luau-lsp.completion.showPropertiesOnMethodCall": true,
+    "luau-lsp.types.definitionFiles": {
+        "@engine": "./src/luau/definitions.d.luau"
+    },
 }

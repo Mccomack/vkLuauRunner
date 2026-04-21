@@ -4,7 +4,7 @@ module;
 #include <cstring>
 
 export module graphic:validationLayer;
-import Logger;
+import logger;
 
 import std;
 

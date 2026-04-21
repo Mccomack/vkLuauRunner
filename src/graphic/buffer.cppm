@@ -3,7 +3,7 @@ module;
 
 export module graphic:buffer;
 import :common;
-import Logger;
+import logger;
 
 import std;
 

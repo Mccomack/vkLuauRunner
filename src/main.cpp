@@ -2,11 +2,13 @@
 #include <cstdlib>
 #include <exception>
 
+import std;
 import osinfo;
 import appinfo;
 import Config;
-import Logger;
+import logger;
 import graphic;
+import luau;
 
 int main() {
     Config& config = Config::getInstance();
@@ -28,7 +30,17 @@ int main() {
 
     logger.Logf("appData folder path: {}", os::appPath.generic_string());
 
-    //graphic::graphicLearning();
+    luau::State main(luau::SecurityType::eDefault);
+    main.registerFunction("print", luau::global::lprint, luau::SecurityType::eNone);
+    main.registerFunction("add", luau::global::laddTest, luau::SecurityType::eNone);
+    main.registerFunction("security", luau::global::lsecurity, luau::SecurityType::eDefault);
+    luau::Environment script1(main);
+
+    try {
+        luau::run::runLuauFile(*script1, os::appPath / "asset" / "script" / "main.luau");
+    } catch (const std::exception& e) {
+        logger.Log(e.what(), "Error");
+    }
 
     graphic::app helloTriangle;
 

@@ -9,8 +9,9 @@ if(APPLE)
 
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
 
-    set(CMAKE_EXE_LINKER_FLAGS "-L/opt/homebrew/opt/llvm/lib")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -stdlib=libc++")
+    set(CMAKE_EXE_LINKER_FLAGS 
+        "-L/opt/homebrew/opt/llvm/lib/c++ -L/opt/homebrew/opt/llvm/lib -Wl,-rpath,/opt/homebrew/opt/llvm/lib/c++ -Wl,-rpath,/opt/homebrew/opt/llvm/lib -stdlib=libc++"
+    )
 
     include_directories("/opt/homebrew/opt/llvm/include")
 
@@ -28,7 +29,7 @@ endif()
 set(CMAKE_CXX_SCAN_FOR_MODULES ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-project(MyCpp3DGame VERSION 0.0.1)
+project(MyCpp3DGame VERSION 0.1.0)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
@@ -49,9 +50,11 @@ if(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
     option(GIT_SUBMODULE "Check submodules during build" ON)
     if(GIT_SUBMODULE)
         message(STATUS "Submodule update")
-        execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive
-                        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-                        RESULT_VARIABLE GIT_SUBMOD_RESULT)
+        execute_process(
+            COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+            RESULT_VARIABLE GIT_SUBMOD_RESULT
+        )
     endif()
 endif()
 
@@ -143,6 +146,7 @@ target_compile_definitions(VulkanHppModule PUBLIC
     VULKAN_HPP_CPPM_MODULE
     VULKAN_HPP_HANDLE_ERROR_OUT_OF_DATE_AS_SUCCESS
 )
+target_compile_options(VulkanHppModule PRIVATE -stdlib=libc++)
 target_include_directories(VulkanHppModule PUBLIC "${Vulkan_INCLUDE_DIR}")
 target_link_libraries(VulkanHppModule PUBLIC Vulkan::Vulkan)
 
@@ -167,6 +171,7 @@ target_include_directories(program PRIVATE external/glfw/include)
 target_include_directories(program PRIVATE external/glm)
 target_include_directories(program PRIVATE external/luau/VM/include)
 target_include_directories(program PRIVATE external/luau/Compiler/include)
+target_include_directories(program PRIVATE external/luau/CodeGen/include)
 target_include_directories(program PRIVATE external/luau/Common/include)
 
 target_include_directories(program PRIVATE ${CMAKE_SOURCE_DIR}/includes)
@@ -180,10 +185,11 @@ target_link_libraries(program PRIVATE
 
     Luau.VM
     Luau.Compiler
-    # Luau.CodeGen
+    Luau.CodeGen
 )
 
 target_compile_options(program PRIVATE 
+    -stdlib=libc++ 
     # $<$<CXX_COMPILER_ID:GNU>:-fmodules-ts>
     # $<$<CXX_COMPILER_ID:Clang>:-fmodules>
     # $<$<CXX_COMPILER_ID:MSVC>:/experimental:module>
