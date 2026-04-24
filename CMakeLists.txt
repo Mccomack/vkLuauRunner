@@ -10,7 +10,10 @@ if(APPLE)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
 
     set(CMAKE_EXE_LINKER_FLAGS 
-        "-L/opt/homebrew/opt/llvm/lib/c++ -L/opt/homebrew/opt/llvm/lib -Wl,-rpath,/opt/homebrew/opt/llvm/lib/c++ -Wl,-rpath,/opt/homebrew/opt/llvm/lib -stdlib=libc++"
+        "-L/opt/homebrew/opt/llvm/lib/c++ -L/opt/homebrew/opt/llvm/lib \
+        -Wl,-rpath,/opt/homebrew/opt/llvm/lib/c++ \
+        -Wl,-rpath,/opt/homebrew/opt/llvm/lib \
+        -stdlib=libc++"
     )
 
     include_directories("/opt/homebrew/opt/llvm/include")
@@ -113,6 +116,10 @@ if(MODULE_SOURCES)
     #     )
     # endforeach()
 endif()
+
+set_source_files_properties(src/libc_workaround.cpp PROPERTIES
+    CXX_SCAN_FOR_MODULES OFF
+)
 
 # git hash 정의
 execute_process(

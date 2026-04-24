@@ -1,12 +1,10 @@
 module;
-#include <iostream>
-#include <fstream>
-#include <filesystem>
-#include <string_view>
 #include <nlohmann/json.hpp>
 
 export module Config;
 import osinfo;
+
+import std;
 
 namespace fs = std::filesystem;
 

@@ -1,19 +1,8 @@
-module;
-#include <iomanip>
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <filesystem>
-#include <string>
-#include <string_view>
-#include <format>
-#include <optional>
-#include <chrono>
-#include <utility>
-
 export module logger;
 import osinfo;
 import appinfo;
+
+import std;
 
 namespace fs = std::filesystem;
 namespace ch = std::chrono;

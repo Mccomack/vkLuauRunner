@@ -1,10 +1,4 @@
 module;
-#include <cstdlib>
-#include <format>
-#include <string>
-#include <string_view>
-#include <filesystem>
-
 #define OS_LIST     \
     X(Windows)      \
     X(macOS)        \
@@ -13,6 +7,8 @@ module;
 
 export module osinfo;
 import appinfo;
+
+import std;
 
 namespace fs = std::filesystem;
 

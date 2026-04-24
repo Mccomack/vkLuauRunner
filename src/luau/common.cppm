@@ -1,5 +1,6 @@
 module;
 #import <lualib.h>
+
 #define SECURITY_TYPE_LIST \
     X(eNone) \
     X(eUntrusted) \
@@ -8,6 +9,7 @@ module;
     X(eEngineScript) \
 
 export module luau:common;
+
 import std;
 
 namespace luau {

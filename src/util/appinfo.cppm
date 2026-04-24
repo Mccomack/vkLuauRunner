@@ -1,7 +1,9 @@
 module;
-#include <string>
+#include <cstdint>
 
 export module appinfo;
+
+import std;
 
 export namespace app {
     std::string name = "vkLuauRunner";

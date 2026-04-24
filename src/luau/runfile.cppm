@@ -1,15 +1,10 @@
 module;
-#include <filesystem>
-#include <sstream>
-#include <fstream>
 #include <lua.h>
 #include <lualib.h>
 #include <luacode.h>
 #include <luacodegen.h>
 #include <Luau/Compiler.h>
 #include <Luau/CodeGen.h>
-
-namespace fs = std::filesystem;
 
 export module luau:runfile;
 import std;
@@ -29,7 +24,7 @@ std::string run::readFile(const std::filesystem::path& path) {
     return ss.str();
 }
 
-void run::runLuauFile(lua_State* L, const fs::path& path) {
+void run::runLuauFile(lua_State* L, const std::filesystem::path& path) {
     const std::string source   = readFile(path);
     const std::string chunkName = "@" + path.filename().string();
 
