@@ -10,7 +10,7 @@ import std;
 
 import vulkan;
 
-export namespace validationLayer {
+export namespace graphic::validationLayer {
     const std::vector<const char*> validationLayers = {
         "VK_LAYER_KHRONOS_validation"
     };
@@ -40,7 +40,7 @@ namespace {
     Logger logger("graphic/validationLayer");
 }
 
-bool validationLayer::checkValidationLayerSupport() {
+bool graphic::validationLayer::checkValidationLayerSupport() {
     uint32_t layerCount;
     vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
 
@@ -65,7 +65,7 @@ bool validationLayer::checkValidationLayerSupport() {
     return true;
 }
 
-void validationLayer::pushRequiredInstanceExtensions(std::vector<const char*> &extensions) {
+void graphic::validationLayer::pushRequiredInstanceExtensions(std::vector<const char*> &extensions) {
     if (enableValidationLayers) {
         extensions.push_back(vk::EXTDebugUtilsExtensionName);
     }
@@ -82,7 +82,7 @@ VKAPI_ATTR vk::Bool32 VKAPI_CALL debugCallback(
     return vk::False;
 }
 
-void validationLayer::populateDebugMessengerCreateInfo(vk::DebugUtilsMessengerCreateInfoEXT& createInfo) {
+void graphic::validationLayer::populateDebugMessengerCreateInfo(vk::DebugUtilsMessengerCreateInfoEXT& createInfo) {
     vk::DebugUtilsMessageSeverityFlagsEXT severityFlags{
         vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose | 
         //vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo | 
@@ -101,7 +101,7 @@ void validationLayer::populateDebugMessengerCreateInfo(vk::DebugUtilsMessengerCr
     createInfo.pfnUserCallback = &debugCallback;
 }
 
-vk::DebugUtilsMessengerEXT validationLayer::createDebugMessenger(const vk::raii::Instance &instance) {
+vk::DebugUtilsMessengerEXT graphic::validationLayer::createDebugMessenger(const vk::raii::Instance &instance) {
     if (!enableValidationLayers)
         return nullptr;
 

@@ -10,7 +10,7 @@ import std;
 
 import vulkan;
 
-export namespace pipeline {
+export namespace graphic::pipeline {
     vk::raii::ShaderModule createShaderModule(const vk::raii::Device& device, const std::vector<char>& code);
     std::tuple<vk::raii::ShaderModule, vk::raii::ShaderModule> getShaderModule(const vk::raii::Device& device);
 
@@ -38,7 +38,7 @@ static std::vector<char> readFile(const std::filesystem::path& filename) {
     return buffer;
 }
 
-vk::raii::ShaderModule pipeline::createShaderModule(const vk::raii::Device& device, const std::vector<char> &code) {
+vk::raii::ShaderModule graphic::pipeline::createShaderModule(const vk::raii::Device& device, const std::vector<char> &code) {
     vk::ShaderModuleCreateInfo createInfo{
         .codeSize = code.size(),
         .pCode = reinterpret_cast<const uint32_t*>(code.data())
@@ -47,7 +47,7 @@ vk::raii::ShaderModule pipeline::createShaderModule(const vk::raii::Device& devi
     return vk::raii::ShaderModule(device, createInfo);
 }
 
-std::tuple<vk::raii::ShaderModule, vk::raii::ShaderModule> pipeline::getShaderModule(const vk::raii::Device& device) {
+std::tuple<vk::raii::ShaderModule, vk::raii::ShaderModule> graphic::pipeline::getShaderModule(const vk::raii::Device& device) {
     std::filesystem::path shaderPath = os::appPath / "shaders";
 
     std::vector<char> shaderCode = readFile(shaderPath / "shader.slang.spv");
@@ -58,7 +58,7 @@ std::tuple<vk::raii::ShaderModule, vk::raii::ShaderModule> pipeline::getShaderMo
     return std::make_tuple(std::move(vertShaderModule), std::move(fragShaderModule));
 }
 
-vk::raii::PipelineLayout pipeline::createPipelineLayout(const vk::raii::Device& device, const vk::raii::DescriptorSetLayout& descriptorSetLayout, const vk::raii::ShaderModule& vertShaderModule, const vk::raii::ShaderModule& fragShaderModule) {
+vk::raii::PipelineLayout graphic::pipeline::createPipelineLayout(const vk::raii::Device& device, const vk::raii::DescriptorSetLayout& descriptorSetLayout, const vk::raii::ShaderModule& vertShaderModule, const vk::raii::ShaderModule& fragShaderModule) {
     vk::PipelineLayoutCreateInfo pipelineLayoutInfo{
         .setLayoutCount = 1,
         .pSetLayouts = &*descriptorSetLayout,
@@ -69,7 +69,7 @@ vk::raii::PipelineLayout pipeline::createPipelineLayout(const vk::raii::Device& 
     return vk::raii::PipelineLayout(device, pipelineLayoutInfo);
 }
 
-vk::raii::RenderPass pipeline::createRenderPass(const vk::raii::Device& device, vk::Format swapChainImageFormat) {
+vk::raii::RenderPass graphic::pipeline::createRenderPass(const vk::raii::Device& device, vk::Format swapChainImageFormat) {
     vk::AttachmentDescription colorAttachment{
         .format = swapChainImageFormat,
         .samples = vk::SampleCountFlagBits::e1,
@@ -110,7 +110,7 @@ vk::raii::RenderPass pipeline::createRenderPass(const vk::raii::Device& device, 
     return vk::raii::RenderPass(device, renderPassInfo);
 }
 
-vk::raii::Pipeline pipeline::createGraphicsPipeline(const vk::raii::Device& device, const vk::raii::PipelineLayout& pipelineLayout, const vk::raii::RenderPass& renderPass, const vk::raii::ShaderModule& vertShaderModule, const vk::raii::ShaderModule& fragShaderModule, vk::Extent2D extent) {
+vk::raii::Pipeline graphic::pipeline::createGraphicsPipeline(const vk::raii::Device& device, const vk::raii::PipelineLayout& pipelineLayout, const vk::raii::RenderPass& renderPass, const vk::raii::ShaderModule& vertShaderModule, const vk::raii::ShaderModule& fragShaderModule, vk::Extent2D extent) {
     std::array<vk::PipelineShaderStageCreateInfo, 2> shaderStages = {
         vk::PipelineShaderStageCreateInfo{
             .stage  = vk::ShaderStageFlagBits::eVertex,

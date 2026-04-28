@@ -8,14 +8,14 @@ import std;
 
 import vulkan;
 
-export namespace command {
+export namespace graphic::command {
     vk::raii::CommandPool createCommandPool(const vk::raii::PhysicalDevice& physicalDevice, const vk::raii::Device& device, const vk::raii::SurfaceKHR& surface);
     std::vector<vk::raii::CommandBuffer> createCommandBuffer(const vk::raii::Device& device, const vk::raii::CommandPool& commandPool);
 
     void recordCommandBuffer(const vk::raii::CommandBuffer& commandBuffer, const graphic::RenderStateView& renderState, const graphic::FrameTargetView& frameTarget);
 }
 
-vk::raii::CommandPool command::createCommandPool(const vk::raii::PhysicalDevice& physicalDevice, const vk::raii::Device& device, const vk::raii::SurfaceKHR& surface) {
+vk::raii::CommandPool graphic::command::createCommandPool(const vk::raii::PhysicalDevice& physicalDevice, const vk::raii::Device& device, const vk::raii::SurfaceKHR& surface) {
     graphic::QueueFamilyIndices queueFamilyIndices = graphic::findQueueFamilies(physicalDevice, surface);
 
     vk::CommandPoolCreateInfo commandPoolInfo{
@@ -28,7 +28,7 @@ vk::raii::CommandPool command::createCommandPool(const vk::raii::PhysicalDevice&
     return commandPool;
 }
 
-std::vector<vk::raii::CommandBuffer> command::createCommandBuffer(const vk::raii::Device& device, const vk::raii::CommandPool& commandPool) {
+std::vector<vk::raii::CommandBuffer> graphic::command::createCommandBuffer(const vk::raii::Device& device, const vk::raii::CommandPool& commandPool) {
     vk::CommandBufferAllocateInfo allocInfo{
         .commandPool = *commandPool,
         .level = vk::CommandBufferLevel::ePrimary,
@@ -38,7 +38,7 @@ std::vector<vk::raii::CommandBuffer> command::createCommandBuffer(const vk::raii
     return vk::raii::CommandBuffers(device, allocInfo);
 }
 
-void command::recordCommandBuffer(const vk::raii::CommandBuffer& commandBuffer, const graphic::RenderStateView& renderState, const graphic::FrameTargetView& frameTarget) {
+void graphic::command::recordCommandBuffer(const vk::raii::CommandBuffer& commandBuffer, const graphic::RenderStateView& renderState, const graphic::FrameTargetView& frameTarget) {
     commandBuffer.begin(vk::CommandBufferBeginInfo{});
 
     vk::ClearValue clearColor{ vk::ClearColorValue{0.0f, 0.0f, 0.0f, 1.0f} };

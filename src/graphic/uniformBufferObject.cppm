@@ -11,11 +11,11 @@ import std;
 
 import vulkan;
 
-export namespace uniformBufferObject {
+export namespace graphic::uniformBufferObject {
     void updateUniformBuffer(vk::Extent2D swapchainExtent, void* uniformBufferMapped);
 }
 
-void uniformBufferObject::updateUniformBuffer(vk::Extent2D swapchainExtent, void* uniformBufferMapped) {
+void graphic::uniformBufferObject::updateUniformBuffer(vk::Extent2D swapchainExtent, void* uniformBufferMapped) {
     static std::chrono::time_point startTime = std::chrono::high_resolution_clock::now();
 
     std::chrono::time_point currentTime = std::chrono::high_resolution_clock::now();

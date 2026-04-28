@@ -3,12 +3,12 @@ module;
 export module graphic:synchronization;
 import vulkan;
 
-export namespace synchronization {
+export namespace graphic::synchronization {
     vk::raii::Semaphore craeteSemaphore(const vk::raii::Device& device);
     vk::raii::Fence createFence(const vk::raii::Device& device);
 }
 
-vk::raii::Semaphore synchronization::craeteSemaphore(const vk::raii::Device& device) {
+vk::raii::Semaphore graphic::synchronization::craeteSemaphore(const vk::raii::Device& device) {
     vk::SemaphoreCreateInfo semaphoreInfo{};
 
     vk::raii::Semaphore semaphore(device, semaphoreInfo);
@@ -16,7 +16,7 @@ vk::raii::Semaphore synchronization::craeteSemaphore(const vk::raii::Device& dev
     return semaphore;
 }
 
-vk::raii::Fence synchronization::createFence(const vk::raii::Device& device) {
+vk::raii::Fence graphic::synchronization::createFence(const vk::raii::Device& device) {
     vk::FenceCreateInfo fenceInfo{ .flags = vk::FenceCreateFlagBits::eSignaled };
 
     vk::raii::Fence fence(device, fenceInfo);

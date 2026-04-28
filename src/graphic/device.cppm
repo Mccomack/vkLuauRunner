@@ -10,7 +10,7 @@ import std;
 
 import vulkan;
 
-export namespace device {
+export namespace graphic::device {
     const std::vector<const char*> deviceExtensions = {
         vk::KHRSwapchainExtensionName,
         vk::EXTSwapchainMaintenance1ExtensionName
@@ -28,7 +28,7 @@ namespace {
     Logger logger("graphic/device");
 }
 
-bool device::checkDeviceExtensionSupport(const vk::raii::PhysicalDevice& physicalDevice) {
+bool graphic::device::checkDeviceExtensionSupport(const vk::raii::PhysicalDevice& physicalDevice) {
     std::vector<vk::ExtensionProperties> availableExtensions = physicalDevice.enumerateDeviceExtensionProperties();
 
     std::set<std::string> requiredExtensions(deviceExtensions.begin(), deviceExtensions.end());
@@ -40,7 +40,7 @@ bool device::checkDeviceExtensionSupport(const vk::raii::PhysicalDevice& physica
     return requiredExtensions.empty();
 }
 
-bool device::checkDeviceFeatureSupport(const vk::raii::PhysicalDevice &physicalDevice) {
+bool graphic::device::checkDeviceFeatureSupport(const vk::raii::PhysicalDevice &physicalDevice) {
     vk::StructureChain<
         vk::PhysicalDeviceFeatures2, 
         vk::PhysicalDeviceVulkan13Features, 
@@ -65,7 +65,7 @@ bool device::checkDeviceFeatureSupport(const vk::raii::PhysicalDevice &physicalD
     return supportsRequiredFeatures;
 }
 
-bool device::isDeviceSuitable(const vk::raii::PhysicalDevice& physicalDevice, const vk::raii::SurfaceKHR& surface) {
+bool graphic::device::isDeviceSuitable(const vk::raii::PhysicalDevice& physicalDevice, const vk::raii::SurfaceKHR& surface) {
     auto props = physicalDevice.getProperties();
 
     logger.Debugf("Device: {}, API: {}.{}.{}", 
@@ -99,7 +99,7 @@ bool device::isDeviceSuitable(const vk::raii::PhysicalDevice& physicalDevice, co
     return swapChainAdequate;
 }
 
-vk::raii::PhysicalDevice device::pickPhysicalDevice(const vk::raii::Instance& instance, const vk::raii::SurfaceKHR& surface) {
+vk::raii::PhysicalDevice graphic::device::pickPhysicalDevice(const vk::raii::Instance& instance, const vk::raii::SurfaceKHR& surface) {
     vk::raii::PhysicalDevice physicalDevice = nullptr;
 
     std::vector<vk::raii::PhysicalDevice> devices = instance.enumeratePhysicalDevices();
@@ -122,7 +122,7 @@ vk::raii::PhysicalDevice device::pickPhysicalDevice(const vk::raii::Instance& in
     return physicalDevice;
 }
 
-std::tuple<vk::raii::Device, vk::raii::Queue, vk::raii::Queue> device::createLogicalDevice(const vk::raii::PhysicalDevice& physicalDevice, const vk::raii::SurfaceKHR& surface) {
+std::tuple<vk::raii::Device, vk::raii::Queue, vk::raii::Queue> graphic::device::createLogicalDevice(const vk::raii::PhysicalDevice& physicalDevice, const vk::raii::SurfaceKHR& surface) {
     vk::raii::Device device = nullptr;
     vk::raii::Queue graphicsQueue = nullptr;
     vk::raii::Queue presentQueue = nullptr;

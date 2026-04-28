@@ -13,7 +13,7 @@ namespace {
     Logger logger("graphic/buffer");
 }
 
-export namespace buffer {
+export namespace graphic::buffer {
     graphic::Buffer createBuffer(const vk::raii::PhysicalDevice& physicalDevice, const vk::raii::Device& device, vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags memProperties);
 
     void copyBuffer(const vk::raii::Device& device, const vk::raii::CommandPool& commandPool, const vk::raii::Queue& graphicsQueue, const vk::raii::Buffer& srcBuffer, const vk::raii::Buffer& dstBuffer, vk::DeviceSize size);
@@ -23,7 +23,7 @@ export namespace buffer {
     std::tuple<std::vector<vk::raii::Buffer>, std::vector<vk::raii::DeviceMemory>, std::vector<void*>> createUniformBuffer(const vk::raii::PhysicalDevice& physicalDevice, const vk::raii::Device& device, const vk::raii::CommandPool& commandPool, const vk::raii::Queue& graphicsQueue);
 }
 
-graphic::Buffer buffer::createBuffer(const vk::raii::PhysicalDevice& physicalDevice, const vk::raii::Device& device, vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags memProperties) {
+graphic::Buffer graphic::buffer::createBuffer(const vk::raii::PhysicalDevice& physicalDevice, const vk::raii::Device& device, vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags memProperties) {
     vk::BufferCreateInfo bufferInfo{
         .size = size,
         .usage = usage,
@@ -45,7 +45,7 @@ graphic::Buffer buffer::createBuffer(const vk::raii::PhysicalDevice& physicalDev
     return graphic::Buffer{std::move(buffer), std::move(bufferMemory)};
 }
 
-void buffer::copyBuffer(const vk::raii::Device& device, const vk::raii::CommandPool& commandPool, const vk::raii::Queue& graphicsQueue, const vk::raii::Buffer& srcBuffer, const vk::raii::Buffer& dstBuffer, vk::DeviceSize size) {
+void graphic::buffer::copyBuffer(const vk::raii::Device& device, const vk::raii::CommandPool& commandPool, const vk::raii::Queue& graphicsQueue, const vk::raii::Buffer& srcBuffer, const vk::raii::Buffer& dstBuffer, vk::DeviceSize size) {
     vk::CommandBufferAllocateInfo allocInfo{
         .commandPool = commandPool,
         .level =  vk::CommandBufferLevel::ePrimary,
@@ -74,7 +74,7 @@ void buffer::copyBuffer(const vk::raii::Device& device, const vk::raii::CommandP
     graphicsQueue.waitIdle();
 }
 
-graphic::Buffer buffer::createVertexBuffer(const vk::raii::PhysicalDevice& physicalDevice, const vk::raii::Device& device, const vk::raii::CommandPool& commandPool, const vk::raii::Queue& graphicsQueue, const void* bufData, vk::DeviceSize size) {
+graphic::Buffer graphic::buffer::createVertexBuffer(const vk::raii::PhysicalDevice& physicalDevice, const vk::raii::Device& device, const vk::raii::CommandPool& commandPool, const vk::raii::Queue& graphicsQueue, const void* bufData, vk::DeviceSize size) {
     graphic::Buffer stagingBuffers = createBuffer(physicalDevice, device, size, vk::BufferUsageFlagBits::eTransferSrc, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
 
     void* data = stagingBuffers.bufferMemory.mapMemory(0, size);
@@ -88,7 +88,7 @@ graphic::Buffer buffer::createVertexBuffer(const vk::raii::PhysicalDevice& physi
     return vertexBuffers;
 }
 
-graphic::Buffer buffer::createIndexBffer(const vk::raii::PhysicalDevice& physicalDevice, const vk::raii::Device& device, const vk::raii::CommandPool& commandPool, const vk::raii::Queue& graphicsQueue, const void *indData, vk::DeviceSize size) {
+graphic::Buffer graphic::buffer::createIndexBffer(const vk::raii::PhysicalDevice& physicalDevice, const vk::raii::Device& device, const vk::raii::CommandPool& commandPool, const vk::raii::Queue& graphicsQueue, const void *indData, vk::DeviceSize size) {
     graphic::Buffer stagingBuffers = createBuffer(physicalDevice, device, size, vk::BufferUsageFlagBits::eTransferSrc, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
 
     void* data = stagingBuffers.bufferMemory.mapMemory(0, size);
@@ -102,7 +102,7 @@ graphic::Buffer buffer::createIndexBffer(const vk::raii::PhysicalDevice& physica
     return indexBuffer;
 }
 
-std::tuple<std::vector<vk::raii::Buffer>, std::vector<vk::raii::DeviceMemory>, std::vector<void*>> buffer::createUniformBuffer(const vk::raii::PhysicalDevice& physicalDevice, const vk::raii::Device& device, const vk::raii::CommandPool& commandPool, const vk::raii::Queue& graphicsQueue) {
+std::tuple<std::vector<vk::raii::Buffer>, std::vector<vk::raii::DeviceMemory>, std::vector<void*>> graphic::buffer::createUniformBuffer(const vk::raii::PhysicalDevice& physicalDevice, const vk::raii::Device& device, const vk::raii::CommandPool& commandPool, const vk::raii::Queue& graphicsQueue) {
     std::vector<vk::raii::Buffer> uniformBuffers;
     std::vector<vk::raii::DeviceMemory> uniformBufferMemories;
     std::vector<void*> uniformBufferMapped;

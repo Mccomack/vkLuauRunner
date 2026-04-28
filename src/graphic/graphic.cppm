@@ -28,46 +28,48 @@ import std;
 
 import vulkan;
 
+// namespace command = graphic::command;
+
 export namespace graphic {
-    namespace validationLayer {
-        using namespace ::validationLayer;
-    }
+    // namespace validationLayer {
+    //     using namespace ::validationLayer;
+    // }
 
-    namespace device {
-        using namespace ::device;
-    }
+    // namespace device {
+    //     using namespace ::device;
+    // }
 
-    namespace swapchain {
-        using namespace ::swapchain;
-    }
+    // namespace swapchain {
+    //     using namespace ::swapchain;
+    // }
 
-    namespace pipeline {
-        using namespace ::pipeline;
-    }
+    // namespace pipeline {
+    //     using namespace ::pipeline;
+    // }
 
-    namespace framebuffer {
-        using namespace ::framebuffer;
-    }
+    // namespace framebuffer {
+    //     using namespace ::framebuffer;
+    // }
 
-    namespace command {
-        using namespace ::command;
-    }
+    // namespace command {
+    //     using namespace ::command;
+    // }
 
-    namespace synchronization {
-        using namespace ::synchronization;
-    }
+    // namespace synchronization {
+    //     using namespace ::synchronization;
+    // }
 
-    namespace buffer {
-        using namespace ::buffer;
-    }
+    // namespace buffer {
+    //     using namespace ::buffer;
+    // }
 
-    namespace descriptor {
-        using namespace ::descriptor;
-    }
+    // namespace descriptor {
+    //     using namespace ::descriptor;
+    // }
 
-    namespace uniformBufferObejct {
-        using namespace ::uniformBufferObject;
-    }
+    // namespace uniformBufferObejct {
+    //     using namespace ::uniformBufferObject;
+    // }
 
     class app;
 }

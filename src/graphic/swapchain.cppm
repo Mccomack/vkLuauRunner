@@ -8,7 +8,7 @@ import std;
 
 import vulkan;
 
-export namespace swapchain {
+export namespace graphic::swapchain {
     vk::SurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& avaliableFormats);
     vk::PresentModeKHR chooseSwapPresentMode(const std::vector<vk::PresentModeKHR>& avaliablePresentModes);
     vk::Extent2D chooseSwapExtent(const vk::SurfaceCapabilitiesKHR& capabilities, GLFWwindow* window);
@@ -19,7 +19,7 @@ export namespace swapchain {
     std::vector<vk::raii::ImageView> createImageViews(const vk::raii::Device& device, const std::vector<vk::Image>& swapChainImages, vk::SurfaceFormatKHR swapChainSurfaceFormat);
 }
 
-vk::SurfaceFormatKHR swapchain::chooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& avaliableFormats) {
+vk::SurfaceFormatKHR graphic::swapchain::chooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& avaliableFormats) {
     for (const vk::SurfaceFormatKHR& avaliableFormat : avaliableFormats) {
         if (avaliableFormat.format == vk::Format::eB8G8R8A8Srgb && avaliableFormat.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear) {
             return avaliableFormat;
@@ -29,7 +29,7 @@ vk::SurfaceFormatKHR swapchain::chooseSwapSurfaceFormat(const std::vector<vk::Su
     return avaliableFormats[0];
 }
 
-vk::PresentModeKHR swapchain::chooseSwapPresentMode(const std::vector<vk::PresentModeKHR>& avaliablePresentModes) {
+vk::PresentModeKHR graphic::swapchain::chooseSwapPresentMode(const std::vector<vk::PresentModeKHR>& avaliablePresentModes) {
     for (const vk::PresentModeKHR& avaliablePresentMode : avaliablePresentModes) {
         if (avaliablePresentMode == vk::PresentModeKHR::eMailbox) {
             return avaliablePresentMode;
@@ -39,7 +39,7 @@ vk::PresentModeKHR swapchain::chooseSwapPresentMode(const std::vector<vk::Presen
     return vk::PresentModeKHR::eFifo;
 }
 
-vk::Extent2D swapchain::chooseSwapExtent(const vk::SurfaceCapabilitiesKHR& capabilities, GLFWwindow* window) {
+vk::Extent2D graphic::swapchain::chooseSwapExtent(const vk::SurfaceCapabilitiesKHR& capabilities, GLFWwindow* window) {
     if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max()) {
         return capabilities.currentExtent;
     }
@@ -58,7 +58,7 @@ vk::Extent2D swapchain::chooseSwapExtent(const vk::SurfaceCapabilitiesKHR& capab
     return actualExtend;
 }
 
-uint32_t swapchain::chooseSwapMinImageCount(const vk::SurfaceCapabilitiesKHR& surfaceCapabilities) {
+uint32_t graphic::swapchain::chooseSwapMinImageCount(const vk::SurfaceCapabilitiesKHR& surfaceCapabilities) {
     auto minImageCount = std::max(3u, surfaceCapabilities.minImageCount);
 
     if ((0 < surfaceCapabilities.maxImageCount) && (surfaceCapabilities.maxImageCount < minImageCount)) {
@@ -68,7 +68,7 @@ uint32_t swapchain::chooseSwapMinImageCount(const vk::SurfaceCapabilitiesKHR& su
     return minImageCount;
 }
 
-vk::raii::SwapchainKHR swapchain::createSwapChain(const vk::raii::PhysicalDevice& physicalDevice, const vk::raii::Device& device, const vk::raii::SurfaceKHR& surface, GLFWwindow* window, vk::SwapchainKHR oldSwapchain) {
+vk::raii::SwapchainKHR graphic::swapchain::createSwapChain(const vk::raii::PhysicalDevice& physicalDevice, const vk::raii::Device& device, const vk::raii::SurfaceKHR& surface, GLFWwindow* window, vk::SwapchainKHR oldSwapchain) {
     graphic::QueueFamilyIndices indices = graphic::findQueueFamilies(physicalDevice, surface);
     graphic::SwapChainSupportDetails swapChainSupport = graphic::querySwapChainSupport(physicalDevice, surface);
 
@@ -107,13 +107,13 @@ vk::raii::SwapchainKHR swapchain::createSwapChain(const vk::raii::PhysicalDevice
     return swapChain;
 }
 
-std::vector<vk::Image> swapchain::createImages(const vk::raii::Device& device, const vk::raii::SwapchainKHR& swapChain) {
+std::vector<vk::Image> graphic::swapchain::createImages(const vk::raii::Device& device, const vk::raii::SwapchainKHR& swapChain) {
     std::vector<vk::Image> swapChainImages = swapChain.getImages();
 
     return swapChainImages;
 }
 
-std::vector<vk::raii::ImageView> swapchain::createImageViews(const vk::raii::Device& device, const std::vector<vk::Image>& swapChainImages, vk::SurfaceFormatKHR swapChainSurfaceFormat) {
+std::vector<vk::raii::ImageView> graphic::swapchain::createImageViews(const vk::raii::Device& device, const std::vector<vk::Image>& swapChainImages, vk::SurfaceFormatKHR swapChainSurfaceFormat) {
     std::vector<vk::raii::ImageView> imageViews;
 
     vk::ImageViewCreateInfo createInfo{
