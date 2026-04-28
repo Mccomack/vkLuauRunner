@@ -3,6 +3,7 @@ module;
 #include <lualib.h>
 
 export module luau:global.testadd;
+import :common;
 
 export namespace global {
     int laddTest(lua_State* L) {
@@ -13,4 +14,16 @@ export namespace global {
 
         return 1;
     }
+}
+
+namespace {
+    inline int _ = []()->int {
+        luau::getDefaultFunctions().push_back(luau::funcRegInfo{
+            .name = "add",
+            .reqLevel = luau::SecurityType::eNone,
+            .func = global::laddTest
+        });
+
+        return 0;
+    }();
 }

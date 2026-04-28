@@ -30,9 +30,7 @@ int main() {
     logger.Logf("appData folder path: {}", os::appPath.generic_string());
 
     luau::State main(luau::SecurityType::eDefault);
-    main.registerFunction("print", luau::global::lprint, luau::SecurityType::eNone);
-    main.registerFunction("add", luau::global::laddTest, luau::SecurityType::eNone);
-    main.registerFunction("security", luau::global::lsecurity, luau::SecurityType::eDefault);
+    luau::global::registerDefaultFunctions(*main);
     luau::Environment script1(main);
 
     try {

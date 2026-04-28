@@ -3,6 +3,7 @@ module;
 #include <lualib.h>
 
 export module luau:global.print;
+import :common;
 import logger;
 import std;
 
@@ -28,4 +29,16 @@ export namespace global {
 
         return 0;
     }
+}
+
+namespace {
+    inline static int _ = []() -> int {
+        luau::getDefaultFunctions().push_back(luau::funcRegInfo{
+            .name = "print",
+            .reqLevel = luau::SecurityType::eNone,
+            .func = global::lprint
+        });
+
+        return 0;
+    }();
 }

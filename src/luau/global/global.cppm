@@ -5,7 +5,14 @@ export module luau:global;
 export import :global.testadd;
 export import :global.print;
 export import :global.testsecurity;
+export import :common;
 
 export namespace global {
-    int laddTest(lua_State* L);
+    void registerDefaultFunctions(lua_State* L);
+}
+
+void global::registerDefaultFunctions(lua_State* L) {
+    for (luau::funcRegInfo funcRegInfo : luau::getDefaultFunctions()) {
+        luau::registerFunction(L, funcRegInfo.name, funcRegInfo.func, funcRegInfo.reqLevel);
+    }
 }

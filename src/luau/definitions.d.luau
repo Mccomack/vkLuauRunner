@@ -11,3 +11,4 @@ declare Enum: Enum
 
 declare function add(v1: number, v2: number): number
 declare function security(): string
+declare function printSecurityLevel(): nil

@@ -1,5 +1,7 @@
 module;
-#import <lualib.h>
+#include <lua.h>
+#include <lualib.h>
+#include <vector>
 
 #define SECURITY_TYPE_LIST \
     X(eNone) \
@@ -19,11 +21,24 @@ namespace luau {
 
     struct environmentContext {
         SecurityType secType = SecurityType::eNone;
-    } environmentContext;
+    };
+
+    struct funcRegInfo {
+        std::string name;
+        SecurityType reqLevel = SecurityType::eDefault;
+        lua_CFunction func;
+    };
+
+    std::vector<funcRegInfo>& getDefaultFunctions();
 
     int securityWrapper(lua_State* L);
-    void registerFunction(lua_State* L, const std::string& name, lua_CFunction func, luau::SecurityType requiredLevel);
+    void registerFunction(lua_State* L, const std::string& name, lua_CFunction func, SecurityType requiredLevel);
 }
+
+std::vector<luau::funcRegInfo>& luau::getDefaultFunctions() {
+    static std::vector<funcRegInfo> defaultFunctions;
+    return defaultFunctions;
+};
 
 int luau::securityWrapper(lua_State* L) {
     int requiredLevel = lua_tointeger(L, lua_upvalueindex(1));

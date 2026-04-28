@@ -5,3 +5,5 @@ print(
 
 print(security())
 print("im not gonna die")
+
+printSecurityLevel()
