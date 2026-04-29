@@ -5,7 +5,7 @@ module;
 export module luau:global.testadd;
 import :common;
 
-export namespace global {
+export namespace luau::global {
     int laddTest(lua_State* L) {
         double v1 = luaL_checknumber(L, 1);
         double v2 = luaL_checknumber(L, 2);
@@ -21,7 +21,7 @@ namespace {
         luau::getDefaultFunctions().push_back(luau::funcRegInfo{
             .name = "add",
             .reqLevel = luau::SecurityType::eNone,
-            .func = global::laddTest
+            .func = luau::global::laddTest
         });
 
         return 0;

@@ -11,7 +11,7 @@ namespace {
     Logger logger("luau/global/printSecurityLevel");
 }
 
-namespace global {
+namespace luau::global {
     int lprintSecurityLevel(lua_State* L) {
         auto* envData = static_cast<struct luau::environmentContext*>(lua_getthreaddata(L));
         int currentLevel = envData ? static_cast<int>(envData->secType) : 0;
@@ -27,7 +27,7 @@ namespace {
         luau::getDefaultFunctions().push_back(luau::funcRegInfo{
             .name = "printSecurityLevel",
             .reqLevel = luau::SecurityType::eNone,
-            .func = global::lprintSecurityLevel
+            .func = luau::global::lprintSecurityLevel
         });
 
         return 0;

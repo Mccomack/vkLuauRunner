@@ -9,12 +9,12 @@ module;
 export module luau:runfile;
 import std;
 
-export namespace run {
+export namespace luau::run {
     std::string readFile(const std::filesystem::path& path);
     void runLuauFile(lua_State* L, const std::filesystem::path& path);
 }
 
-std::string run::readFile(const std::filesystem::path& path) {
+std::string luau::run::readFile(const std::filesystem::path& path) {
     std::ifstream file(path);
     if (!file.is_open())
         throw std::runtime_error("cannot open file: " + path.string());
@@ -24,7 +24,7 @@ std::string run::readFile(const std::filesystem::path& path) {
     return ss.str();
 }
 
-void run::runLuauFile(lua_State* L, const std::filesystem::path& path) {
+void luau::run::runLuauFile(lua_State* L, const std::filesystem::path& path) {
     const std::string source   = readFile(path);
     const std::string chunkName = "@" + path.filename().string();
 

@@ -7,11 +7,11 @@ export import :global.print;
 export import :global.testsecurity;
 export import :common;
 
-export namespace global {
+export namespace luau::global {
     void registerDefaultFunctions(lua_State* L);
 }
 
-void global::registerDefaultFunctions(lua_State* L) {
+void luau::global::registerDefaultFunctions(lua_State* L) {
     for (luau::funcRegInfo funcRegInfo : luau::getDefaultFunctions()) {
         luau::registerFunction(L, funcRegInfo.name, funcRegInfo.func, funcRegInfo.reqLevel);
     }

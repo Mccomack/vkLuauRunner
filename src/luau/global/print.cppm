@@ -11,7 +11,7 @@ namespace {
     Logger logger("luau/global/print");
 }
 
-export namespace global {
+export namespace luau::global {
     int lprint(lua_State* L) {
         int n = lua_gettop(L);
 
@@ -20,7 +20,7 @@ export namespace global {
         for (int i = 1; i <= n; i++) {
             tmp += luaL_tolstring(L, i, nullptr);
 
-            if (i != n) tmp += " ";
+            if (i != n) tmp += "\t";
 
             lua_pop(L, 1);
         }
@@ -36,7 +36,7 @@ namespace {
         luau::getDefaultFunctions().push_back(luau::funcRegInfo{
             .name = "print",
             .reqLevel = luau::SecurityType::eNone,
-            .func = global::lprint
+            .func = luau::global::lprint
         });
 
         return 0;

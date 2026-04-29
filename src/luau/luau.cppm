@@ -11,14 +11,6 @@ export import :common;
 import std;
 
 export namespace luau {
-    namespace global {
-        using namespace ::global;
-    }
-
-    namespace run {
-        using namespace ::run;
-    }
-
     class State;
     class Environment;
 }
