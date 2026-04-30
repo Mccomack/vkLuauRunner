@@ -24,3 +24,4 @@ mkdir -p runtest
 
 ln -sfn "$buildType" "build/current"
 ln -sfn ../build/shaders runtest/shaders
+ln -sfn ../asset runtest/asset
