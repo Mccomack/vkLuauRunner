@@ -34,12 +34,22 @@ public:
     void Debugf(std::format_string<Args...> fmt, Args&&... args);
 };
 
+std::stringstream getFormattedDate() {
+    auto now = ch::system_clock::now();
+    auto time = ch::system_clock::to_time_t(now);
+
+    std::stringstream ss;
+    ss << std::put_time(std::gmtime(&time), "%Y-%m-%d");
+
+    return ss;
+}
+
 std::stringstream getFormattedTime() {
     auto now = ch::system_clock::now();
     auto time = ch::system_clock::to_time_t(now);
 
     std::stringstream ss;
-    ss << std::put_time(std::localtime(&time), "%Y-%m-%dT%H:%M:%S");
+    ss << std::put_time(std::gmtime(&time), "%H:%M:%S");
 
     return ss;
 }
@@ -48,8 +58,8 @@ std::stringstream getFormattedTimeMicrosecond() {
     auto now = ch::system_clock::now();
     auto us = ch::duration_cast<ch::microseconds>(now.time_since_epoch()) % 1000000;
 
-    std::stringstream ss = getFormattedTime();
-    ss << '.' << std::setfill('0') << std::setw(6) << us.count();
+    std::stringstream ss;
+    ss << std::setfill('0') << std::setw(6) << us.count();
 
     return ss;
 }
@@ -65,13 +75,9 @@ fs::path& Logger::getPath() {
 }
 
 std::string& Logger::getFileName() {
-#ifdef NDEBUG
-    std::string buildType = "Release";
-#else
-    std::string buildType = "Debug";
-#endif
+    std::string buildType = app::isDebugBuild ? "Debug" : "Release";
 
-    static std::string fileName = std::format("{}_{}_{}_last.log", getFormattedTime().str(), app::name, buildType);
+    static std::string fileName = std::format("{}T{}Z_{}_{}_last.log", getFormattedDate().str(), getFormattedTime().str(), app::name, buildType);
 
     return fileName;
 }
@@ -83,7 +89,7 @@ std::ofstream& Logger::getFile() {
 }
 
 std::string Logger::getCurrentTime() {
-    return getFormattedTimeMicrosecond().str();
+    return std::format("{}T{}.{}Z", getFormattedDate().str(), getFormattedTimeMicrosecond().str(), getFormattedTimeMicrosecond().str());
 }
 
 std::string Logger::format(std::string_view log, std::optional<std::string_view> logLevel) {
