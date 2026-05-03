@@ -10,6 +10,8 @@ import graphic;
 import luau;
 
 int main() {
+    std::ios_base::sync_with_stdio(false);
+    
     Config& config = Config::getInstance();
     Logger logger("main");
 
@@ -21,11 +23,7 @@ int main() {
 
     logger.Logf("Current OS: {}", os::name);
 
-#ifdef NDEBUG
-    logger.Log("Current build type: Release");
-#else
-    logger.Log("Current build type: Debug");
-#endif
+    logger.Logf("Current build type: {}", (app::isDebugBuild ? "Debug" : "Release"));
 
     logger.Logf("appData folder path: {}", os::appPath.generic_string());
 

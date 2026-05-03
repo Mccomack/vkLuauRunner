@@ -15,4 +15,10 @@ export namespace app {
     uint8_t versionPatch = APP_VERSION_PATCH;
 
     std::string gitHash = GIT_HASH;
+
+#ifdef NDEBUG
+    bool isDebugBuild = false;
+#else
+    bool isDebugBuild = true;
+#endif
 }
