@@ -5,7 +5,7 @@ module;
 export module luau:global.print;
 import :common;
 import logger;
-import std;
+// import std;
 
 namespace {
     Logger logger("luau/global/print");

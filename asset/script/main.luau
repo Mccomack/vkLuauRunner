@@ -14,10 +14,12 @@ print(
     xpcall(
         function(v1, v2)
             assert(add(v1, v2) == -1, "asdf")
-        end, function(...)
+        end, 
+        function(...)
             print(...)
             return true
-        end, 2, 3
+        end, 
+        2, 3
     )
 )
 
@@ -26,3 +28,5 @@ print({
     ["aagdf"] = "asdfd"
 })
 
+print(test.somemethod());
+print(getmetatable(test))

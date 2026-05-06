@@ -5,6 +5,8 @@ module;
 
 export module luau;
 export import :global;
+export import :library;
+export import :object;
 export import :runfile;
 export import :common;
 
@@ -13,6 +15,9 @@ import std;
 export namespace luau {
     class State;
     class Environment;
+
+    void sandbox(State l);
+    void sandbox(Environment l);
 }
 
 class luau::State {
@@ -118,3 +123,11 @@ public:
         if (envData) delete envData;
     }
 };
+
+void luau::sandbox(State l) {
+    luaL_sandbox(*l);
+}
+
+void luau::sandbox(Environment l) {
+    luaL_sandboxthread(*l);
+}

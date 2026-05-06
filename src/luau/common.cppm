@@ -1,6 +1,7 @@
 module;
 #include <lua.h>
 #include <lualib.h>
+#include <optional>
 #include <vector>
 
 #define SECURITY_TYPE_LIST \
@@ -29,16 +30,61 @@ namespace luau {
         lua_CFunction func;
     };
 
+    template <typename T>
+    struct propRegInfo {
+        std::string name;
+        SecurityType readLevel = SecurityType::eDefault;
+        SecurityType writeLevel = SecurityType::eDefault;
+        std::optional<T> defaultValue = std::nullopt;
+    };
+
+    export using anyProp = std::variant<
+        propRegInfo<std::string>, 
+        propRegInfo<short>, 
+        propRegInfo<int>, 
+        propRegInfo<long long>, 
+        propRegInfo<float>, 
+        propRegInfo<double>, 
+        propRegInfo<bool>
+    >;
+
+    struct libRegInfo {
+        std::string name;
+
+        std::vector<funcRegInfo> methods;
+    };
+
+    struct objRegInfo {
+        std::string name;
+
+        std::vector<funcRegInfo> methods;
+        std::vector<anyProp> properties;
+    };
+
     std::vector<funcRegInfo>& getDefaultFunctions();
+    std::vector<libRegInfo>&  getDefaultLibraries();
+    std::vector<objRegInfo>&  getDefaultObjects();
 
     int securityWrapper(lua_State* L);
     void registerFunction(lua_State* L, const std::string& name, lua_CFunction func, SecurityType requiredLevel);
+    void registerLibrary(lua_State* L, const libRegInfo& regInfo);
+    void registerObject(lua_State* L, const objRegInfo& objInfo);
 }
 
 std::vector<luau::funcRegInfo>& luau::getDefaultFunctions() {
     static std::vector<funcRegInfo> defaultFunctions;
     return defaultFunctions;
 };
+
+std::vector<luau::libRegInfo>& luau::getDefaultLibraries() {
+    static std::vector<libRegInfo> defaultLibraries;
+    return defaultLibraries;
+}
+
+std::vector<luau::objRegInfo>& luau::getDefaultObjects() {
+    static std::vector<objRegInfo> defaultObjects;
+    return defaultObjects;
+}
 
 int luau::securityWrapper(lua_State* L) {
     int requiredLevel = lua_tointeger(L, lua_upvalueindex(1));
@@ -58,4 +104,22 @@ void luau::registerFunction(lua_State* L, const std::string& name, lua_CFunction
     lua_pushcfunction(L, func, name.c_str());
     lua_pushcclosure(L, &luau::securityWrapper, name.c_str(), 2);
     lua_setglobal(L, name.c_str());
+}
+
+void luau::registerLibrary(lua_State *L, const libRegInfo& libInfo) {
+    lua_newtable(L);
+
+    for (luau::funcRegInfo funcInfo : libInfo.methods) {
+        lua_pushinteger(L, static_cast<int>(funcInfo.reqLevel));
+        lua_pushcfunction(L, funcInfo.func, funcInfo.name.c_str());
+        lua_pushcclosure(L, &luau::securityWrapper, funcInfo.name.c_str(), 2);
+        lua_setfield(L, -2, funcInfo.name.c_str());
+    }
+
+    lua_setreadonly(L, -1, true);
+    lua_setglobal(L, libInfo.name.c_str());
+}
+
+void luau::registerObject(lua_State *L, const objRegInfo& objInfo) {
+    
 }

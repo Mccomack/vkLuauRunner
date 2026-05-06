@@ -29,6 +29,7 @@ int main() {
 
     luau::State main(luau::SecurityType::eDefault);
     luau::global::registerDefaultFunctions(*main);
+    luau::library::registerDefaultLibraries(*main);
     luau::Environment script1(main);
 
     try {
