@@ -16,8 +16,8 @@ export namespace luau {
     class State;
     class Environment;
 
-    void sandbox(State l);
-    void sandbox(Environment l);
+    void sandbox(const State& l);
+    void sandbox(const Environment& l);
 }
 
 class luau::State {
@@ -56,9 +56,8 @@ public:
         return *this;
     }
 
-    lua_State* operator*() {
-        return L;
-    }
+    lua_State* operator*() { return L; }
+    lua_State* operator*() const { return L; }
 
     void registerFunction(const std::string& name, lua_CFunction func, luau::SecurityType requiredLevel) {return luau::registerFunction(L, name, func, requiredLevel);};
 
@@ -113,9 +112,8 @@ public:
         return *this;
     }
 
-    lua_State* operator*() {
-        return thread;
-    }
+    lua_State* operator*() { return thread; }
+    lua_State* operator*() const { return thread; }
 
     void registerFunction(const std::string& name, lua_CFunction func, luau::SecurityType requiredLevel) {return luau::registerFunction(thread, name, func, requiredLevel);};
 
@@ -124,10 +122,10 @@ public:
     }
 };
 
-void luau::sandbox(State l) {
+void luau::sandbox(const State& l) {
     luaL_sandbox(*l);
 }
 
-void luau::sandbox(Environment l) {
+void luau::sandbox(const Environment& l) {
     luaL_sandboxthread(*l);
 }

@@ -30,3 +30,5 @@ print({
 
 print(test.somemethod());
 print(getmetatable(test))
+print(test)
+print(table)
