@@ -9,7 +9,7 @@ export namespace luau::library {
 }
 
 void luau::library::registerDefaultLibraries(lua_State *L) {
-    for (const luau::libRegInfo& libInfo : luau::getDefaultLibraries()) {
-        luau::registerLibrary(L, libInfo);
+    for (luau::libRegInfo* libInfo : luau::getDefaultLibraries()) {
+        luau::registerLibrary(L, *libInfo);
     }
 }

@@ -1,8 +1,6 @@
 module;
 #include <lua.h>
 #include <lualib.h>
-#include <optional>
-#include <vector>
 
 #define SECURITY_TYPE_LIST \
     X(eNone) \
@@ -12,8 +10,13 @@ module;
     X(eEngineScript) \
 
 export module luau:common;
+import logger;
 
 import std;
+
+namespace {
+    Logger logger("luau");
+}
 
 namespace luau {
     #define X(name) name,
@@ -62,7 +65,7 @@ namespace luau {
     };
 
     std::vector<funcRegInfo>& getDefaultFunctions();
-    std::vector<libRegInfo>&  getDefaultLibraries();
+    std::vector<libRegInfo*>&  getDefaultLibraries();
     std::vector<objRegInfo>&  getDefaultObjects();
 
     int securityWrapper(lua_State* L);
@@ -76,8 +79,8 @@ std::vector<luau::funcRegInfo>& luau::getDefaultFunctions() {
     return defaultFunctions;
 };
 
-std::vector<luau::libRegInfo>& luau::getDefaultLibraries() {
-    static std::vector<libRegInfo> defaultLibraries;
+std::vector<luau::libRegInfo*>& luau::getDefaultLibraries() {
+    static std::vector<libRegInfo*> defaultLibraries;
     return defaultLibraries;
 }
 
@@ -109,7 +112,7 @@ void luau::registerFunction(lua_State* L, const std::string& name, lua_CFunction
 void luau::registerLibrary(lua_State *L, const libRegInfo& libInfo) {
     lua_newtable(L);
 
-    for (luau::funcRegInfo funcInfo : libInfo.methods) {
+    for (const luau::funcRegInfo& funcInfo : libInfo.methods) {
         lua_pushinteger(L, static_cast<int>(funcInfo.reqLevel));
         lua_pushcfunction(L, funcInfo.func, funcInfo.name.c_str());
         lua_pushcclosure(L, &luau::securityWrapper, funcInfo.name.c_str(), 2);

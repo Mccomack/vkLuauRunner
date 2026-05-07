@@ -32,3 +32,9 @@ print(test.somemethod());
 print(getmetatable(test))
 print(test)
 print(table)
+
+print("나다 이 잡것들아. ")
+print(test.toMoneyFace("나다 이 잡것들아. "))
+-- print(test.toMoneyFace())
+print(test.toMoneyFace(nil))
+print(test.toMoneyFace(12134))
