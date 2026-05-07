@@ -38,3 +38,5 @@ print(test.toMoneyFace("나다 이 잡것들아. "))
 -- print(test.toMoneyFace())
 print(test.toMoneyFace(nil))
 print(test.toMoneyFace(12134))
+
+print(_G)

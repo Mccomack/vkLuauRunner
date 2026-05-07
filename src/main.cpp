@@ -30,6 +30,7 @@ int main() {
     luau::State main(luau::SecurityType::eDefault);
     luau::global::registerDefaultFunctions(*main);
     luau::library::registerDefaultLibraries(*main);
+    luau::object::registerDefaultObjects(*main); 
     luau::sandbox(main);
     luau::Environment script1(main);
     luau::sandbox(script1);

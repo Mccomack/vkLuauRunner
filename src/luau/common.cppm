@@ -65,8 +65,8 @@ namespace luau {
     };
 
     std::vector<funcRegInfo>& getDefaultFunctions();
-    std::vector<libRegInfo*>&  getDefaultLibraries();
-    std::vector<objRegInfo>&  getDefaultObjects();
+    std::vector<libRegInfo*>& getDefaultLibraries();
+    std::vector<objRegInfo*>& getDefaultObjects();
 
     int securityWrapper(lua_State* L);
     void registerFunction(lua_State* L, const std::string& name, lua_CFunction func, SecurityType requiredLevel);
@@ -84,8 +84,8 @@ std::vector<luau::libRegInfo*>& luau::getDefaultLibraries() {
     return defaultLibraries;
 }
 
-std::vector<luau::objRegInfo>& luau::getDefaultObjects() {
-    static std::vector<objRegInfo> defaultObjects;
+std::vector<luau::objRegInfo*>& luau::getDefaultObjects() {
+    static std::vector<objRegInfo*> defaultObjects;
     return defaultObjects;
 }
 

@@ -1,12 +1,16 @@
 [submodule "external/json"]
 	path = external/json
 	url = https://github.com/nlohmann/json.git
+	branch = develop
 [submodule "external/glfw"]
 	path = external/glfw
 	url = https://github.com/glfw/glfw.git
+	branch = master
 [submodule "external/glm"]
 	path = external/glm
 	url = https://github.com/g-truc/glm
+	branch = master
 [submodule "external/luau"]
 	path = external/luau
 	url = https://github.com/luau-lang/luau.git
+	branch = master
