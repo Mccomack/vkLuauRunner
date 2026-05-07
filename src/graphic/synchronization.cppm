@@ -17,7 +17,7 @@ vk::raii::Semaphore graphic::synchronization::craeteSemaphore(const vk::raii::De
 }
 
 vk::raii::Fence graphic::synchronization::createFence(const vk::raii::Device& device) {
-    vk::FenceCreateInfo fenceInfo{ .flags = vk::FenceCreateFlagBits::eSignaled };
+    vk::FenceCreateInfo fenceInfo{.flags = vk::FenceCreateFlagBits::eSignaled};
 
     vk::raii::Fence fence(device, fenceInfo);
 

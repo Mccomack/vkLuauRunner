@@ -12,6 +12,10 @@
         "--compile-commands-dir=${workspaceFolder}/build/current",
         "--log=verbose"
     ],
+    "editor.formatOnSave": true,
+    "[cpp]": {
+        "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd"
+    },
     "luau-lsp.platform.type": "standard",
     "luau-lsp.completion.autocompleteEnd": true,
     "luau-lsp.completion.showPropertiesOnMethodCall": true,

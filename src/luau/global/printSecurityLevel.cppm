@@ -13,7 +13,8 @@ namespace {
 
 namespace luau::global {
     int lprintSecurityLevel(lua_State* L) {
-        auto* envData = static_cast<struct luau::environmentContext*>(lua_getthreaddata(L));
+        auto* envData =
+            static_cast<struct luau::environmentContext*>(lua_getthreaddata(L));
         int currentLevel = envData ? static_cast<int>(envData->secType) : 0;
 
         logger.Logf("Current level: {}", currentLevel);
@@ -23,12 +24,14 @@ namespace luau::global {
 }
 
 namespace {
-    inline int _ = []()->int {
+    inline int _ = []() -> int {
+        // clang-format off
         luau::getDefaultFunctions().push_back(luau::funcRegInfo{
             .name = "printSecurityLevel",
             .reqLevel = luau::SecurityType::eNone,
             .func = luau::global::lprintSecurityLevel
         });
+        // clang-format on
 
         return 0;
     }();

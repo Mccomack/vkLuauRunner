@@ -15,11 +15,13 @@ export namespace luau::global {
 
 namespace {
     inline int _ = []() -> int {
+        // clang-format off
         luau::getDefaultFunctions().push_back(luau::funcRegInfo{
             .name = "security",
             .reqLevel = luau::SecurityType::eDefault,
             .func = luau::global::lsecurity
         });
+        // clang-format on
 
         return 0;
     }();

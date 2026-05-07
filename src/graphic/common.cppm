@@ -36,8 +36,10 @@ export namespace graphic {
             return bindingDescription;
         }
 
-        static std::array<vk::VertexInputAttributeDescription, 2> getAttributeDescriptions() {
-            std::array<vk::VertexInputAttributeDescription, 2> attributeDescriptions{};
+        static std::array<vk::VertexInputAttributeDescription, 2>
+        getAttributeDescriptions() {
+            std::array<vk::VertexInputAttributeDescription, 2>
+                attributeDescriptions{};
             attributeDescriptions[0].binding = 0;
             attributeDescriptions[0].location = 0;
             attributeDescriptions[0].format = vk::Format::eR32G32Sfloat;
@@ -82,19 +84,33 @@ export namespace graphic {
 
     const int MAX_FRAMES_IN_FLIGHT = 2;
 
-    QueueFamilyIndices findQueueFamilies(const vk::raii::PhysicalDevice& physicalDevice, const vk::raii::SurfaceKHR& surface);
-    SwapChainSupportDetails querySwapChainSupport(const vk::raii::PhysicalDevice& physicalDevice, const vk::raii::SurfaceKHR& surface);
+    QueueFamilyIndices findQueueFamilies(
+        const vk::raii::PhysicalDevice& physicalDevice,
+        const vk::raii::SurfaceKHR& surface
+    );
+    SwapChainSupportDetails querySwapChainSupport(
+        const vk::raii::PhysicalDevice& physicalDevice,
+        const vk::raii::SurfaceKHR& surface
+    );
 
-    uint32_t findMemoryType(const vk::raii::PhysicalDevice& physicalDevice, uint32_t typeFilter, vk::MemoryPropertyFlags properties);
+    uint32_t findMemoryType(
+        const vk::raii::PhysicalDevice& physicalDevice,
+        uint32_t typeFilter,
+        vk::MemoryPropertyFlags properties
+    );
 
     vk::Viewport newViewport(vk::Extent2D swapchainExtent);
     vk::Rect2D newScissor(vk::Extent2D swapchainExtent);
 }
 
-graphic::QueueFamilyIndices graphic::findQueueFamilies(const vk::raii::PhysicalDevice& physicalDevice, const vk::raii::SurfaceKHR& surface) {
+graphic::QueueFamilyIndices graphic::findQueueFamilies(
+    const vk::raii::PhysicalDevice& physicalDevice,
+    const vk::raii::SurfaceKHR& surface
+) {
     graphic::QueueFamilyIndices indices;
 
-    std::vector<vk::QueueFamilyProperties> queueFamilies = physicalDevice.getQueueFamilyProperties();
+    std::vector<vk::QueueFamilyProperties> queueFamilies =
+        physicalDevice.getQueueFamilyProperties();
 
     int i = 0;
     for (const vk::QueueFamilyProperties& queueFamily : queueFamilies) {
@@ -102,7 +118,8 @@ graphic::QueueFamilyIndices graphic::findQueueFamilies(const vk::raii::PhysicalD
             indices.graphicsFamily = i;
         }
 
-        vk::Bool32 presentSupport = physicalDevice.getSurfaceSupportKHR(i, surface);
+        vk::Bool32 presentSupport =
+            physicalDevice.getSurfaceSupportKHR(i, surface);
 
         if (presentSupport) {
             indices.presentFamily = i;
@@ -118,7 +135,10 @@ graphic::QueueFamilyIndices graphic::findQueueFamilies(const vk::raii::PhysicalD
     return indices;
 }
 
-graphic::SwapChainSupportDetails graphic::querySwapChainSupport(const vk::raii::PhysicalDevice& physicalDevice, const vk::raii::SurfaceKHR& surface) {
+graphic::SwapChainSupportDetails graphic::querySwapChainSupport(
+    const vk::raii::PhysicalDevice& physicalDevice,
+    const vk::raii::SurfaceKHR& surface
+) {
     SwapChainSupportDetails details{
         .capabilities = physicalDevice.getSurfaceCapabilitiesKHR(*surface),
         .formats = physicalDevice.getSurfaceFormatsKHR(*surface),
@@ -128,11 +148,18 @@ graphic::SwapChainSupportDetails graphic::querySwapChainSupport(const vk::raii::
     return details;
 }
 
-uint32_t graphic::findMemoryType(const vk::raii::PhysicalDevice& physicalDevice, uint32_t typeFilter, vk::MemoryPropertyFlags properties) {
-    vk::PhysicalDeviceMemoryProperties memProperties = physicalDevice.getMemoryProperties();
+uint32_t graphic::findMemoryType(
+    const vk::raii::PhysicalDevice& physicalDevice,
+    uint32_t typeFilter,
+    vk::MemoryPropertyFlags properties
+) {
+    vk::PhysicalDeviceMemoryProperties memProperties =
+        physicalDevice.getMemoryProperties();
 
     for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
-        if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
+        if ((typeFilter & (1 << i)) &&
+            (memProperties.memoryTypes[i].propertyFlags & properties) ==
+                properties) {
             return i;
         }
     }
@@ -155,10 +182,7 @@ vk::Viewport graphic::newViewport(vk::Extent2D swapchainExtent) {
 
 vk::Rect2D graphic::newScissor(vk::Extent2D swapchainExtent) {
     vk::Rect2D scissor{
-        .offset = vk::Offset2D{
-            0, 
-            0
-        },
+        .offset = vk::Offset2D{0, 0},
         .extent = swapchainExtent,
     };
 

@@ -20,7 +20,8 @@ export namespace luau::global {
         for (int i = 1; i <= n; i++) {
             tmp += luaL_tolstring(L, i, nullptr);
 
-            if (i != n) tmp += "\t";
+            if (i != n)
+                tmp += "\t";
 
             lua_pop(L, 1);
         }
@@ -33,11 +34,15 @@ export namespace luau::global {
 
 namespace {
     inline static int _ = []() -> int {
-        luau::getDefaultFunctions().push_back(luau::funcRegInfo{
+        // clang-format off
+        luau::funcRegInfo print{
             .name = "print",
             .reqLevel = luau::SecurityType::eNone,
             .func = luau::global::lprint
-        });
+        };
+        // clang-format on
+
+        luau::getDefaultFunctions().push_back(print);
 
         return 0;
     }();

@@ -1,7 +1,7 @@
 module;
-#include "lualib.h"
-#include <cstddef>
 #include <lua.h>
+#include <cstddef>
+#include "lualib.h"
 
 export module luau:library.test.luau;
 import :library.test;
@@ -27,8 +27,10 @@ namespace luau::library {
         std::string str;
         const char* _str = lua_tolstring(L, 1, nullptr);
 
-        if (_str == nullptr) str = "nil";
-        else str = _str;
+        if (_str == nullptr)
+            str = "nil";
+        else
+            str = _str;
 
         lua_pushstring(L, test.toMoneyFace(str).c_str());
 

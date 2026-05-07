@@ -17,12 +17,14 @@ export namespace luau::global {
 }
 
 namespace {
-    inline int _ = []()->int {
+    inline int _ = []() -> int {
+        // clang-format off
         luau::getDefaultFunctions().push_back(luau::funcRegInfo{
             .name = "add",
             .reqLevel = luau::SecurityType::eNone,
             .func = luau::global::laddTest
         });
+        // clang-format on
 
         return 0;
     }();

@@ -3,11 +3,11 @@ module;
 #include <lualib.h>
 
 #define SECURITY_TYPE_LIST \
-    X(eNone) \
-    X(eUntrusted) \
-    X(eDefault) \
-    X(ePlugin) \
-    X(eEngineScript) \
+    X(eNone)               \
+    X(eUntrusted)          \
+    X(eDefault)            \
+    X(ePlugin)             \
+    X(eEngineScript)
 
 export module luau:common;
 import logger;
@@ -19,9 +19,9 @@ namespace {
 }
 
 namespace luau {
-    #define X(name) name,
+#define X(name) name,
     export enum SecurityType { SECURITY_TYPE_LIST };
-    #undef X
+#undef X
 
     struct environmentContext {
         SecurityType secType = SecurityType::eNone;
@@ -42,14 +42,13 @@ namespace luau {
     };
 
     export using anyProp = std::variant<
-        propRegInfo<std::string>, 
-        propRegInfo<short>, 
-        propRegInfo<int>, 
-        propRegInfo<long long>, 
-        propRegInfo<float>, 
-        propRegInfo<double>, 
-        propRegInfo<bool>
-    >;
+        propRegInfo<std::string>,
+        propRegInfo<short>,
+        propRegInfo<int>,
+        propRegInfo<long long>,
+        propRegInfo<float>,
+        propRegInfo<double>,
+        propRegInfo<bool> >;
 
     struct libRegInfo {
         std::string name;
@@ -69,7 +68,12 @@ namespace luau {
     std::vector<objRegInfo*>& getDefaultObjects();
 
     int securityWrapper(lua_State* L);
-    void registerFunction(lua_State* L, const std::string& name, lua_CFunction func, SecurityType requiredLevel);
+    void registerFunction(
+        lua_State* L,
+        const std::string& name,
+        lua_CFunction func,
+        SecurityType requiredLevel
+    );
     void registerLibrary(lua_State* L, const libRegInfo& regInfo);
     void registerObject(lua_State* L, const objRegInfo& objInfo);
 }
@@ -92,24 +96,35 @@ std::vector<luau::objRegInfo*>& luau::getDefaultObjects() {
 int luau::securityWrapper(lua_State* L) {
     int requiredLevel = lua_tointeger(L, lua_upvalueindex(1));
 
-    auto* envData = static_cast<struct environmentContext*>(lua_getthreaddata(L));
+    auto* envData =
+        static_cast<struct environmentContext*>(lua_getthreaddata(L));
     int currentLevel = envData ? static_cast<int>(envData->secType) : 0;
 
     if (currentLevel < requiredLevel)
-        luaL_error(L, "Cannot access. required level: %d, current level: %d. ", requiredLevel, currentLevel);
+        luaL_error(
+            L,
+            "Cannot access. required level: %d, current level: %d. ",
+            requiredLevel,
+            currentLevel
+        );
 
     lua_CFunction func = lua_tocfunction(L, lua_upvalueindex(2));
     return func(L);
 }
 
-void luau::registerFunction(lua_State* L, const std::string& name, lua_CFunction func, luau::SecurityType requiredLevel) {
+void luau::registerFunction(
+    lua_State* L,
+    const std::string& name,
+    lua_CFunction func,
+    luau::SecurityType requiredLevel
+) {
     lua_pushinteger(L, static_cast<int>(requiredLevel));
     lua_pushcfunction(L, func, name.c_str());
     lua_pushcclosure(L, &luau::securityWrapper, name.c_str(), 2);
     lua_setglobal(L, name.c_str());
 }
 
-void luau::registerLibrary(lua_State *L, const libRegInfo& libInfo) {
+void luau::registerLibrary(lua_State* L, const libRegInfo& libInfo) {
     lua_newtable(L);
 
     for (const luau::funcRegInfo& funcInfo : libInfo.methods) {
@@ -123,6 +138,4 @@ void luau::registerLibrary(lua_State *L, const libRegInfo& libInfo) {
     lua_setglobal(L, libInfo.name.c_str());
 }
 
-void luau::registerObject(lua_State *L, const objRegInfo& objInfo) {
-    
-}
+void luau::registerObject(lua_State* L, const objRegInfo& objInfo) {}
