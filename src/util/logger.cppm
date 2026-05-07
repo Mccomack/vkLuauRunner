@@ -89,7 +89,7 @@ std::ofstream& Logger::getFile() {
 }
 
 std::string Logger::getCurrentTime() {
-    return std::format("{}T{}.{}Z", getFormattedDate().str(), getFormattedTimeMicrosecond().str(), getFormattedTimeMicrosecond().str());
+    return std::format("{}T{}.{}Z", getFormattedDate().str(), getFormattedTime().str(), getFormattedTimeMicrosecond().str());
 }
 
 std::string Logger::format(std::string_view log, std::optional<std::string_view> logLevel) {
