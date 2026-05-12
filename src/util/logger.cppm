@@ -15,16 +15,19 @@ export class Logger {
     static std::ofstream& getFile();
 
     std::string getCurrentTime();
-    std::string format(std::string_view log, std::optional<std::string_view> logLevel);
+    std::string format(
+        std::string_view log,
+        std::optional<std::string_view> logLevel
+    );
     void write(std::string_view log);
 
-public:
+   public:
     Logger(std::string_view Name);
     //~Logger();
 
     void Log(std::string_view log);
     void Log(std::string_view log, std::string_view logLevel);
-    
+
     void Debug(std::string_view log);
 
     template <typename... Args>
@@ -56,7 +59,8 @@ std::stringstream getFormattedTime() {
 
 std::stringstream getFormattedTimeMicrosecond() {
     auto now = ch::system_clock::now();
-    auto us = ch::duration_cast<ch::microseconds>(now.time_since_epoch()) % 1000000;
+    auto us =
+        ch::duration_cast<ch::microseconds>(now.time_since_epoch()) % 1000000;
 
     std::stringstream ss;
     ss << std::setfill('0') << std::setw(6) << us.count();
@@ -77,7 +81,13 @@ fs::path& Logger::getPath() {
 std::string& Logger::getFileName() {
     std::string buildType = app::isDebugBuild ? "Debug" : "Release";
 
-    static std::string fileName = std::format("{}T{}Z_{}_{}_last.log", getFormattedDate().str(), getFormattedTime().str(), app::name, buildType);
+    static std::string fileName = std::format(
+        "{}T{}Z_{}_{}.log",
+        getFormattedDate().str(),
+        getFormattedTime().str(),
+        app::name,
+        buildType
+    );
 
     return fileName;
 }
@@ -89,13 +99,24 @@ std::ofstream& Logger::getFile() {
 }
 
 std::string Logger::getCurrentTime() {
-    return std::format("{}T{}.{}Z", getFormattedDate().str(), getFormattedTime().str(), getFormattedTimeMicrosecond().str());
+    return std::format(
+        "{}T{}.{}Z",
+        getFormattedDate().str(),
+        getFormattedTime().str(),
+        getFormattedTimeMicrosecond().str()
+    );
 }
 
-std::string Logger::format(std::string_view log, std::optional<std::string_view> logLevel) {
-    std::string LogLevel = logLevel.has_value() ? std::format(" {}", *logLevel) : "";
+std::string Logger::format(
+    std::string_view log,
+    std::optional<std::string_view> logLevel
+) {
+    std::string LogLevel =
+        logLevel.has_value() ? std::format(" {}", *logLevel) : "";
 
-    return std::format("{};{} [{}]: {}\n", getCurrentTime(), LogLevel, name, log);
+    return std::format(
+        "{}{} [{}]: {}\n", getCurrentTime(), LogLevel, name, log
+    );
 }
 
 void Logger::write(std::string_view log) {
@@ -103,7 +124,8 @@ void Logger::write(std::string_view log) {
     getFile().flush();
 }
 
-Logger::Logger(std::string_view Name) : name(Name) {};
+Logger::Logger(std::string_view Name)
+    : name(Name) {};
 
 void Logger::Log(std::string_view log) {
     std::string formattedStr = format(log, std::nullopt);
@@ -124,7 +146,7 @@ void Logger::Debug(std::string_view log) {
     return;
 #endif
 
-    Log(log, (std::string_view)"DEBUG");
+    Log(log, (std::string_view) "DEBUG");
 }
 
 template <typename... Args>
@@ -134,10 +156,9 @@ void Logger::Logf(std::format_string<Args...> fmt, Args&&... args) {
     Log(s);
 }
 
-
 template <typename... Args>
 void Logger::Debugf(std::format_string<Args...> fmt, Args&&... args) {
     std::string s = std::format(fmt, std::forward<Args>(args)...);
-    
+
     Debug(s);
 }

@@ -20,7 +20,8 @@ export class Config {
     const fs::path path;
 
     nlohmann::json j;
-public:
+
+   public:
     static Config& getInstance();
 
     bool New();
@@ -50,9 +51,15 @@ public:
     }
 };
 
-Config::Config() : loaded(false), path(os::appPath / "config.json"), j(nullptr) {}
+Config::Config()
+    : loaded(false),
+      path(os::appPath / "config.json"),
+      j(nullptr) {}
 
-Config::Config(fs::path Path) : loaded(false), path(Path), j(nullptr) {}
+Config::Config(fs::path Path)
+    : loaded(false),
+      path(Path),
+      j(nullptr) {}
 
 Config::~Config() {
     if (loaded) {
@@ -66,6 +73,7 @@ Config& Config::getInstance() {
     return instance;
 }
 
+// create config.json file if not exists.
 bool Config::New() {
     if (fs::exists(path)) {
         return false;
@@ -74,7 +82,10 @@ bool Config::New() {
     std::ofstream file(path, std::ios::out);
 
     if (!file.is_open()) {
-        std::cerr << std::format("Error opening {}", fs::absolute(path).string()) << std::endl;
+        std::cerr << std::format(
+                         "Error opening {}", fs::absolute(path).string()
+                     )
+                  << std::endl;
 
         return false;
     }
@@ -93,7 +104,10 @@ bool Config::Load() {
     std::ifstream file(path, std::ios::in);
 
     if (!file.is_open()) {
-        std::cerr << std::format("Error opening {}", fs::absolute(path).string()) << std::endl;
+        std::cerr << std::format(
+                         "Error opening {}", fs::absolute(path).string()
+                     )
+                  << std::endl;
 
         return false;
     }
@@ -116,7 +130,10 @@ bool Config::Save() {
     std::ofstream file(path, std::ios::out);
 
     if (!file.is_open()) {
-        std::cerr << std::format("Error opening {}", fs::absolute(path).string()) << std::endl;
+        std::cerr << std::format(
+                         "Error opening {}", fs::absolute(path).string()
+                     )
+                  << std::endl;
 
         return false;
     }

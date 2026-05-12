@@ -1,5 +1,4 @@
 module;
-
 #include <GLFW/glfw3.h>
 
 #define GLM_FORCE_RADIANS
@@ -101,7 +100,10 @@ class graphic::app {
 
     void initWindow();
     void initVulkan();
-    void mainLoop();
+    void mainLoop(
+        std::function<void()> beforeRenderCallback = nullptr,
+        std::function<void()> afterRenderCallback = nullptr
+    );
 
     void cleanupSwapchain();
     void cleanup();
@@ -109,7 +111,11 @@ class graphic::app {
    public:
     bool framebufferResized = false;
 
-    void run();
+    void run(
+        std::function<void()> afterInitCallback = nullptr,
+        std::function<void()> beforeRenderCallback = nullptr,
+        std::function<void()> afterRenderCallback = nullptr
+    );
 };
 
 namespace {
@@ -119,7 +125,9 @@ namespace {
 void graphic::app::createInstance() {
     if (validationLayer::enableValidationLayers &&
         !validationLayer::checkValidationLayerSupport()) {
-        throw std::runtime_error("validation layers requested, but not available!");
+        throw std::runtime_error(
+            "validation layers requested, but not available!"
+        );
     }
 
     constexpr vk::ApplicationInfo appInfo{
@@ -137,23 +145,28 @@ void graphic::app::createInstance() {
     std::vector<const char*> requiredLayers;
     if (validationLayer::enableValidationLayers) {
         requiredLayers.assign(
-            validationLayer::validationLayers.begin(), validationLayer::validationLayers.end()
+            validationLayer::validationLayers.begin(),
+            validationLayer::validationLayers.end()
         );
     }
 
     auto layerProperties = context.enumerateInstanceLayerProperties();
-    auto unsupportedLayer =
-        std::ranges::find_if(requiredLayers, [&layerProperties](auto const& requiredLayer) {
+    auto unsupportedLayer = std::ranges::find_if(
+        requiredLayers, [&layerProperties](auto const& requiredLayer) {
             return std::ranges::none_of(
                 layerProperties, [requiredLayer](auto const& layerProperty) {
                     return strcmp(layerProperty.layerName, requiredLayer) == 0;
                 }
             );
-        });
+        }
+    );
 
     if (unsupportedLayer != requiredLayers.end()) {
         throw std::runtime_error(
-            std::format("Required layer not supported: {}", std::string(*unsupportedLayer))
+            std::format(
+                "Required layer not supported: {}",
+                std::string(*unsupportedLayer)
+            )
         );
     }
 
@@ -165,7 +178,8 @@ void graphic::app::createInstance() {
         vk::DebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
 
         validationLayer::populateDebugMessengerCreateInfo(debugCreateInfo);
-        createInfo.pNext = (vk::DebugUtilsMessengerCreateInfoEXT*)&debugCreateInfo;
+        createInfo.pNext =
+            (vk::DebugUtilsMessengerCreateInfoEXT*)&debugCreateInfo;
     } else {
         createInfo.pNext = nullptr;
     }
@@ -189,10 +203,15 @@ void graphic::app::createInstance() {
 
     // macOS Settings
     if (os::os == os::macOS) {
-        requiredExtensions.push_back(vk::KHRPortabilityEnumerationExtensionName);
-        requiredExtensions.push_back(vk::KHRGetPhysicalDeviceProperties2ExtensionName);
+        requiredExtensions.push_back(
+            vk::KHRPortabilityEnumerationExtensionName
+        );
+        requiredExtensions.push_back(
+            vk::KHRGetPhysicalDeviceProperties2ExtensionName
+        );
 
-        createInfo.flags |= vk::InstanceCreateFlagBits::eEnumeratePortabilityKHR;
+        createInfo.flags |=
+            vk::InstanceCreateFlagBits::eEnumeratePortabilityKHR;
     }
 
     // put instance extensions
@@ -211,7 +230,8 @@ void graphic::app::createInstance() {
 void graphic::app::createSurface() {
     VkSurfaceKHR _surface;
 
-    if (glfwCreateWindowSurface(*instance, window, nullptr, &_surface) != VK_SUCCESS) {
+    if (glfwCreateWindowSurface(*instance, window, nullptr, &_surface) !=
+        VK_SUCCESS) {
         throw std::runtime_error("Cannot create window surface. ");
     }
 
@@ -230,17 +250,23 @@ void graphic::app::recreateSwapchain() {
 
     cleanupSwapchain();
 
-    swapChain = swapchain::createSwapChain(physicalDevice, device, surface, window, swapChain);
+    swapChain = swapchain::createSwapChain(
+        physicalDevice, device, surface, window, swapChain
+    );
 
-    SwapChainSupportDetails swapchainSupport = querySwapChainSupport(physicalDevice, surface);
-    swapChainSurfaceFormat = swapchain::chooseSwapSurfaceFormat(swapchainSupport.formats);
-    swapChainExtent = swapchain::chooseSwapExtent(swapchainSupport.capabilities, window);
+    SwapChainSupportDetails swapchainSupport =
+        querySwapChainSupport(physicalDevice, surface);
+    swapChainSurfaceFormat =
+        swapchain::chooseSwapSurfaceFormat(swapchainSupport.formats);
+    swapChainExtent =
+        swapchain::chooseSwapExtent(swapchainSupport.capabilities, window);
 
     cleanupSwapchain();
 
     swapChainImages = swapchain::createImages(device, swapChain);
-    swapChainImageViews =
-        swapchain::createImageViews(device, swapChainImages, swapChainSurfaceFormat);
+    swapChainImageViews = swapchain::createImageViews(
+        device, swapChainImages, swapChainSurfaceFormat
+    );
 
     for (size_t i = 0; i < swapChainImageViews.size(); i++) {
         swapChainFramebuffers.push_back(
@@ -260,28 +286,34 @@ void graphic::app::recreateSwapchain() {
         renderFinishedSemaphores.clear();
 
         for (size_t i = 0; i < swapChainImages.size(); i++) {
-            renderFinishedSemaphores.push_back(std::move(synchronization::craeteSemaphore(device)));
+            renderFinishedSemaphores.push_back(
+                std::move(synchronization::craeteSemaphore(device))
+            );
         }
     }
 }
 
 void graphic::app::drawFrame() {
     {
-        auto result = device.waitForFences(*presentFences[currentFrame], vk::True, UINT64_MAX);
+        auto result = device.waitForFences(
+            *presentFences[currentFrame], vk::True, UINT64_MAX
+        );
         if (result != vk::Result::eSuccess) {
             throw std::runtime_error("cannot wait for fence(presentFence)");
         }
     }
 
-    auto [result, imageIndex] =
-        swapChain.acquireNextImage(UINT64_MAX, *imageAvaliableSemaphores[currentFrame], nullptr);
+    auto [result, imageIndex] = swapChain.acquireNextImage(
+        UINT64_MAX, *imageAvaliableSemaphores[currentFrame], nullptr
+    );
     if (result == vk::Result::eErrorOutOfDateKHR) {
         framebufferResized = false;
         recreateSwapchain();
 
         return;
     } else if (result == vk::Result::eSuboptimalKHR || framebufferResized) {
-        vk::PipelineStageFlags waitStage = vk::PipelineStageFlagBits::eBottomOfPipe;
+        vk::PipelineStageFlags waitStage =
+            vk::PipelineStageFlagBits::eBottomOfPipe;
         vk::SubmitInfo submitInfo{
             .waitSemaphoreCount = 1,
             .pWaitSemaphores = &*imageAvaliableSemaphores[currentFrame],
@@ -296,19 +328,25 @@ void graphic::app::drawFrame() {
 
         return;
     } else if (result != vk::Result::eSuccess) {
-        assert(result == vk::Result::eTimeout || result == vk::Result::eNotReady);
+        assert(
+            result == vk::Result::eTimeout || result == vk::Result::eNotReady
+        );
 
         throw std::runtime_error("cannot acquire swapchain image");
     }
 
     device.resetFences(*presentFences[currentFrame]);
 
-    std::ignore = device.waitForFences(*inFlightFences[currentFrame], vk::True, UINT64_MAX);
+    std::ignore = device.waitForFences(
+        *inFlightFences[currentFrame], vk::True, UINT64_MAX
+    );
     device.resetFences(*inFlightFences[currentFrame]);
 
     commandBuffers[currentFrame].reset();
 
-    uniformBufferObject::updateUniformBuffer(swapChainExtent, uniformBufferMapped[currentFrame]);
+    uniformBufferObject::updateUniformBuffer(
+        swapChainExtent, uniformBufferMapped[currentFrame]
+    );
 
     RenderStateView renderState{
         .renderPass = renderPass,
@@ -322,13 +360,18 @@ void graphic::app::drawFrame() {
     };
 
     FrameTargetView frameTarget{
-        .framebuffer = swapChainFramebuffers[imageIndex], .extent = swapChainExtent
+        .framebuffer = swapChainFramebuffers[imageIndex],
+        .extent = swapChainExtent
     };
 
-    command::recordCommandBuffer(commandBuffers[currentFrame], renderState, frameTarget);
+    command::recordCommandBuffer(
+        commandBuffers[currentFrame], renderState, frameTarget
+    );
 
     vk::Semaphore waitSemaphores[] = {*imageAvaliableSemaphores[currentFrame]};
-    vk::PipelineStageFlags waitStages[] = {vk::PipelineStageFlagBits::eColorAttachmentOutput};
+    vk::PipelineStageFlags waitStages[] = {
+        vk::PipelineStageFlagBits::eColorAttachmentOutput
+    };
     vk::Semaphore signalSemaphores[] = {*renderFinishedSemaphores[imageIndex]};
 
     vk::SubmitInfo submitInfo{
@@ -359,8 +402,8 @@ void graphic::app::drawFrame() {
     };
 
     result = presentQueue.presentKHR(presentInfo);
-    if (result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR ||
-        framebufferResized) {
+    if (result == vk::Result::eErrorOutOfDateKHR ||
+        result == vk::Result::eSuboptimalKHR || framebufferResized) {
         framebufferResized = false;
         recreateSwapchain();
 
@@ -372,8 +415,13 @@ void graphic::app::drawFrame() {
     currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 }
 
-static void framebufferResizeCallback(GLFWwindow* window, int width, int height) {
-    graphic::app* app = reinterpret_cast<graphic::app*>(glfwGetWindowUserPointer(window));
+static void framebufferResizeCallback(
+    GLFWwindow* window,
+    int width,
+    int height
+) {
+    graphic::app* app =
+        reinterpret_cast<graphic::app*>(glfwGetWindowUserPointer(window));
 
     app->framebufferResized = true;
 }
@@ -402,32 +450,50 @@ void graphic::app::initVulkan() {
     std::tie(device, graphicsQueue, presentQueue) =
         device::createLogicalDevice(physicalDevice, surface);
 
-    swapChain = swapchain::createSwapChain(physicalDevice, device, surface, window);
+    swapChain =
+        swapchain::createSwapChain(physicalDevice, device, surface, window);
     swapChainImages = swapchain::createImages(device, swapChain);
 
-    SwapChainSupportDetails swapchainSupport = querySwapChainSupport(physicalDevice, surface);
-    swapChainSurfaceFormat = swapchain::chooseSwapSurfaceFormat(swapchainSupport.formats);
-    swapChainExtent = swapchain::chooseSwapExtent(swapchainSupport.capabilities, window);
+    SwapChainSupportDetails swapchainSupport =
+        querySwapChainSupport(physicalDevice, surface);
+    swapChainSurfaceFormat =
+        swapchain::chooseSwapSurfaceFormat(swapchainSupport.formats);
+    swapChainExtent =
+        swapchain::chooseSwapExtent(swapchainSupport.capabilities, window);
 
-    swapChainImageViews =
-        swapchain::createImageViews(device, swapChainImages, swapChainSurfaceFormat);
+    swapChainImageViews = swapchain::createImageViews(
+        device, swapChainImages, swapChainSurfaceFormat
+    );
 
     commandPool = command::createCommandPool(physicalDevice, device, surface);
 
-    auto [vertShaderModule, fragShaderModule] = pipeline::getShaderModule(device);
+    auto [vertShaderModule, fragShaderModule] =
+        pipeline::getShaderModule(device);
 
     vk::DeviceSize size = sizeof(vertices[0]) * vertices.size();
     vk::DeviceSize indSize = sizeof(indices[0]) * indices.size();
 
     vertexBuffers = buffer::createVertexBuffer(
-        physicalDevice, device, commandPool, graphicsQueue, vertices.data(), size
+        physicalDevice,
+        device,
+        commandPool,
+        graphicsQueue,
+        vertices.data(),
+        size
     );
     indexBuffers = buffer::createIndexBffer(
-        physicalDevice, device, commandPool, graphicsQueue, indices.data(), indSize
+        physicalDevice,
+        device,
+        commandPool,
+        graphicsQueue,
+        indices.data(),
+        indSize
     );
 
     std::tie(uniformBuffers, uniformBufferMemories, uniformBufferMapped) =
-        buffer::createUniformBuffer(physicalDevice, device, commandPool, graphicsQueue);
+        buffer::createUniformBuffer(
+            physicalDevice, device, commandPool, graphicsQueue
+        );
 
     descriptorSetLayout = descriptor::createDescriptorSetLayout(device);
     descriptorPool = descriptor::createDescriptorPool(device);
@@ -438,10 +504,16 @@ void graphic::app::initVulkan() {
     pipelineLayout = pipeline::createPipelineLayout(
         device, descriptorSetLayout, vertShaderModule, fragShaderModule
     );
-    renderPass = pipeline::createRenderPass(device, swapChainSurfaceFormat.format);
+    renderPass =
+        pipeline::createRenderPass(device, swapChainSurfaceFormat.format);
 
     graphicsPipeline = pipeline::createGraphicsPipeline(
-        device, pipelineLayout, renderPass, vertShaderModule, fragShaderModule, swapChainExtent
+        device,
+        pipelineLayout,
+        renderPass,
+        vertShaderModule,
+        fragShaderModule,
+        swapChainExtent
     );
 
     for (size_t i = 0; i < swapChainImageViews.size(); i++) {
@@ -457,23 +529,41 @@ void graphic::app::initVulkan() {
     commandBuffers = command::createCommandBuffer(device, commandPool);
 
     for (size_t i = 0; i < swapChainImages.size(); i++) {
-        renderFinishedSemaphores.push_back(std::move(synchronization::craeteSemaphore(device)));
+        renderFinishedSemaphores.push_back(
+            std::move(synchronization::craeteSemaphore(device))
+        );
     }
 
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-        imageAvaliableSemaphores.push_back(std::move(synchronization::craeteSemaphore(device)));
+        imageAvaliableSemaphores.push_back(
+            std::move(synchronization::craeteSemaphore(device))
+        );
 
-        inFlightFences.push_back(std::move(synchronization::createFence(device)));
-        presentFences.push_back(std::move(synchronization::createFence(device)));
+        inFlightFences.push_back(
+            std::move(synchronization::createFence(device))
+        );
+        presentFences.push_back(
+            std::move(synchronization::createFence(device))
+        );
     }
 }
 
-void graphic::app::mainLoop() {
+void graphic::app::mainLoop(
+    std::function<void()> beforeRenderCallback,
+    std::function<void()> afterRenderCallback
+) {
     logger.Log("mainLoop start", "Info");
 
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
+
+        if (beforeRenderCallback)
+            beforeRenderCallback();
+
         drawFrame();
+
+        if (afterRenderCallback)
+            afterRenderCallback();
     }
 
     device.waitIdle();
@@ -491,9 +581,16 @@ void graphic::app::cleanup() {
     glfwTerminate();
 }
 
-void graphic::app::run() {
+void graphic::app::run(
+    std::function<void()> afterInitCallback,
+    std::function<void()> beforeRenderCallback,
+    std::function<void()> afterRenderCallback
+) {
     graphic::app::initWindow();
     graphic::app::initVulkan();
-    graphic::app::mainLoop();
+    if (afterInitCallback)
+        afterInitCallback();
+
+    graphic::app::mainLoop(beforeRenderCallback, afterRenderCallback);
     graphic::app::cleanup();
 }

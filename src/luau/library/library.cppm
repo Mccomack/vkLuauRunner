@@ -2,6 +2,7 @@ module;
 #include <lua.h>
 
 export module luau:library;
+export import :library.test;
 import :common;
 
 export namespace luau::library {

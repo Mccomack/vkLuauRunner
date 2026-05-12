@@ -28,6 +28,9 @@ print({
     ["aagdf"] = "asdfd"
 })
 
+print()
+print(nil)
+
 print(test.somemethod());
 print(getmetatable(test))
 print(test)

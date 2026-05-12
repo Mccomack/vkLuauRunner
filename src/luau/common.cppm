@@ -10,6 +10,7 @@ module;
     X(eEngineScript)
 
 export module luau:common;
+import property;
 import logger;
 
 import std;
@@ -34,21 +35,21 @@ namespace luau {
     };
 
     template <typename T>
-    struct propRegInfo {
+    struct prop {
         std::string name;
         SecurityType readLevel = SecurityType::eDefault;
         SecurityType writeLevel = SecurityType::eDefault;
-        std::optional<T> defaultValue = std::nullopt;
+        Property<T>* value = nullptr;
     };
 
     export using anyProp = std::variant<
-        propRegInfo<std::string>,
-        propRegInfo<short>,
-        propRegInfo<int>,
-        propRegInfo<long long>,
-        propRegInfo<float>,
-        propRegInfo<double>,
-        propRegInfo<bool> >;
+        prop<std::string>,
+        prop<short>,
+        prop<int>,
+        prop<long long>,
+        prop<float>,
+        prop<double>,
+        prop<bool> >;
 
     struct libRegInfo {
         std::string name;

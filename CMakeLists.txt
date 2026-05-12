@@ -32,7 +32,7 @@ endif()
 set(CMAKE_CXX_SCAN_FOR_MODULES ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-project(MyCpp3DGame VERSION 0.1.1)
+project(MyCpp3DGame VERSION 0.1.2)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
@@ -117,7 +117,7 @@ if(MODULE_SOURCES)
     # endforeach()
 endif()
 
-set_source_files_properties(src/libc_workaround.cpp PROPERTIES
+set_source_files_properties(src/brewfix.cpp PROPERTIES
     CXX_SCAN_FOR_MODULES OFF
 )
 
