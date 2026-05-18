@@ -3,32 +3,6 @@ cmake_minimum_required(VERSION 3.30)
 set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "451f2fe2-a8a2-47c3-bc32-94786d8fc91b")
 set(CMAKE_CXX_MODULE_STD ON)
 
-if(APPLE)
-    set(CMAKE_C_COMPILER "/opt/homebrew/opt/llvm/bin/clang")
-    set(CMAKE_CXX_COMPILER "/opt/homebrew/opt/llvm/bin/clang++")
-
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
-
-    set(CMAKE_EXE_LINKER_FLAGS 
-        "-L/opt/homebrew/opt/llvm/lib/c++ -L/opt/homebrew/opt/llvm/lib \
-        -Wl,-rpath,/opt/homebrew/opt/llvm/lib/c++ \
-        -Wl,-rpath,/opt/homebrew/opt/llvm/lib \
-        -stdlib=libc++"
-    )
-
-    include_directories("/opt/homebrew/opt/llvm/include")
-
-    set(CMAKE_CXX_STDLIB_MODULES_JSON "/opt/homebrew/opt/llvm/lib/c++/libc++.modules.json")
-
-    execute_process(
-        COMMAND xcrun --show-sdk-path
-        OUTPUT_VARIABLE MACOS_SDK_PATH
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-    )
-
-    set(CMAKE_OSX_SYSROOT ${MACOS_SDK_PATH})
-endif()
-
 set(CMAKE_CXX_SCAN_FOR_MODULES ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 

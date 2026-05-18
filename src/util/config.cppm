@@ -73,11 +73,10 @@ Config& Config::getInstance() {
     return instance;
 }
 
-// create config.json file if not exists.
+// create config file if not exists.
 bool Config::New() {
-    if (fs::exists(path)) {
+    if (fs::exists(path))
         return false;
-    }
 
     std::ofstream file(path, std::ios::out);
 
@@ -97,9 +96,8 @@ bool Config::New() {
 }
 
 bool Config::Load() {
-    if (loaded) {
+    if (loaded)
         std::cout << "Reloading config" << std::endl;
-    }
 
     std::ifstream file(path, std::ios::in);
 
@@ -121,11 +119,8 @@ bool Config::Load() {
 }
 
 bool Config::Save() {
-    if (!loaded) {
-        std::cerr << "bro we have nothing to save" << std::endl;
-
+    if (!loaded)
         return false;
-    }
 
     std::ofstream file(path, std::ios::out);
 

@@ -139,4 +139,6 @@ void luau::registerLibrary(lua_State* L, const libRegInfo& libInfo) {
     lua_setglobal(L, libInfo.name.c_str());
 }
 
-void luau::registerObject(lua_State* L, const objRegInfo& objInfo) {}
+void luau::registerObject(lua_State* L, const objRegInfo& objInfo) {
+    //
+}

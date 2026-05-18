@@ -25,15 +25,17 @@ namespace luau::object {
         Base();
         Property<int> coolvalue = 0;
         Property<std::string> className;
-        void bindOnChanged(std::function<void(void)> func);
+        void bindOnChangedEvent(std::function<void(void)> func);
     };
 }
 
+using Base = luau::object::Base;
+
 template <typename T>
 void warpChanged(
-    const luau::object::Base* self,
+    const Base* self,
     Property<T>* prop,
-    std::function<void(const luau::object::Base*)> raiseChangedEvent,
+    std::function<void(const Base*)> raiseChangedEvent,
     std::string propertyName
 ) {
     prop->bindSet(
@@ -47,18 +49,19 @@ void warpChanged(
     );
 }
 
-luau::object::Base::Base() {
+Base::Base() {
     className = "Base";
+    classNames.insert("Base");
 
     // clang-format off
     warpChanged<int>(this, &coolvalue, raiseChangedEvent, "coolvalue");
     // clang-format on
 }
 
-void luau::object::Base::raiseChangedEvent(const Base* self) {
+void Base::raiseChangedEvent(const Base* self) {
     std::cout << "raiseChangedEvent: " << self->coolvalue << std::endl;
 }
 
-void luau::object::Base::bindOnChanged(std::function<void(void)> func) {
+void Base::bindOnChangedEvent(std::function<void(void)> func) {
     //
 }

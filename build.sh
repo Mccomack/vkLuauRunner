@@ -16,7 +16,12 @@ else
     buildType="Debug"
 fi
 
-cmake -S . -B "build/$buildType" -G "Ninja" -DCMAKE_BUILD_TYPE=$buildType
+case "$(uname -s)" in
+    Darwin) target="$HOME/Library/Application Support/vkLuauRunner" toolchain="cmake/toolchain/macos.cmake" ;;
+    *)      target="$HOME/.local/share/vkLuauRunner" toolchain="cmake/toolchain/linux.cmake";;
+esac
+
+cmake -S . -B "build/$buildType" -G "Ninja" -DCMAKE_BUILD_TYPE=$buildType -DCMAKE_TOOLCHAIN_FILE=$toolchain
 
 cmake --build "build/$buildType"
 
@@ -26,10 +31,5 @@ ln -sfn "$buildType" "build/current"
 
 ln -sfn ../build/shaders runtest/shaders
 ln -sfn ../asset runtest/asset
-
-case "$(uname -s)" in
-    Darwin) target="$HOME/Library/Application Support/vkLuauRunner" ;;
-    *)      target="$HOME/.local/share/vkLuauRunner" ;;
-esac
 
 ln -sfn "$(pwd)/runtest" "$target"

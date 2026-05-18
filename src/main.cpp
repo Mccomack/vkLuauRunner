@@ -22,10 +22,16 @@ void afterInit() {
     luau::sandbox(main);
     luau::Environment script1(main);
     luau::sandbox(script1);
+    luau::Environment script2(main);
+    luau::sandbox(script2);
 
     try {
         luau::run::runLuauFile(
             *script1, os::appPath / "asset" / "script" / "main.luau"
+        );
+        logger.Log("---");
+        luau::run::runLuauFile(
+            *script2, os::appPath / "asset" / "script" / "2ndrankedppl.luau"
         );
     } catch (const std::exception& e) {
         logger.Log(e.what(), "Error");
@@ -33,11 +39,11 @@ void afterInit() {
 }
 
 void beforeRender() {
-    //
+    // TODO: impl
 }
 
 void afterRender() {
-    //
+    // TODO: impl
 }
 
 int main() {
