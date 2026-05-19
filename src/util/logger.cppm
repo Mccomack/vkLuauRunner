@@ -152,12 +152,12 @@ template <typename... Args>
 void Logger::Logf(std::format_string<Args...> fmt, Args&&... args) {
     std::string s = std::format(fmt, std::forward<Args>(args)...);
 
-    Log(s);
+    Log(std::string_view(s.data(), s.size()));
 }
 
 template <typename... Args>
 void Logger::Debugf(std::format_string<Args...> fmt, Args&&... args) {
     std::string s = std::format(fmt, std::forward<Args>(args)...);
 
-    Debug(s);
+    Debug(std::string_view(s.data(), s.size()));
 }

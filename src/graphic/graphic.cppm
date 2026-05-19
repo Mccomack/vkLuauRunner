@@ -124,7 +124,7 @@ namespace {
 
 void graphic::app::createInstance() {
     if (validationLayer::enableValidationLayers &&
-        !validationLayer::checkValidationLayerSupport()) {
+        !validationLayer::checkValidationLayerSupport(context)) {
         throw std::runtime_error(
             "validation layers requested, but not available!"
         );

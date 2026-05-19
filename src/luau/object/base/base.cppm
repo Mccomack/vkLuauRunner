@@ -23,8 +23,13 @@ namespace luau::object {
 
        public:
         Base();
-        Property<int> coolvalue = 0;
+
         Property<std::string> className;
+
+        Property<int> coolvalue = 0;
+
+        bool isA(const std::string& className);
+
         void bindOnChangedEvent(std::function<void(void)> func);
     };
 }
@@ -60,6 +65,10 @@ Base::Base() {
 
 void Base::raiseChangedEvent(const Base* self) {
     std::cout << "raiseChangedEvent: " << self->coolvalue << std::endl;
+}
+
+bool Base::isA(const std::string& className) {
+    return classNames.contains(className);
 }
 
 void Base::bindOnChangedEvent(std::function<void(void)> func) {

@@ -2,9 +2,11 @@ module;
 #include <GLFW/glfw3.h>
 
 #include <cstring>
+#include "vulkan/vulkan.hpp"
 
 export module graphic:validationLayer;
 import logger;
+import appinfo;
 
 import std;
 
@@ -12,49 +14,43 @@ import vulkan;
 
 export namespace graphic::validationLayer {
     // clang-format off
-    const std::vector<const char*> validationLayers = {
+    constexpr std::array<const char*, 1> validationLayers = {
         "VK_LAYER_KHRONOS_validation"
     };
     // clang-format on
 
-#ifdef NDEBUG
-    const bool enableValidationLayers = false;
-#else
-    const bool enableValidationLayers = true;
-#endif
+    const bool enableValidationLayers = app::isDebugBuild;
 
-    bool checkValidationLayerSupport();
+    bool checkValidationLayerSupport(const vk::raii::Context& context);
     void pushRequiredInstanceExtensions(std::vector<const char*>& extensions);
 
-    void populateDebugMessengerCreateInfo(vk::DebugUtilsMessengerCreateInfoEXT& createInfo);
+    void populateDebugMessengerCreateInfo(
+        vk::DebugUtilsMessengerCreateInfoEXT& createInfo
+    );
 
-    vk::DebugUtilsMessengerEXT createDebugMessenger(const vk::raii::Instance& instance);
+    vk::DebugUtilsMessengerEXT createDebugMessenger(
+        const vk::raii::Instance& instance
+    );
 };
 
 namespace {
     Logger logger("graphic/validationLayer");
 }
 
-bool graphic::validationLayer::checkValidationLayerSupport() {
-    uint32_t layerCount;
-    vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
+bool graphic::validationLayer::checkValidationLayerSupport(
+    const vk::raii::Context& context
+) {
+    std::vector<vk::LayerProperties> availableLayers =
+        context.enumerateInstanceLayerProperties();
+    std::unordered_set<std::string> availableLayerNames;
 
-    std::vector<VkLayerProperties> availableLayers(layerCount);
-    vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
+    for (const vk::LayerProperties& layerProperties : availableLayers) {
+        availableLayerNames.insert(layerProperties.layerName);
+    }
 
     for (const char* layerName : validationLayers) {
-        bool layerFound = false;
-
-        for (const auto& layerProperties : availableLayers) {
-            if (strcmp(layerName, layerProperties.layerName) == 0) {
-                layerFound = true;
-                break;
-            }
-        }
-
-        if (!layerFound) {
+        if (!availableLayerNames.contains(layerName))
             return false;
-        }
     }
 
     return true;
@@ -63,9 +59,8 @@ bool graphic::validationLayer::checkValidationLayerSupport() {
 void graphic::validationLayer::pushRequiredInstanceExtensions(
     std::vector<const char*>& extensions
 ) {
-    if (enableValidationLayers) {
+    if (enableValidationLayers)
         extensions.push_back(vk::EXTDebugUtilsExtensionName);
-    }
 }
 
 VKAPI_ATTR vk::Bool32 VKAPI_CALL debugCallback(
@@ -95,7 +90,8 @@ void graphic::validationLayer::populateDebugMessengerCreateInfo(
         vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation
     };
 
-    createInfo.messageSeverity = severityFlags, createInfo.messageType = messageTypeFlags,
+    createInfo.messageSeverity = severityFlags,
+    createInfo.messageType = messageTypeFlags,
     createInfo.pfnUserCallback = &debugCallback;
 }
 

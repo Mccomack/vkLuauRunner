@@ -133,6 +133,7 @@ bool graphic::device::isDeviceSuitable(
     if (extensionsSupported) {
         graphic::SwapChainSupportDetails swapChainSupport =
             graphic::querySwapChainSupport(physicalDevice, surface);
+
         swapChainAdequate = !swapChainSupport.formats.empty() &&
                             !swapChainSupport.presentModes.empty();
     }
@@ -184,7 +185,6 @@ std::tuple<vk::raii::Device, vk::raii::Queue, vk::raii::Queue> graphic::device::
         indices.graphicsFamily.value(), indices.presentFamily.value()
     };
 
-    // what the hell is this
     float queuePriority = 1.0f;
     for (uint32_t queueFamily : uniqueQueueFamilies) {
         vk::DeviceQueueCreateInfo queueCreateInfo{
