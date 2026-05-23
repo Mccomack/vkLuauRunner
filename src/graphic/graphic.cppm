@@ -23,6 +23,8 @@ import :common;
 import osinfo;
 import logger;
 
+import window;
+
 import std;
 
 import vulkan;
@@ -32,9 +34,6 @@ export namespace graphic {
 }
 
 class graphic::app {
-    static constexpr uint32_t WIDTH = 800;
-    static constexpr uint32_t HEIGHT = 600;
-
     uint32_t currentFrame = 0;
 
     const std::vector<graphic::Vertex> vertices = {
@@ -45,8 +44,6 @@ class graphic::app {
     };
 
     const std::vector<uint16_t> indices = {0, 1, 2, 2, 3, 0};
-
-    GLFWwindow* window;
 
     vk::raii::Context context;
     vk::raii::Instance instance = nullptr;
@@ -109,10 +106,18 @@ class graphic::app {
     void cleanup();
 
    public:
+    window& window_;
+
     bool framebufferResized = false;
 
+    app(window& _window)
+        : window_(_window) {
+        initWindow();
+        initVulkan();
+    };
+    ~app() { cleanup(); };
+
     void run(
-        std::function<void()> afterInitCallback = nullptr,
         std::function<void()> beforeRenderCallback = nullptr,
         std::function<void()> afterRenderCallback = nullptr
     );
@@ -124,11 +129,10 @@ namespace {
 
 void graphic::app::createInstance() {
     if (validationLayer::enableValidationLayers &&
-        !validationLayer::checkValidationLayerSupport(context)) {
+        !validationLayer::checkValidationLayerSupport(context))
         throw std::runtime_error(
             "validation layers requested, but not available!"
         );
-    }
 
     constexpr vk::ApplicationInfo appInfo{
         .pApplicationName = "Hello Quadrangle",
@@ -143,12 +147,11 @@ void graphic::app::createInstance() {
 
     // instance layers
     std::vector<const char*> requiredLayers;
-    if (validationLayer::enableValidationLayers) {
+    if (validationLayer::enableValidationLayers)
         requiredLayers.assign(
             validationLayer::validationLayers.begin(),
             validationLayer::validationLayers.end()
         );
-    }
 
     auto layerProperties = context.enumerateInstanceLayerProperties();
     auto unsupportedLayer = std::ranges::find_if(
@@ -161,14 +164,13 @@ void graphic::app::createInstance() {
         }
     );
 
-    if (unsupportedLayer != requiredLayers.end()) {
+    if (unsupportedLayer != requiredLayers.end())
         throw std::runtime_error(
             std::format(
                 "Required layer not supported: {}",
                 std::string(*unsupportedLayer)
             )
         );
-    }
 
     createInfo.enabledLayerCount = static_cast<uint32_t>(requiredLayers.size());
     createInfo.ppEnabledLayerNames = requiredLayers.data();
@@ -192,9 +194,8 @@ void graphic::app::createInstance() {
 
     glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
 
-    for (int i = 0; i < glfwExtensionCount; i++) {
+    for (int i = 0; i < glfwExtensionCount; i++)
         requiredExtensions.push_back(glfwExtensions[i]);
-    }
 
     validationLayer::pushRequiredInstanceExtensions(requiredExtensions);
 
@@ -220,9 +221,8 @@ void graphic::app::createInstance() {
 
     logger.Debug("Enabled instance extensions: ");
 
-    for (const char* extension : requiredExtensions) {
+    for (const char* extension : requiredExtensions)
         logger.Debugf("\t{}", extension);
-    }
 
     instance = vk::raii::Instance(context, createInfo);
 }
@@ -230,19 +230,17 @@ void graphic::app::createInstance() {
 void graphic::app::createSurface() {
     VkSurfaceKHR _surface;
 
-    if (glfwCreateWindowSurface(*instance, window, nullptr, &_surface) !=
-        VK_SUCCESS) {
+    if (glfwCreateWindowSurface(*instance, *window_, nullptr, &_surface) !=
+        VK_SUCCESS)
         throw std::runtime_error("Cannot create window surface. ");
-    }
 
     surface = vk::raii::SurfaceKHR(instance, _surface);
 }
 
 void graphic::app::recreateSwapchain() {
-    int width = 0, height = 0;
-    glfwGetFramebufferSize(window, &width, &height);
+    auto [width, height] = window_.getFramebufferSize();
     while (width == 0 || height == 0) {
-        glfwGetFramebufferSize(window, &width, &height);
+        std::tie(width, height) = window_.getFramebufferSize();
         glfwWaitEvents();
     }
 
@@ -251,7 +249,7 @@ void graphic::app::recreateSwapchain() {
     cleanupSwapchain();
 
     swapChain = swapchain::createSwapChain(
-        physicalDevice, device, surface, window, swapChain
+        physicalDevice, device, surface, *window_, swapChain
     );
 
     SwapChainSupportDetails swapchainSupport =
@@ -259,7 +257,7 @@ void graphic::app::recreateSwapchain() {
     swapChainSurfaceFormat =
         swapchain::chooseSwapSurfaceFormat(swapchainSupport.formats);
     swapChainExtent =
-        swapchain::chooseSwapExtent(swapchainSupport.capabilities, window);
+        swapchain::chooseSwapExtent(swapchainSupport.capabilities, *window_);
 
     cleanupSwapchain();
 
@@ -268,7 +266,7 @@ void graphic::app::recreateSwapchain() {
         device, swapChainImages, swapChainSurfaceFormat
     );
 
-    for (size_t i = 0; i < swapChainImageViews.size(); i++) {
+    for (size_t i = 0; i < swapChainImageViews.size(); i++)
         swapChainFramebuffers.push_back(
             std::move(
                 framebuffer::createFramebuffer(
@@ -276,7 +274,6 @@ void graphic::app::recreateSwapchain() {
                 )
             )
         );
-    }
 
     if (swapChainImages.size() != renderFinishedSemaphores.size()) {
         // for (size_t i = 0; i < imageAvaliableSemaphores.size(); i++) {
@@ -408,9 +405,8 @@ void graphic::app::drawFrame() {
         recreateSwapchain();
 
         return;
-    } else if (result != vk::Result::eSuccess) {
+    } else if (result != vk::Result::eSuccess)
         throw std::runtime_error("cannot present swapchain image");
-    }
 
     currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 }
@@ -427,21 +423,14 @@ static void framebufferResizeCallback(
 }
 
 void graphic::app::initWindow() {
-    glfwInit();
-
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-
-    window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
-    glfwSetWindowUserPointer(window, this);
-    glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
+    glfwSetFramebufferSizeCallback(*window_, framebufferResizeCallback);
 }
 
 void graphic::app::initVulkan() {
     createInstance();
 
-    if (validationLayer::enableValidationLayers) {
+    if (validationLayer::enableValidationLayers)
         debugMessenger = validationLayer::createDebugMessenger(instance);
-    }
 
     createSurface();
 
@@ -451,7 +440,7 @@ void graphic::app::initVulkan() {
         device::createLogicalDevice(physicalDevice, surface);
 
     swapChain =
-        swapchain::createSwapChain(physicalDevice, device, surface, window);
+        swapchain::createSwapChain(physicalDevice, device, surface, *window_);
     swapChainImages = swapchain::createImages(device, swapChain);
 
     SwapChainSupportDetails swapchainSupport =
@@ -459,7 +448,7 @@ void graphic::app::initVulkan() {
     swapChainSurfaceFormat =
         swapchain::chooseSwapSurfaceFormat(swapchainSupport.formats);
     swapChainExtent =
-        swapchain::chooseSwapExtent(swapchainSupport.capabilities, window);
+        swapchain::chooseSwapExtent(swapchainSupport.capabilities, *window_);
 
     swapChainImageViews = swapchain::createImageViews(
         device, swapChainImages, swapChainSurfaceFormat
@@ -516,7 +505,7 @@ void graphic::app::initVulkan() {
         swapChainExtent
     );
 
-    for (size_t i = 0; i < swapChainImageViews.size(); i++) {
+    for (size_t i = 0; i < swapChainImageViews.size(); i++)
         swapChainFramebuffers.push_back(
             std::move(
                 framebuffer::createFramebuffer(
@@ -524,15 +513,13 @@ void graphic::app::initVulkan() {
                 )
             )
         );
-    }
 
     commandBuffers = command::createCommandBuffer(device, commandPool);
 
-    for (size_t i = 0; i < swapChainImages.size(); i++) {
+    for (size_t i = 0; i < swapChainImages.size(); i++)
         renderFinishedSemaphores.push_back(
             std::move(synchronization::craeteSemaphore(device))
         );
-    }
 
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
         imageAvaliableSemaphores.push_back(
@@ -554,7 +541,7 @@ void graphic::app::mainLoop(
 ) {
     logger.Log("mainLoop start", "Info");
 
-    while (!glfwWindowShouldClose(window)) {
+    while (!glfwWindowShouldClose(*window_)) {
         glfwPollEvents();
 
         if (beforeRenderCallback)
@@ -576,21 +563,16 @@ void graphic::app::cleanupSwapchain() {
 }
 
 void graphic::app::cleanup() {
-    glfwDestroyWindow(window);
+    // cleanupSwapchain();
 
-    glfwTerminate();
+    // glfwDestroyWindow(window);
+
+    // glfwTerminate();
 }
 
 void graphic::app::run(
-    std::function<void()> afterInitCallback,
     std::function<void()> beforeRenderCallback,
     std::function<void()> afterRenderCallback
 ) {
-    graphic::app::initWindow();
-    graphic::app::initVulkan();
-    if (afterInitCallback)
-        afterInitCallback();
-
     graphic::app::mainLoop(beforeRenderCallback, afterRenderCallback);
-    graphic::app::cleanup();
 }

@@ -1,6 +1,6 @@
 export module logger;
 import osinfo;
-import appinfo;
+import projinfo;
 
 import std;
 
@@ -78,13 +78,13 @@ fs::path& Logger::getPath() {
 }
 
 std::string& Logger::getFileName() {
-    std::string buildType = app::isDebugBuild ? "Debug" : "Release";
+    std::string buildType = project::isDebugBuild ? "Debug" : "Release";
 
     static std::string fileName = std::format(
         "{}T{}Z_{}_{}.log",
         getFormattedDate().str(),
         getFormattedTime().str(),
-        app::name,
+        project::name,
         buildType
     );
 

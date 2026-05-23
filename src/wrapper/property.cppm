@@ -1,5 +1,6 @@
 module;
 
+#include <concepts>
 export module property;
 
 import std;
@@ -16,7 +17,7 @@ class Property {
         T init = T{},
         std::function<T(const T&)> getter = nullptr,
         std::function<T(const T& old, const T& req)> setter = nullptr
-    )
+    ) noexcept
         : value(init),
           getter(getter),
           setter(setter) {};
@@ -35,11 +36,19 @@ class Property {
 
     operator T() const { return getter ? getter(value) : value; }
 
-    void bindGet(std::function<T(const T& now)> func) { getter = func; }
-    void bindSet(std::function<T(const T& old, const T& req)> func) {
+    template <typename U>
+        requires std::convertible_to<T, U>
+    explicit operator U() const {
+        return static_cast<U>(getter ? getter(value) : value);
+    }
+
+    void bindGet(std::function<T(const T& now)> func) noexcept {
+        getter = func;
+    }
+    void bindSet(std::function<T(const T& old, const T& req)> func) noexcept {
         setter = func;
     }
 
-    const T rawGet() { return value; }
-    void rawSet(const T& _val) { value = _val; }
+    const T rawGet() noexcept { return value; }
+    void rawSet(const T& _val) noexcept { value = _val; }
 };

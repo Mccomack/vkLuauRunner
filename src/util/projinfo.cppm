@@ -1,11 +1,11 @@
 module;
 #include <cstdint>
 
-export module appinfo;
+export module projinfo;
 
 import std;
 
-export namespace app {
+export namespace project {
     std::string name = "vkLuauRunner";
 
     std::string version = APP_VERSION;

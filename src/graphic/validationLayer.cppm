@@ -6,7 +6,7 @@ module;
 
 export module graphic:validationLayer;
 import logger;
-import appinfo;
+import projinfo;
 
 import std;
 
@@ -19,7 +19,7 @@ export namespace graphic::validationLayer {
     };
     // clang-format on
 
-    const bool enableValidationLayers = app::isDebugBuild;
+    const bool enableValidationLayers = project::isDebugBuild;
 
     bool checkValidationLayerSupport(const vk::raii::Context& context);
     void pushRequiredInstanceExtensions(std::vector<const char*>& extensions);

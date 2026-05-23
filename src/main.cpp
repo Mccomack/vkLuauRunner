@@ -1,49 +1,19 @@
 #define EXIT_SUCCESS 0
 #define EXIT_FAILURE 1
 
+#include <GLFW/glfw3.h>
+
 import std;
 import osinfo;
-import appinfo;
+import projinfo;
 import Config;
 import logger;
-import graphic;
+import app;
 import luau;
 
 namespace {
     Config& config = Config::getInstance();
     Logger logger("main");
-}
-
-void afterInit() {
-    luau::State main(luau::SecurityType::eDefault);
-    luau::global::registerDefaultFunctions(*main);
-    luau::library::registerDefaultLibraries(*main);
-    luau::object::registerDefaultObjects(*main);
-    luau::sandbox(main);
-    luau::Environment script1(main);
-    luau::sandbox(script1);
-    luau::Environment script2(main);
-    luau::sandbox(script2);
-
-    try {
-        luau::run::runLuauFile(
-            *script1, os::appPath / "asset" / "script" / "main.luau"
-        );
-        logger.Log("---");
-        luau::run::runLuauFile(
-            *script2, os::appPath / "asset" / "script" / "2ndrankedppl.luau"
-        );
-    } catch (const std::exception& e) {
-        logger.Log(e.what(), "Error");
-    }
-}
-
-void beforeRender() {
-    // TODO: impl
-}
-
-void afterRender() {
-    // TODO: impl
 }
 
 int main() {
@@ -52,21 +22,20 @@ int main() {
     config.New();
     config.Load();
 
-    logger.Logf("{} v{}", app::name, app::version);
-    logger.Logf("Git hash: {}", app::gitHash);
+    logger.Logf("{} v{}", project::name, project::version);
+    logger.Logf("Git hash: {}", project::gitHash);
 
     logger.Logf("Current OS: {}", os::name);
 
     logger.Logf(
-        "Current build type: {}", (app::isDebugBuild ? "Debug" : "Release")
+        "Current build type: {}", (project::isDebugBuild ? "Debug" : "Release")
     );
 
     logger.Logf("appData folder path: {}", os::appPath.generic_string());
 
-    graphic::app helloTriangle;
-
     try {
-        helloTriangle.run(afterInit, beforeRender, afterRender);
+        app::app app;
+        app.run();
     } catch (const std::exception& e) {
         logger.Log(e.what(), "Error");
 
