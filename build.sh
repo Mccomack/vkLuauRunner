@@ -25,11 +25,13 @@ cmake -S . -B "build/$buildType" -G "Ninja" -DCMAKE_BUILD_TYPE=$buildType -DCMAK
 
 cmake --build "build/$buildType"
 
-mkdir -p runtest
-
 ln -sfn "$buildType" "build/current"
+
+mkdir -p logs
+mkdir -p runtest
 
 ln -sfn ../build/shaders runtest/shaders
 ln -sfn ../asset runtest/asset
+ln -sfn ../logs runtest/logs
 
 ln -sfn "$(pwd)/runtest" "$target"

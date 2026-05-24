@@ -116,8 +116,8 @@ target_compile_definitions(program PRIVATE
     APP_VERSION_PATCH=${PROJECT_VERSION_PATCH}
 )
 
-add_subdirectory(${CMAKE_SOURCE_DIR}/external/glfw external/glfw)
-add_subdirectory(${CMAKE_SOURCE_DIR}/external/luau external/luau)
+add_subdirectory(${CMAKE_SOURCE_DIR}/external/glfw ${CMAKE_BINARY_DIR}/external/glfw)
+add_subdirectory(${CMAKE_SOURCE_DIR}/external/luau ${CMAKE_BINARY_DIR}/external/luau)
 
 target_include_directories(program PRIVATE 
     ${CMAKE_SOURCE_DIR}/external/json/include
