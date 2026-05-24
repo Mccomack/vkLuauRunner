@@ -12,6 +12,10 @@
         "--compile-commands-dir=${workspaceFolder}/build/current",
         "--log=verbose"
     ],
+    "markdownlint.lintWorkspaceGlobs": [
+        "**/*.md",
+        "**/*.mdx"
+    ],
     "editor.formatOnSave": true,
     "[cpp]": {
         "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd"
