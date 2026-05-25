@@ -1,41 +1,4 @@
-# 외부 라이브러리 설정
-set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
-set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-set(GLFW_VULKAN_STATIC OFF CACHE BOOL "" FORCE)
-
-set(LUAU_BUILD_CLI OFF CACHE BOOL "" FORCE)
-set(LUAU_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-set(LUAU_BUILD_WEB OFF CACHE BOOL "" FORCE)
-
-# Vulkan hpp
-find_package(Vulkan REQUIRED)
-
-add_library(VulkanHppModule)
-add_library(Vulkan::cppm ALIAS VulkanHppModule)
-
-target_compile_definitions(VulkanHppModule PUBLIC
-    VULKAN_HPP_DISPATCH_LOADER_DYNAMIC=1
-    VULKAN_HPP_NO_STRUCT_CONSTRUCTORS=1
-    VULKAN_HPP_CPPM_MODULE
-    VULKAN_HPP_HANDLE_ERROR_OUT_OF_DATE_AS_SUCCESS
-)
-target_compile_options(VulkanHppModule PRIVATE -stdlib=libc++)
-target_include_directories(VulkanHppModule PUBLIC "${Vulkan_INCLUDE_DIR}")
-target_link_libraries(VulkanHppModule PUBLIC Vulkan::Vulkan)
-
-set_target_properties(VulkanHppModule PROPERTIES
-    CXX_STANDARD 23
-    CXX_MODULE_STD ON          # import std 자동 처리
-)
-
-file(GLOB VULKAN_CPPM_FILES "${Vulkan_INCLUDE_DIR}/vulkan/*.cppm")
-
-target_sources(VulkanHppModule PUBLIC
-    FILE_SET CXX_MODULES
-    BASE_DIRS "${Vulkan_INCLUDE_DIR}"
-    FILES ${VULKAN_CPPM_FILES}
-)
+include(${CMAKE_SOURCE_DIR}/cmake/VulkanModule.cmake)
 
 # shader 컴파일
 file(GLOB_RECURSE GLSL_FILES "shaders/*.vert" "shaders/*.frag" "shaders/*.comp")
@@ -105,19 +68,17 @@ execute_process(
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
-target_compile_definitions(program PRIVATE 
-    GIT_HASH="${GIT_HASH}"
-)
-
 target_compile_definitions(program PRIVATE
+    GIT_HASH="${GIT_HASH}"
+
     APP_VERSION="${PROJECT_VERSION}"
     APP_VERSION_MAJOR=${PROJECT_VERSION_MAJOR}
     APP_VERSION_MINOR=${PROJECT_VERSION_MINOR}
     APP_VERSION_PATCH=${PROJECT_VERSION_PATCH}
-)
 
-add_subdirectory(${CMAKE_SOURCE_DIR}/external/glfw ${CMAKE_BINARY_DIR}/external/glfw)
-add_subdirectory(${CMAKE_SOURCE_DIR}/external/luau ${CMAKE_BINARY_DIR}/external/luau)
+    GLFW_INCLUDE_VULKAN
+    VULKAN_HPP_CPPM_MODULE
+)
 
 target_include_directories(program PRIVATE 
     ${CMAKE_SOURCE_DIR}/external/json/include
@@ -135,7 +96,7 @@ target_compile_features(program PRIVATE cxx_std_23)
 
 target_link_libraries(program PRIVATE 
     Vulkan::Vulkan
-    VulkanHppModule
+    VulkanModule
 
     glfw
     
@@ -152,9 +113,4 @@ target_compile_options(program PRIVATE
 
     $<$<AND:$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>,$<CONFIG:Debug>>:-g -O0>
     $<$<AND:$<CXX_COMPILER_ID:MSVC>,$<CONFIG:Debug>>:/Zi /Od>
-)
-
-target_compile_definitions(program PRIVATE 
-    GLFW_INCLUDE_VULKAN
-    VULKAN_HPP_CPPM_MODULE
 )

@@ -2,7 +2,6 @@ module;
 #include <GLFW/glfw3.h>
 
 #include <cstring>
-#include "vulkan/vulkan.hpp"
 
 export module graphic:validationLayer;
 import logger;

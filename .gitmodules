@@ -14,3 +14,6 @@
 	path = external/luau
 	url = https://github.com/luau-lang/luau.git
 	branch = master
+[submodule "external/googletest"]
+	path = external/googletest
+	url = https://github.com/google/googletest.git

@@ -38,4 +38,26 @@ if(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
     endif()
 endif()
 
+# 외부 라이브러리 설정
+set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(GLFW_VULKAN_STATIC OFF CACHE BOOL "" FORCE)
+
+set(LUAU_BUILD_CLI OFF CACHE BOOL "" FORCE)
+set(LUAU_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(LUAU_BUILD_WEB OFF CACHE BOOL "" FORCE)
+
+# 라이브러리 
+add_subdirectory(external/glfw)
+add_subdirectory(external/luau)
+add_subdirectory(external/googletest)
+
+# 메인
 add_subdirectory(src)
+
+option(BUILD_TEST "Build test" ON)
+if(BUILD_TEST)
+    enable_testing()
+    add_subdirectory(test)
+endif()

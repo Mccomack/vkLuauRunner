@@ -1,6 +1,5 @@
 module;
 #include <GLFW/glfw3.h>
-#include "vulkan/vulkan.hpp"
 
 export module graphic:swapchain;
 import :common;
@@ -20,7 +19,9 @@ export namespace graphic::swapchain {
         const vk::SurfaceCapabilitiesKHR& capabilities,
         GLFWwindow* window
     );
-    uint32_t chooseSwapMinImageCount(const vk::SurfaceCapabilitiesKHR& surfaceCapabilities);
+    uint32_t chooseSwapMinImageCount(
+        const vk::SurfaceCapabilitiesKHR& surfaceCapabilities
+    );
 
     vk::raii::SwapchainKHR createSwapChain(
         const vk::raii::PhysicalDevice& physicalDevice,
@@ -56,7 +57,8 @@ vk::SurfaceFormatKHR graphic::swapchain::chooseSwapSurfaceFormat(
 vk::PresentModeKHR graphic::swapchain::chooseSwapPresentMode(
     const std::vector<vk::PresentModeKHR>& avaliablePresentModes
 ) {
-    for (const vk::PresentModeKHR& avaliablePresentMode : avaliablePresentModes) {
+    for (const vk::PresentModeKHR& avaliablePresentMode :
+         avaliablePresentModes) {
         if (avaliablePresentMode == vk::PresentModeKHR::eMailbox) {
             return avaliablePresentMode;
         }
@@ -69,20 +71,27 @@ vk::Extent2D graphic::swapchain::chooseSwapExtent(
     const vk::SurfaceCapabilitiesKHR& capabilities,
     GLFWwindow* window
 ) {
-    if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max()) {
+    if (capabilities.currentExtent.width !=
+        std::numeric_limits<uint32_t>::max()) {
         return capabilities.currentExtent;
     }
 
     int width, height;
     glfwGetFramebufferSize(window, &width, &height);
 
-    vk::Extent2D actualExtend{static_cast<uint32_t>(width), static_cast<uint32_t>(height)};
+    vk::Extent2D actualExtend{
+        static_cast<uint32_t>(width), static_cast<uint32_t>(height)
+    };
 
     actualExtend.width = std::clamp(
-        actualExtend.width, capabilities.minImageExtent.width, capabilities.maxImageExtent.width
+        actualExtend.width,
+        capabilities.minImageExtent.width,
+        capabilities.maxImageExtent.width
     );
     actualExtend.height = std::clamp(
-        actualExtend.height, capabilities.minImageExtent.height, capabilities.maxImageExtent.height
+        actualExtend.height,
+        capabilities.minImageExtent.height,
+        capabilities.maxImageExtent.height
     );
 
     return actualExtend;
@@ -108,15 +117,20 @@ vk::raii::SwapchainKHR graphic::swapchain::createSwapChain(
     GLFWwindow* window,
     vk::SwapchainKHR oldSwapchain
 ) {
-    graphic::QueueFamilyIndices indices = graphic::findQueueFamilies(physicalDevice, surface);
+    graphic::QueueFamilyIndices indices =
+        graphic::findQueueFamilies(physicalDevice, surface);
     graphic::SwapChainSupportDetails swapChainSupport =
         graphic::querySwapChainSupport(physicalDevice, surface);
 
-    vk::SurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
-    vk::PresentModeKHR presentMode = chooseSwapPresentMode(swapChainSupport.presentModes);
-    vk::Extent2D extent = chooseSwapExtent(swapChainSupport.capabilities, window);
+    vk::SurfaceFormatKHR surfaceFormat =
+        chooseSwapSurfaceFormat(swapChainSupport.formats);
+    vk::PresentModeKHR presentMode =
+        chooseSwapPresentMode(swapChainSupport.presentModes);
+    vk::Extent2D extent =
+        chooseSwapExtent(swapChainSupport.capabilities, window);
 
-    uint32_t imageCount = chooseSwapMinImageCount(swapChainSupport.capabilities);
+    uint32_t imageCount =
+        chooseSwapMinImageCount(swapChainSupport.capabilities);
 
     vk::SwapchainCreateInfoKHR createInfo{
         .surface = *surface,
@@ -134,7 +148,9 @@ vk::raii::SwapchainKHR graphic::swapchain::createSwapChain(
         .oldSwapchain = oldSwapchain
     };
 
-    uint32_t queueFamilyIndices[] = {indices.graphicsFamily.value(), indices.presentFamily.value()};
+    uint32_t queueFamilyIndices[] = {
+        indices.graphicsFamily.value(), indices.presentFamily.value()
+    };
 
     if (indices.graphicsFamily != indices.presentFamily) {
         createInfo.imageSharingMode = vk::SharingMode::eConcurrent;
