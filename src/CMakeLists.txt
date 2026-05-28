@@ -1,21 +1,22 @@
 include(${CMAKE_SOURCE_DIR}/cmake/VulkanModule.cmake)
 
 # shader 컴파일
-file(GLOB_RECURSE GLSL_FILES "shaders/*.vert" "shaders/*.frag" "shaders/*.comp")
+# file(GLOB_RECURSE GLSL_FILES "shaders/*.vert" "shaders/*.frag" "shaders/*.comp")
+
+# foreach(GLSL ${GLSL_FILES})
+#     get_filename_component(FILE_NAME ${GLSL} NAME)
+#     set(SPV "${CMAKE_SOURCE_DIR}/build/shaders/${FILE_NAME}.spv")
+
+#     add_custom_command(
+#         OUTPUT ${SPV}
+#         COMMAND glslc ${GLSL} -o ${SPV}
+#         DEPENDS ${GLSL}
+#     )
+
+#     list(APPEND SPV_FILES ${SPV})
+# endforeach()
+
 file(GLOB_RECURSE SLANG_FILES "shaders/*.slang")
-
-foreach(GLSL ${GLSL_FILES})
-    get_filename_component(FILE_NAME ${GLSL} NAME)
-    set(SPV "${CMAKE_SOURCE_DIR}/build/shaders/${FILE_NAME}.spv")
-
-    add_custom_command(
-        OUTPUT ${SPV}
-        COMMAND glslc ${GLSL} -o ${SPV}
-        DEPENDS ${GLSL}
-    )
-
-    list(APPEND SPV_FILES ${SPV})
-endforeach()
 
 foreach(SLANG ${SLANG_FILES})
     get_filename_component(FILE_NAME ${SLANG} NAME)

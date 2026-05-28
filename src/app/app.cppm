@@ -48,7 +48,7 @@ class app::app {
     static void beforeRender(app& obj);
     static void afterRender(app& obj);
 
-    window mainWindow;
+    Window mainWindow;
     graphic::app renderer;
     input::handler inputHandler;
 
@@ -62,12 +62,12 @@ class app::app {
     void run();
 };
 
-input::Status beforeStatus;
 void app::app::beforeRender(app& obj) {
     // TODO: impl
     // input handle
     // 구스범스바보 factos 👀
 
+    static input::Status beforeStatus = input::Status::eNone;
     input::Status status = obj.inputHandler.getKeyStatus(input::keyboard::W);
 
     if (status == beforeStatus)

@@ -1,6 +1,3 @@
-module;
-#include <lua.h>
-
 export module luau:library.test;
 import :common;
 
@@ -40,7 +37,7 @@ luau::library::test& luau::library::test::getInstance() {
 std::string luau::library::test::toMoneyFace(std::string_view original) {
     std::string moneyface = "";
 
-    for (size_t i = 0; i < original.size();) {
+    for (std::size_t i = 0; i < original.size();) {
         std::string str = utf8::index(original, i);
 
         if (specialChars.contains(str))

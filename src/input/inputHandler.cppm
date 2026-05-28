@@ -7,6 +7,8 @@ export import :keyboard;
 
 import window;
 
+import std;
+
 export namespace input {
     class handler;
 }
@@ -19,11 +21,13 @@ class input::handler {
     handler(handler&&) = delete;
     handler& operator=(handler&&) = delete;
 
-    window& window_;  // only reference
+    Window& window;
+
+    std::unordered_map<keyboard, Status> keyStatus;
 
    public:
     handler() = delete;
-    handler(window& _window) noexcept;
+    handler(Window& window_) noexcept;
     ~handler();
 
     Status getKeyStatus(keyboard key);
@@ -31,8 +35,8 @@ class input::handler {
 
 using handler = input::handler;
 
-handler::handler(window& _window) noexcept
-    : window_(_window) {
+handler::handler(Window& window_) noexcept
+    : window(window_) {
     //
 }
 
@@ -41,7 +45,7 @@ handler::~handler() {
 }
 
 input::Status handler::getKeyStatus(keyboard key) {
-    int keyStatus = glfwGetKey(*window_, getKeyboardKeyMap().at(key));
+    int keyStatus = glfwGetKey(*window, keyboardMap.getB(key));
 
     return keyStatus == GLFW_PRESS ? Status::ePress : Status::eNone;
 }

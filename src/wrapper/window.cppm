@@ -6,38 +6,38 @@ export module window;
 
 import std;
 
-export class window {
+export class Window {
    private:
-    window(const window&) = delete;
-    window& operator=(const window&) = delete;
+    Window(const Window&) = delete;
+    Window& operator=(const Window&) = delete;
 
-    window(window&&) = delete;
-    window& operator=(window&&) = delete;
+    Window(Window&&) = delete;
+    Window& operator=(Window&&) = delete;
 
-    GLFWwindow* _window;
+    GLFWwindow* window;
 
    public:
-    window(int width = 800, int height = 600)
-        : _window([&]() -> GLFWwindow* {
+    Window(int width = 800, int height = 600)
+        : window([&]() -> GLFWwindow* {
               glfwInit();
               glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
               return glfwCreateWindow(
-                  width, height, "window", nullptr, nullptr
+                  width, height, "Window", nullptr, nullptr
               );
           }()) {}
 
-    ~window() {
-        glfwDestroyWindow(_window);
+    ~Window() {
+        glfwDestroyWindow(window);
         glfwTerminate();
     }
 
-    GLFWwindow* operator*() { return _window; }
+    GLFWwindow* operator*() { return window; }
 
     std::tuple<int, int> getFramebufferSize() {
         int width, height;
 
-        glfwGetFramebufferSize(_window, &width, &height);
+        glfwGetFramebufferSize(window, &width, &height);
 
         return std::make_tuple(width, height);
     }

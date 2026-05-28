@@ -106,12 +106,12 @@ class graphic::app {
     void cleanup();
 
    public:
-    window& window_;
+    Window& window;
 
     bool framebufferResized = false;
 
-    app(window& _window)
-        : window_(_window) {
+    app(Window& window_)
+        : window(window_) {
         initWindow();
         initVulkan();
     };
@@ -230,7 +230,7 @@ void graphic::app::createInstance() {
 void graphic::app::createSurface() {
     VkSurfaceKHR _surface;
 
-    if (glfwCreateWindowSurface(*instance, *window_, nullptr, &_surface) !=
+    if (glfwCreateWindowSurface(*instance, *window, nullptr, &_surface) !=
         VK_SUCCESS)
         throw std::runtime_error("Cannot create window surface. ");
 
@@ -238,9 +238,9 @@ void graphic::app::createSurface() {
 }
 
 void graphic::app::recreateSwapchain() {
-    auto [width, height] = window_.getFramebufferSize();
+    auto [width, height] = window.getFramebufferSize();
     while (width == 0 || height == 0) {
-        std::tie(width, height) = window_.getFramebufferSize();
+        std::tie(width, height) = window.getFramebufferSize();
         glfwWaitEvents();
     }
 
@@ -249,7 +249,7 @@ void graphic::app::recreateSwapchain() {
     cleanupSwapchain();
 
     swapChain = swapchain::createSwapChain(
-        physicalDevice, device, surface, *window_, swapChain
+        physicalDevice, device, surface, *window, swapChain
     );
 
     SwapChainSupportDetails swapchainSupport =
@@ -257,7 +257,7 @@ void graphic::app::recreateSwapchain() {
     swapChainSurfaceFormat =
         swapchain::chooseSwapSurfaceFormat(swapchainSupport.formats);
     swapChainExtent =
-        swapchain::chooseSwapExtent(swapchainSupport.capabilities, *window_);
+        swapchain::chooseSwapExtent(swapchainSupport.capabilities, *window);
 
     cleanupSwapchain();
 
@@ -423,7 +423,7 @@ static void framebufferResizeCallback(
 }
 
 void graphic::app::initWindow() {
-    glfwSetFramebufferSizeCallback(*window_, framebufferResizeCallback);
+    glfwSetFramebufferSizeCallback(*window, framebufferResizeCallback);
 }
 
 void graphic::app::initVulkan() {
@@ -440,7 +440,7 @@ void graphic::app::initVulkan() {
         device::createLogicalDevice(physicalDevice, surface);
 
     swapChain =
-        swapchain::createSwapChain(physicalDevice, device, surface, *window_);
+        swapchain::createSwapChain(physicalDevice, device, surface, *window);
     swapChainImages = swapchain::createImages(device, swapChain);
 
     SwapChainSupportDetails swapchainSupport =
@@ -448,7 +448,7 @@ void graphic::app::initVulkan() {
     swapChainSurfaceFormat =
         swapchain::chooseSwapSurfaceFormat(swapchainSupport.formats);
     swapChainExtent =
-        swapchain::chooseSwapExtent(swapchainSupport.capabilities, *window_);
+        swapchain::chooseSwapExtent(swapchainSupport.capabilities, *window);
 
     swapChainImageViews = swapchain::createImageViews(
         device, swapChainImages, swapChainSurfaceFormat
@@ -541,7 +541,7 @@ void graphic::app::mainLoop(
 ) {
     logger.Log("mainLoop start", "Info");
 
-    while (!glfwWindowShouldClose(*window_)) {
+    while (!glfwWindowShouldClose(*window)) {
         glfwPollEvents();
 
         if (beforeRenderCallback)

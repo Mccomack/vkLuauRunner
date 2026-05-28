@@ -1,7 +1,6 @@
 module;
 #include <lua.h>
-#include <cstddef>
-#include "lualib.h"
+#include <lualib.h>
 
 export module luau:library.test.luau;
 import :library.test;
