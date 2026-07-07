@@ -2,15 +2,15 @@
 
 ## 목적
 
-  응용 프로그램으로 배포할 수 있는 프로그램 형식의 GUI 창 만드는 게 너무 어려움 / 느림.
-  Qt는 cpp 쓰면 만들 수 있지만 꽤 만들기 귀찮음.
-  Electron은 Chromium을 기반으로 만들어서 만들기 쉽긴 하지만 느림.
+  Electron 대체
 
 ## 필요 라이브러리
 
-  Vulkan: 그래픽 라이브러리. 설치 필요
-  LLVM clang: 빌드 툴. macOS면 homebrew 버전. 설치 필요
-  cmake: 빌드 툴. 설치 필요
+  - [Vulkan](https://vulkan.lunarg.com/sdk/home): 그래픽 라이브러리. 설치 필요
+  
+  - [LLVM clang](https://github.com/llvm/llvm-project/releases/): 빌드 툴. macOS면 homebrew 버전. 설치 필요
+  
+  - [cmake](https://cmake.org/download/): 빌드 툴. 설치 필요
 
 ## 빌드 방법
 
