@@ -38,7 +38,7 @@ class Property {
 
     template <typename U>
         requires std::convertible_to<T, U>
-    explicit operator U() const {
+    operator U() const {
         return static_cast<U>(getter ? getter(value) : value);
     }
 
