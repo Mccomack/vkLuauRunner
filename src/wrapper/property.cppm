@@ -1,6 +1,5 @@
 module;
 
-#include <concepts>
 export module property;
 
 import std;
@@ -35,12 +34,6 @@ class Property {
     }
 
     operator T() const { return getter ? getter(value) : value; }
-
-    template <typename U>
-        requires std::convertible_to<T, U>
-    operator U() const {
-        return static_cast<U>(getter ? getter(value) : value);
-    }
 
     void bindGet(std::function<T(const T& now)> func) noexcept {
         getter = func;

@@ -28,4 +28,22 @@
 
 ### Windows
 
-  아직 없음
+  필요 도구 (모두 PATH에 추가):
+
+  - [Vulkan SDK](https://vulkan.lunarg.com/sdk/home)
+
+  - [llvm-mingw](https://github.com/mstorsjo/llvm-mingw/releases): clang + libc++ + lld가 포함된 Windows용 배포판임. MSVC(`cl.exe`)는 안 써 (`-stdlib=libc++`를 프로젝트 전반에서 사용하기 때문). `LLVM_MINGW_ROOT` 환경변수로 설치 경로를 지정하거나, `bin` 폴더를 PATH에 추가해라
+
+  - [cmake](https://cmake.org/download/)
+
+  - [ninja](https://github.com/ninja-build/ninja/releases)
+
+  - [Slang](https://github.com/shader-slang/slang/releases) (`slangc`): 셰이더 컴파일러
+
+  ```powershell
+  .\build.ps1 [Debug/Release] [test]
+  .\run.ps1
+  ```
+
+  `test`:
+    테스트 빌드 설정 (`.\test.ps1`로 실행)
