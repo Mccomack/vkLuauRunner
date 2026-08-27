@@ -1,5 +1,5 @@
 module;
-#include <GLFW/glfw3.h>
+#include <SDL3/SDL.h>
 
 export module input;
 export import :common;
@@ -45,7 +45,7 @@ handler::~handler() {
 }
 
 input::Status handler::getKeyStatus(keyboard key) {
-    int keyStatus = glfwGetKey(*window, keyboardMap.getB(key));
+    const bool* keyState = SDL_GetKeyboardState(nullptr);
 
-    return keyStatus == GLFW_PRESS ? Status::ePress : Status::eNone;
+    return keyState[keyboardMap.getB(key)] ? Status::ePress : Status::eNone;
 }

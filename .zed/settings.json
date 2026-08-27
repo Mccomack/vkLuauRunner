@@ -1,0 +1,27 @@
+{
+  "edit_predictions": {
+    "allow_data_collection": "no"
+  },
+  "languages": {
+    "C++": {
+      "format_on_save": "on"
+    }
+  },
+  "lsp": {
+    "clangd": {
+      "binary": {
+        "path": "/opt/homebrew/opt/llvm/bin/clangd",
+        "arguments": [
+          "--experimental-modules-support",
+          "--background-index",
+          "--header-insertion=never"
+        ]
+      }
+    },
+    "luau-lsp": {
+      "settings": {
+        "definitions": ["./src/luau/definitions.d.luau"]
+      }
+    }
+  }
+}
