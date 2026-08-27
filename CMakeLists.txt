@@ -6,7 +6,7 @@ set(CMAKE_CXX_MODULE_STD ON)
 set(CMAKE_CXX_SCAN_FOR_MODULES ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-project(MyCpp3DGame VERSION 0.2.0)
+project(vkLuauRunner VERSION 0.2.0)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
@@ -44,12 +44,18 @@ set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(GLFW_VULKAN_STATIC OFF CACHE BOOL "" FORCE)
 
+set(SDL_SHARED OFF CACHE BOOL "" FORCE)   # static 빌드
+set(SDL_STATIC ON  CACHE BOOL "" FORCE)
+set(SDL_TEST   OFF CACHE BOOL "" FORCE)   # 테스트 제외
+set(SDL_TESTS  OFF CACHE BOOL "" FORCE)
+
 set(LUAU_BUILD_CLI OFF CACHE BOOL "" FORCE)
 set(LUAU_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(LUAU_BUILD_WEB OFF CACHE BOOL "" FORCE)
 
-# 라이브러리 
-add_subdirectory(external/glfw)
+# 라이브러리
+# add_subdirectory(external/glfw)
+add_subdirectory(external/SDL)
 add_subdirectory(external/luau)
 add_subdirectory(external/googletest)
 

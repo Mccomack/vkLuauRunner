@@ -42,6 +42,7 @@ target_compile_definitions(program_test PRIVATE
 target_include_directories(program_test PRIVATE
     ${CMAKE_SOURCE_DIR}/external/json/include
     ${CMAKE_SOURCE_DIR}/external/glfw/include
+    ${CMAKE_SOURCE_DIR}/external/SDL/include
     ${CMAKE_SOURCE_DIR}/external/glm
     ${CMAKE_SOURCE_DIR}/external/luau/VM/include
     ${CMAKE_SOURCE_DIR}/external/luau/Compiler/include
@@ -58,6 +59,7 @@ target_link_libraries(program_test PRIVATE
     VulkanModule
 
     glfw
+    SDL3::SDL3-static
 
     Luau.VM
     Luau.Compiler

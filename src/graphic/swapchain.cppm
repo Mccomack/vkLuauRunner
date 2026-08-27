@@ -1,8 +1,10 @@
 module;
-#include <GLFW/glfw3.h>
+#include <cstdint>
 
 export module graphic:swapchain;
 import :common;
+
+import window;
 
 import std;
 
@@ -17,7 +19,7 @@ export namespace graphic::swapchain {
     );
     vk::Extent2D chooseSwapExtent(
         const vk::SurfaceCapabilitiesKHR& capabilities,
-        GLFWwindow* window
+        const Window& window
     );
     uint32_t chooseSwapMinImageCount(
         const vk::SurfaceCapabilitiesKHR& surfaceCapabilities
@@ -27,7 +29,7 @@ export namespace graphic::swapchain {
         const vk::raii::PhysicalDevice& physicalDevice,
         const vk::raii::Device& device,
         const vk::raii::SurfaceKHR& surface,
-        GLFWwindow* window,
+        const Window& window,
         vk::SwapchainKHR oldSwapchain = nullptr
     );
     std::vector<vk::Image> createImages(
@@ -69,15 +71,14 @@ vk::PresentModeKHR graphic::swapchain::chooseSwapPresentMode(
 
 vk::Extent2D graphic::swapchain::chooseSwapExtent(
     const vk::SurfaceCapabilitiesKHR& capabilities,
-    GLFWwindow* window
+    const Window& window
 ) {
     if (capabilities.currentExtent.width !=
         std::numeric_limits<uint32_t>::max()) {
         return capabilities.currentExtent;
     }
 
-    int width, height;
-    glfwGetFramebufferSize(window, &width, &height);
+    auto [width, height] = window.getFramebufferSize();
 
     vk::Extent2D actualExtend{
         static_cast<uint32_t>(width), static_cast<uint32_t>(height)
@@ -100,7 +101,7 @@ vk::Extent2D graphic::swapchain::chooseSwapExtent(
 uint32_t graphic::swapchain::chooseSwapMinImageCount(
     const vk::SurfaceCapabilitiesKHR& surfaceCapabilities
 ) {
-    auto minImageCount = std::max(3u, surfaceCapabilities.minImageCount);
+    uint32_t minImageCount = std::max(3u, surfaceCapabilities.minImageCount);
 
     if ((0 < surfaceCapabilities.maxImageCount) &&
         (surfaceCapabilities.maxImageCount < minImageCount)) {
@@ -114,7 +115,7 @@ vk::raii::SwapchainKHR graphic::swapchain::createSwapChain(
     const vk::raii::PhysicalDevice& physicalDevice,
     const vk::raii::Device& device,
     const vk::raii::SurfaceKHR& surface,
-    GLFWwindow* window,
+    const Window& window,
     vk::SwapchainKHR oldSwapchain
 ) {
     graphic::QueueFamilyIndices indices =

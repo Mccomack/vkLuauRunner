@@ -1,4 +1,5 @@
 include(${CMAKE_SOURCE_DIR}/cmake/VulkanModule.cmake)
+include(${CMAKE_SOURCE_DIR}/cmake/MacOSBundle.cmake)
 
 # shader 컴파일
 # file(GLOB_RECURSE GLSL_FILES "shaders/*.vert" "shaders/*.frag" "shaders/*.comp")
@@ -81,9 +82,10 @@ target_compile_definitions(program PRIVATE
     VULKAN_HPP_CPPM_MODULE
 )
 
-target_include_directories(program PRIVATE 
+target_include_directories(program PRIVATE
     ${CMAKE_SOURCE_DIR}/external/json/include
     ${CMAKE_SOURCE_DIR}/external/glfw/include
+    ${CMAKE_SOURCE_DIR}/external/SDL/include
     ${CMAKE_SOURCE_DIR}/external/glm
     ${CMAKE_SOURCE_DIR}/external/luau/VM/include
     ${CMAKE_SOURCE_DIR}/external/luau/Compiler/include
@@ -95,19 +97,20 @@ target_include_directories(program PRIVATE
 
 target_compile_features(program PRIVATE cxx_std_23)
 
-target_link_libraries(program PRIVATE 
+target_link_libraries(program PRIVATE
     Vulkan::Vulkan
     VulkanModule
 
     glfw
-    
+    SDL3::SDL3-static
+
     Luau.VM
     Luau.Compiler
     Luau.CodeGen
 )
 
-target_compile_options(program PRIVATE 
-    -stdlib=libc++ 
+target_compile_options(program PRIVATE
+    -stdlib=libc++
     # $<$<CXX_COMPILER_ID:GNU>:-fmodules-ts>
     # $<$<CXX_COMPILER_ID:Clang>:-fmodules>
     # $<$<CXX_COMPILER_ID:MSVC>:/experimental:module>
