@@ -1,4 +1,5 @@
 module;
+#include <SDL3/SDL.h>
 
 export module app;
 import window;
@@ -45,6 +46,7 @@ void afterInit() {
 
 class app::app {
    private:
+    bool quit;
     static void beforeRender(app& obj);
     static void afterRender(app& obj);
 
@@ -82,8 +84,29 @@ void app::app::afterRender(app& obj) {
 }
 
 void app::app::run() {
-    renderer.run(
-        [this]() -> void { beforeRender(*this); },
-        [this]() -> void { afterRender(*this); }
-    );
+    bool quit = false;
+    SDL_Event e;
+
+    while (!quit) {
+        beforeRender(*this);
+
+        while (SDL_PollEvent(&e)) {
+            switch (e.type) {
+                case SDL_EVENT_QUIT:
+                    quit = true;
+                    break;
+                case SDL_EVENT_WINDOW_RESIZED:
+                case SDL_EVENT_WINDOW_MINIMIZED:
+                case SDL_EVENT_WINDOW_RESTORED:
+                    renderer.framebufferResized = true;
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        renderer.drawFrame();
+
+        afterRender(*this);
+    }
 }

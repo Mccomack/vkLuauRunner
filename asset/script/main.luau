@@ -14,11 +14,11 @@ print(
     xpcall(
         function(v1, v2)
             assert(add(v1, v2) == -1, "asdf")
-        end, 
+        end,
         function(...)
             print(...)
             return true
-        end, 
+        end,
         2, 3
     )
 )
@@ -71,7 +71,7 @@ print(test.toMoneyFace(12134))
 --                 str ..= `[{i}]: {v}\t{typeof(v)}`
 --             end
 --         end
-        
+
 
 --         print(str)
 --     end
@@ -83,3 +83,4 @@ print(test.toMoneyFace(12134))
 
 -- printTable(_G, false, "_G", 0)
 
+print(printSecurityLevel())

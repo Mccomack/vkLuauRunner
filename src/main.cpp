@@ -1,7 +1,7 @@
 #define EXIT_SUCCESS 0
 #define EXIT_FAILURE 1
 
-#include <GLFW/glfw3.h>
+// #include <GLFW/glfw3.h>
 
 import std;
 import osinfo;

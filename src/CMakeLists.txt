@@ -101,7 +101,7 @@ target_link_libraries(program PRIVATE
     Vulkan::Vulkan
     VulkanModule
 
-    glfw
+    # glfw
     SDL3::SDL3-static
 
     Luau.VM
@@ -118,3 +118,7 @@ target_compile_options(program PRIVATE
     $<$<AND:$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>,$<CONFIG:Debug>>:-g -O0>
     $<$<AND:$<CXX_COMPILER_ID:MSVC>,$<CONFIG:Debug>>:/Zi /Od>
 )
+
+if(BUILD_BUNDLE)
+    macos_bundle_app(program)
+endif()

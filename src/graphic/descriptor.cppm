@@ -1,4 +1,5 @@
 module;
+#include <cstddef>
 #include <cstdint>
 
 export module graphic:descriptor;

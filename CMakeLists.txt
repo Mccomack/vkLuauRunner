@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.30)
 set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "f35a9ac6-8463-4d38-8eec-5d6008153e7d")
 set(CMAKE_CXX_MODULE_STD ON)
 
-set(CMAKE_CXX_SCAN_FOR_MODULES ON)
+# set(CMAKE_CXX_SCAN_FOR_MODULES ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 project(vkLuauRunner VERSION 0.2.0)
@@ -16,6 +16,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 find_package(Git QUIET)
 if(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
     option(GIT_SUBMODULE "Check submodules during build" ON)
+
     if(GIT_SUBMODULE)
         message(STATUS "Submodule update")
         execute_process(
@@ -39,10 +40,10 @@ if(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
 endif()
 
 # 외부 라이브러리 설정
-set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
-set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-set(GLFW_VULKAN_STATIC OFF CACHE BOOL "" FORCE)
+# set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+# set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+# set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+# set(GLFW_VULKAN_STATIC OFF CACHE BOOL "" FORCE)
 
 set(SDL_SHARED OFF CACHE BOOL "" FORCE)   # static 빌드
 set(SDL_STATIC ON  CACHE BOOL "" FORCE)
@@ -59,7 +60,37 @@ add_subdirectory(external/SDL)
 add_subdirectory(external/luau)
 add_subdirectory(external/googletest)
 
+foreach(t SDL3-static SDL3_test)
+    if(TARGET ${t})
+        set_target_properties(${t} PROPERTIES
+            CXX_SCAN_FOR_MODULES OFF
+            CXX_MODULE_STD OFF
+        )
+    endif()
+endforeach()
+
+set(LUAU_TARGETS
+    Luau.Common Luau.Ast Luau.Bytecode Luau.Compiler
+    Luau.Config Luau.Analysis Luau.CodeGen Luau.VM
+    Luau.Require Luau.Inliner Luau.CLI.lib
+)
+foreach(t ${LUAU_TARGETS})
+    if(TARGET ${t})
+        set_target_properties(${t} PROPERTIES
+            CXX_STANDARD 17
+            CXX_STANDARD_REQUIRED ON
+            CXX_SCAN_FOR_MODULES OFF
+            CXX_MODULE_STD OFF
+        )
+
+        target_compile_options(${t} PRIVATE
+            -include "${CMAKE_SOURCE_DIR}/cmake/luau_header_patch.h"
+        )
+    endif()
+endforeach()
+
 # 메인
+option(BUILD_BUNDLE "Build macOS .app bundle" OFF)
 add_subdirectory(src)
 
 option(BUILD_TEST "Build test" ON)
