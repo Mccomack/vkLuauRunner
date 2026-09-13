@@ -10,9 +10,9 @@ export namespace project {
 
     std::string version = APP_VERSION;
 
-    uint8_t versionMajor = APP_VERSION_MAJOR;
-    uint8_t versionMinor = APP_VERSION_MINOR;
-    uint8_t versionPatch = APP_VERSION_PATCH;
+    constexpr uint8_t versionMajor = APP_VERSION_MAJOR;
+    constexpr uint8_t versionMinor = APP_VERSION_MINOR;
+    constexpr uint8_t versionPatch = APP_VERSION_PATCH;
 
     std::string gitHash = GIT_HASH;
 

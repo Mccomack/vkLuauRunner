@@ -124,9 +124,9 @@ void graphic::app::createInstance() {
 
     constexpr vk::ApplicationInfo appInfo{
         .pApplicationName = "Hello Quadrangle",
-        .applicationVersion = VK_MAKE_VERSION(1, 0, 0),
+        .applicationVersion = vk::makeVersion(1, 0, 0),
         .pEngineName = "No Engine",
-        .engineVersion = VK_MAKE_VERSION(
+        .engineVersion = vk::makeVersion(
             project::versionMajor, project::versionMinor, project::versionPatch
         ),
         .apiVersion = vk::ApiVersion14
@@ -218,7 +218,7 @@ void graphic::app::createInstance() {
 void graphic::app::recreateSwapchain() {
     auto [width, height] = window.getFramebufferSize();
     while (width == 0 || height == 0) {
-        glfwWaitEvents();
+        device.waitIdle();
         std::tie(width, height) = window.getFramebufferSize();
     }
 

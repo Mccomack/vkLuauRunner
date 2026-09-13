@@ -1,5 +1,5 @@
 module;
-#include <GLFW/glfw3.h>
+// #include <GLFW/glfw3.h>
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_vulkan.h>
 #include <cstddef>
@@ -11,15 +11,18 @@ import vulkan;
 
 export class Window {
    private:
+    // 복사생성자 금지
     Window(const Window&) = delete;
     Window& operator=(const Window&) = delete;
 
     Window(Window&&) = delete;
     Window& operator=(Window&&) = delete;
 
+    // free windows 🤑🤑🤑
     SDL_Window* window;
 
    public:
+    // 창 생성하는 거. 앱 만드는 게 아니라서 여러 개 있어도 문제 없을 듯?
     Window(int width = 800, int height = 600)
         : window([&]() -> SDL_Window* {
               SDL_Init(SDL_INIT_VIDEO);
@@ -37,6 +40,7 @@ export class Window {
               return window_;
           }()) {}
 
+    // 홍명보당한 경우
     ~Window() {
         if (!window)
             return;
@@ -45,6 +49,7 @@ export class Window {
         SDL_Quit();
     }
 
+    // pointer 관련 편의성 함수. SDL_Window* 반환
     SDL_Window* operator*() const { return window; }
     operator SDL_Window*() const { return window; }
 
