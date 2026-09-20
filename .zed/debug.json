@@ -1,0 +1,14 @@
+[
+    {
+        "label": "LLDB Debug",
+        "request": "launch",
+        "program": "./build/current/src/program",
+        "args": [],
+        "cwd": "./runtest",
+        "build": {
+          "command": "./build.sh debug",
+          "cwd": "$ZED_WORKTREE_ROOT"
+        },
+        "adapter": "CodeLLDB"
+    }
+]

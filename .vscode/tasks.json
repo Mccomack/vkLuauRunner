@@ -4,7 +4,7 @@
         {
             "label": "cmake-build-debug",
             "type": "shell",
-            "command": "${workspaceFolder}/build.sh Debug && xattr -cr ${workspaceFolder}/build/Debug/program && mkdir -p ${workspaceFolder}/runtest",
+            "command": "${workspaceFolder}/build.sh Debug && xattr -cr ${workspaceFolder}/build/current/src/program && mkdir -p ${workspaceFolder}/runtest",
             "group": "build",
             "presentation": {
                 "reveal": "always",

@@ -1,4 +1,5 @@
 module;
+#include <SDL3/SDL.h>
 
 export module app;
 import window;
@@ -45,6 +46,7 @@ void afterInit() {
 
 class app::app {
    private:
+    bool quit;
     static void beforeRender(app& obj);
     static void afterRender(app& obj);
 
@@ -82,8 +84,39 @@ void app::app::afterRender(app& obj) {
 }
 
 void app::app::run() {
-    renderer.run(
-        [this]() -> void { beforeRender(*this); },
-        [this]() -> void { afterRender(*this); }
-    );
+    bool quit = false;
+    SDL_Event e;
+
+    while (!quit) {
+        beforeRender(*this);
+
+        while (SDL_PollEvent(&e)) {
+            switch (e.type) {
+                case SDL_EVENT_QUIT:
+                    quit = true;
+                    break;
+                case SDL_EVENT_WINDOW_RESIZED:
+                    mainWindow.setFinalSize(e.window.data1, e.window.data2);
+                    break;
+                case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
+                    mainWindow.setPixelSize(e.window.data1, e.window.data2);
+                    break;
+                case SDL_EVENT_WINDOW_MINIMIZED:
+                    mainWindow.setMinimizedFlag(true);
+                    break;
+                case SDL_EVENT_WINDOW_RESTORED:
+                    mainWindow.setMinimizedFlag(false);
+                    break;
+                default:
+                    logger.Debugf(
+                        "SDL Event didn't handled. event type: {}", e.type
+                    );
+                    break;
+            }
+        }
+
+        renderer.drawFrame();
+
+        afterRender(*this);
+    }
 }

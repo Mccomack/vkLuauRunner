@@ -1,113 +1,114 @@
 module;
-#include <GLFW/glfw3.h>
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_scancode.h>
 
-#define KEYBOARD_KEYS \
-    X(Unknown)        \
-    X(Space)          \
-    X(Apostrophe)     \
-    X(Comma)          \
-    X(Minus)          \
-    X(Period)         \
-    X(Slash)          \
-    X(Num0)           \
-    X(Num1)           \
-    X(Num2)           \
-    X(Num3)           \
-    X(Num4)           \
-    X(Num5)           \
-    X(Num6)           \
-    X(Num7)           \
-    X(Num8)           \
-    X(Num9)           \
-    X(Semicolon)      \
-    X(Equal)          \
-    X(A)              \
-    X(B)              \
-    X(C)              \
-    X(D)              \
-    X(E)              \
-    X(F)              \
-    X(G)              \
-    X(H)              \
-    X(I)              \
-    X(J)              \
-    X(K)              \
-    X(L)              \
-    X(M)              \
-    X(N)              \
-    X(O)              \
-    X(P)              \
-    X(Q)              \
-    X(R)              \
-    X(S)              \
-    X(T)              \
-    X(U)              \
-    X(V)              \
-    X(W)              \
-    X(X)              \
-    X(Y)              \
-    X(Z)              \
-    X(LeftBracket)    \
-    X(Backslash)      \
-    X(RightBracket)   \
-    X(GraveAccent)    \
-    X(Escape)         \
-    X(Enter)          \
-    X(Tab)            \
-    X(Backspace)      \
-    X(Insert)         \
-    X(Delete)         \
-    X(ArrowRight)     \
-    X(ArrowLeft)      \
-    X(ArrowDown)      \
-    X(ArrowUp)        \
-    X(PageUp)         \
-    X(PageDown)       \
-    X(Home)           \
-    X(End)            \
-    X(CapsLock)       \
-    X(ScrollLock)     \
-    X(NumLock)        \
-    X(PrintScreen)    \
-    X(Pause)          \
-    X(F1)             \
-    X(F2)             \
-    X(F3)             \
-    X(F4)             \
-    X(F5)             \
-    X(F6)             \
-    X(F7)             \
-    X(F8)             \
-    X(F9)             \
-    X(F10)            \
-    X(F11)            \
-    X(F12)            \
-    X(NumPad0)        \
-    X(NumPad1)        \
-    X(NumPad2)        \
-    X(NumPad3)        \
-    X(NumPad4)        \
-    X(NumPad5)        \
-    X(NumPad6)        \
-    X(NumPad7)        \
-    X(NumPad8)        \
-    X(NumPad9)        \
-    X(NumPadDecimal)  \
-    X(NumPadDivide)   \
-    X(NumPadMultiply) \
-    X(NumPadSubtract) \
-    X(NumPadAdd)      \
-    X(NumPadEnter)    \
-    X(NumPadEqual)    \
-    X(LeftShift)      \
-    X(LeftControl)    \
-    X(LeftAlt)        \
-    X(LeftSuper)      \
-    X(RightShift)     \
-    X(RightControl)   \
-    X(RightAlt)       \
-    X(RightSuper)     \
-    X(Menu)
+#define KEYBOARD_KEYS                           \
+    X(Unknown, SDL_SCANCODE_UNKNOWN)            \
+    X(Space, SDL_SCANCODE_SPACE)                \
+    X(Apostrophe, SDL_SCANCODE_APOSTROPHE)      \
+    X(Comma, SDL_SCANCODE_COMMA)                \
+    X(Minus, SDL_SCANCODE_MINUS)                \
+    X(Period, SDL_SCANCODE_PERIOD)              \
+    X(Slash, SDL_SCANCODE_SLASH)                \
+    X(Num0, SDL_SCANCODE_0)                     \
+    X(Num1, SDL_SCANCODE_1)                     \
+    X(Num2, SDL_SCANCODE_2)                     \
+    X(Num3, SDL_SCANCODE_3)                     \
+    X(Num4, SDL_SCANCODE_4)                     \
+    X(Num5, SDL_SCANCODE_5)                     \
+    X(Num6, SDL_SCANCODE_6)                     \
+    X(Num7, SDL_SCANCODE_7)                     \
+    X(Num8, SDL_SCANCODE_8)                     \
+    X(Num9, SDL_SCANCODE_9)                     \
+    X(Semicolon, SDL_SCANCODE_SEMICOLON)        \
+    X(Equal, SDL_SCANCODE_EQUALS)               \
+    X(A, SDL_SCANCODE_A)                        \
+    X(B, SDL_SCANCODE_B)                        \
+    X(C, SDL_SCANCODE_C)                        \
+    X(D, SDL_SCANCODE_D)                        \
+    X(E, SDL_SCANCODE_E)                        \
+    X(F, SDL_SCANCODE_F)                        \
+    X(G, SDL_SCANCODE_G)                        \
+    X(H, SDL_SCANCODE_H)                        \
+    X(I, SDL_SCANCODE_I)                        \
+    X(J, SDL_SCANCODE_J)                        \
+    X(K, SDL_SCANCODE_K)                        \
+    X(L, SDL_SCANCODE_L)                        \
+    X(M, SDL_SCANCODE_M)                        \
+    X(N, SDL_SCANCODE_N)                        \
+    X(O, SDL_SCANCODE_O)                        \
+    X(P, SDL_SCANCODE_P)                        \
+    X(Q, SDL_SCANCODE_Q)                        \
+    X(R, SDL_SCANCODE_R)                        \
+    X(S, SDL_SCANCODE_S)                        \
+    X(T, SDL_SCANCODE_T)                        \
+    X(U, SDL_SCANCODE_U)                        \
+    X(V, SDL_SCANCODE_V)                        \
+    X(W, SDL_SCANCODE_W)                        \
+    X(X, SDL_SCANCODE_X)                        \
+    X(Y, SDL_SCANCODE_Y)                        \
+    X(Z, SDL_SCANCODE_Z)                        \
+    X(LeftBracket, SDL_SCANCODE_LEFTBRACKET)    \
+    X(Backslash, SDL_SCANCODE_BACKSLASH)        \
+    X(RightBracket, SDL_SCANCODE_RIGHTBRACKET)  \
+    X(GraveAccent, SDL_SCANCODE_GRAVE)          \
+    X(Escape, SDL_SCANCODE_ESCAPE)              \
+    X(Enter, SDL_SCANCODE_RETURN)               \
+    X(Tab, SDL_SCANCODE_TAB)                    \
+    X(Backspace, SDL_SCANCODE_BACKSPACE)        \
+    X(Insert, SDL_SCANCODE_INSERT)              \
+    X(Delete, SDL_SCANCODE_DELETE)              \
+    X(ArrowRight, SDL_SCANCODE_RIGHT)           \
+    X(ArrowLeft, SDL_SCANCODE_LEFT)             \
+    X(ArrowDown, SDL_SCANCODE_DOWN)             \
+    X(ArrowUp, SDL_SCANCODE_UP)                 \
+    X(PageUp, SDL_SCANCODE_PAGEUP)              \
+    X(PageDown, SDL_SCANCODE_PAGEDOWN)          \
+    X(Home, SDL_SCANCODE_HOME)                  \
+    X(End, SDL_SCANCODE_END)                    \
+    X(CapsLock, SDL_SCANCODE_CAPSLOCK)          \
+    X(ScrollLock, SDL_SCANCODE_SCROLLLOCK)      \
+    X(NumLock, SDL_SCANCODE_NUMLOCKCLEAR)       \
+    X(PrintScreen, SDL_SCANCODE_PRINTSCREEN)    \
+    X(Pause, SDL_SCANCODE_PAUSE)                \
+    X(F1, SDL_SCANCODE_F1)                      \
+    X(F2, SDL_SCANCODE_F2)                      \
+    X(F3, SDL_SCANCODE_F3)                      \
+    X(F4, SDL_SCANCODE_F4)                      \
+    X(F5, SDL_SCANCODE_F5)                      \
+    X(F6, SDL_SCANCODE_F6)                      \
+    X(F7, SDL_SCANCODE_F7)                      \
+    X(F8, SDL_SCANCODE_F8)                      \
+    X(F9, SDL_SCANCODE_F9)                      \
+    X(F10, SDL_SCANCODE_F10)                    \
+    X(F11, SDL_SCANCODE_F11)                    \
+    X(F12, SDL_SCANCODE_F12)                    \
+    X(NumPad0, SDL_SCANCODE_KP_0)               \
+    X(NumPad1, SDL_SCANCODE_KP_1)               \
+    X(NumPad2, SDL_SCANCODE_KP_2)               \
+    X(NumPad3, SDL_SCANCODE_KP_3)               \
+    X(NumPad4, SDL_SCANCODE_KP_4)               \
+    X(NumPad5, SDL_SCANCODE_KP_5)               \
+    X(NumPad6, SDL_SCANCODE_KP_6)               \
+    X(NumPad7, SDL_SCANCODE_KP_7)               \
+    X(NumPad8, SDL_SCANCODE_KP_8)               \
+    X(NumPad9, SDL_SCANCODE_KP_9)               \
+    X(NumPadDecimal, SDL_SCANCODE_KP_DECIMAL)   \
+    X(NumPadDivide, SDL_SCANCODE_KP_DIVIDE)     \
+    X(NumPadMultiply, SDL_SCANCODE_KP_MULTIPLY) \
+    X(NumPadSubtract, SDL_SCANCODE_KP_MINUS)    \
+    X(NumPadAdd, SDL_SCANCODE_KP_PLUS)          \
+    X(NumPadEnter, SDL_SCANCODE_KP_ENTER)       \
+    X(NumPadEqual, SDL_SCANCODE_KP_EQUALS)      \
+    X(LeftShift, SDL_SCANCODE_LSHIFT)           \
+    X(LeftControl, SDL_SCANCODE_LCTRL)          \
+    X(LeftAlt, SDL_SCANCODE_LALT)               \
+    X(LeftSuper, SDL_SCANCODE_LGUI)             \
+    X(RightShift, SDL_SCANCODE_RSHIFT)          \
+    X(RightControl, SDL_SCANCODE_RCTRL)         \
+    X(RightAlt, SDL_SCANCODE_RALT)              \
+    X(RightSuper, SDL_SCANCODE_RGUI)            \
+    X(Menu, SDL_SCANCODE_MENU)
 
 export module input:keyboard;
 
@@ -116,122 +117,39 @@ import bimap;
 import std;
 
 namespace input {
-#define X(key) key,
-    export enum keyboard { KEYBOARD_KEYS };
+#define X(key, scancode) key,
+    export enum keyboard { KEYBOARD_KEYS Count };
 #undef X
 
-    bimap<input::keyboard, int> keyboardMap;
+    inline constexpr auto keyToScancode = []() {
+        std::array<SDL_Scancode, static_cast<size_t>(keyboard::Count)> arr{};
+#define X(key, scancode) arr[static_cast<size_t>(keyboard::key)] = scancode;
+        KEYBOARD_KEYS
+#undef X
+        return arr;
+    }();
+
+    inline constexpr auto scancodeToKey = []() {
+        std::array<keyboard, SDL_SCANCODE_COUNT> arr{};
+        arr.fill(keyboard::Unknown);
+#define X(key, scancode) arr[static_cast<size_t>(scancode)] = keyboard::key;
+        KEYBOARD_KEYS
+#undef X
+        return arr;
+    }();
+
+    constexpr SDL_Scancode toScancode(keyboard key) {
+        return keyToScancode[static_cast<size_t>(key)];
+    }
+
+    constexpr keyboard fromScancode(SDL_Scancode sc) {
+        return scancodeToKey[static_cast<size_t>(sc)];
+    }
+
+    bool isKeyPressed(input::keyboard key);
 }
 
-static int _ = []() -> int {
-    // clang-format off
-    input::keyboardMap.insert(input::keyboard::Unknown, GLFW_KEY_UNKNOWN);
-    input::keyboardMap.insert(input::keyboard::Space, GLFW_KEY_SPACE);
-    input::keyboardMap.insert(input::keyboard::Apostrophe, GLFW_KEY_APOSTROPHE);
-    input::keyboardMap.insert(input::keyboard::Comma, GLFW_KEY_COMMA);
-    input::keyboardMap.insert(input::keyboard::Minus, GLFW_KEY_MINUS);
-    input::keyboardMap.insert(input::keyboard::Period, GLFW_KEY_PERIOD);
-    input::keyboardMap.insert(input::keyboard::Slash, GLFW_KEY_SLASH);
-    input::keyboardMap.insert(input::keyboard::Num0, GLFW_KEY_0);
-    input::keyboardMap.insert(input::keyboard::Num1, GLFW_KEY_1);
-    input::keyboardMap.insert(input::keyboard::Num2, GLFW_KEY_2);
-    input::keyboardMap.insert(input::keyboard::Num3, GLFW_KEY_3);
-    input::keyboardMap.insert(input::keyboard::Num4, GLFW_KEY_4);
-    input::keyboardMap.insert(input::keyboard::Num5, GLFW_KEY_5);
-    input::keyboardMap.insert(input::keyboard::Num6, GLFW_KEY_6);
-    input::keyboardMap.insert(input::keyboard::Num7, GLFW_KEY_7);
-    input::keyboardMap.insert(input::keyboard::Num8, GLFW_KEY_8);
-    input::keyboardMap.insert(input::keyboard::Num9, GLFW_KEY_9);
-    input::keyboardMap.insert(input::keyboard::Semicolon, GLFW_KEY_SEMICOLON);
-    input::keyboardMap.insert(input::keyboard::Equal, GLFW_KEY_EQUAL);
-    input::keyboardMap.insert(input::keyboard::A, GLFW_KEY_A);
-    input::keyboardMap.insert(input::keyboard::B, GLFW_KEY_B);
-    input::keyboardMap.insert(input::keyboard::C, GLFW_KEY_C);
-    input::keyboardMap.insert(input::keyboard::D, GLFW_KEY_D);
-    input::keyboardMap.insert(input::keyboard::E, GLFW_KEY_E);
-    input::keyboardMap.insert(input::keyboard::F, GLFW_KEY_F);
-    input::keyboardMap.insert(input::keyboard::G, GLFW_KEY_G);
-    input::keyboardMap.insert(input::keyboard::H, GLFW_KEY_H);
-    input::keyboardMap.insert(input::keyboard::I, GLFW_KEY_I);
-    input::keyboardMap.insert(input::keyboard::J, GLFW_KEY_J);
-    input::keyboardMap.insert(input::keyboard::K, GLFW_KEY_K);
-    input::keyboardMap.insert(input::keyboard::L, GLFW_KEY_L);
-    input::keyboardMap.insert(input::keyboard::M, GLFW_KEY_M);
-    input::keyboardMap.insert(input::keyboard::N, GLFW_KEY_N);
-    input::keyboardMap.insert(input::keyboard::O, GLFW_KEY_O);
-    input::keyboardMap.insert(input::keyboard::P, GLFW_KEY_P);
-    input::keyboardMap.insert(input::keyboard::Q, GLFW_KEY_Q);
-    input::keyboardMap.insert(input::keyboard::R, GLFW_KEY_R);
-    input::keyboardMap.insert(input::keyboard::S, GLFW_KEY_S);
-    input::keyboardMap.insert(input::keyboard::T, GLFW_KEY_T);
-    input::keyboardMap.insert(input::keyboard::U, GLFW_KEY_U);
-    input::keyboardMap.insert(input::keyboard::V, GLFW_KEY_V);
-    input::keyboardMap.insert(input::keyboard::W, GLFW_KEY_W);
-    input::keyboardMap.insert(input::keyboard::X, GLFW_KEY_X);
-    input::keyboardMap.insert(input::keyboard::Y, GLFW_KEY_Y);
-    input::keyboardMap.insert(input::keyboard::Z, GLFW_KEY_Z);
-    input::keyboardMap.insert(input::keyboard::LeftBracket, GLFW_KEY_LEFT_BRACKET);
-    input::keyboardMap.insert(input::keyboard::Backslash, GLFW_KEY_BACKSLASH);
-    input::keyboardMap.insert(input::keyboard::RightBracket, GLFW_KEY_RIGHT_BRACKET);
-    input::keyboardMap.insert(input::keyboard::GraveAccent, GLFW_KEY_GRAVE_ACCENT);
-    input::keyboardMap.insert(input::keyboard::Escape, GLFW_KEY_ESCAPE);
-    input::keyboardMap.insert(input::keyboard::Enter, GLFW_KEY_ENTER);
-    input::keyboardMap.insert(input::keyboard::Tab, GLFW_KEY_TAB);
-    input::keyboardMap.insert(input::keyboard::Backspace, GLFW_KEY_BACKSPACE);
-    input::keyboardMap.insert(input::keyboard::Insert, GLFW_KEY_INSERT);
-    input::keyboardMap.insert(input::keyboard::Delete, GLFW_KEY_DELETE);
-    input::keyboardMap.insert(input::keyboard::ArrowRight, GLFW_KEY_RIGHT);
-    input::keyboardMap.insert(input::keyboard::ArrowLeft, GLFW_KEY_LEFT);
-    input::keyboardMap.insert(input::keyboard::ArrowDown, GLFW_KEY_DOWN);
-    input::keyboardMap.insert(input::keyboard::ArrowUp, GLFW_KEY_UP);
-    input::keyboardMap.insert(input::keyboard::PageUp, GLFW_KEY_PAGE_UP);
-    input::keyboardMap.insert(input::keyboard::PageDown, GLFW_KEY_PAGE_DOWN);
-    input::keyboardMap.insert(input::keyboard::Home, GLFW_KEY_HOME);
-    input::keyboardMap.insert(input::keyboard::End, GLFW_KEY_END);
-    input::keyboardMap.insert(input::keyboard::CapsLock, GLFW_KEY_CAPS_LOCK);
-    input::keyboardMap.insert(input::keyboard::ScrollLock, GLFW_KEY_SCROLL_LOCK);
-    input::keyboardMap.insert(input::keyboard::NumLock, GLFW_KEY_NUM_LOCK);
-    input::keyboardMap.insert(input::keyboard::PrintScreen, GLFW_KEY_PRINT_SCREEN);
-    input::keyboardMap.insert(input::keyboard::Pause, GLFW_KEY_PAUSE);
-    input::keyboardMap.insert(input::keyboard::F1, GLFW_KEY_F1);
-    input::keyboardMap.insert(input::keyboard::F2, GLFW_KEY_F2);
-    input::keyboardMap.insert(input::keyboard::F3, GLFW_KEY_F3);
-    input::keyboardMap.insert(input::keyboard::F4, GLFW_KEY_F4);
-    input::keyboardMap.insert(input::keyboard::F5, GLFW_KEY_F5);
-    input::keyboardMap.insert(input::keyboard::F6, GLFW_KEY_F6);
-    input::keyboardMap.insert(input::keyboard::F7, GLFW_KEY_F7);
-    input::keyboardMap.insert(input::keyboard::F8, GLFW_KEY_F8);
-    input::keyboardMap.insert(input::keyboard::F9, GLFW_KEY_F9);
-    input::keyboardMap.insert(input::keyboard::F10, GLFW_KEY_F10);
-    input::keyboardMap.insert(input::keyboard::F11, GLFW_KEY_F11);
-    input::keyboardMap.insert(input::keyboard::F12, GLFW_KEY_F12);
-    input::keyboardMap.insert(input::keyboard::NumPad0, GLFW_KEY_KP_0);
-    input::keyboardMap.insert(input::keyboard::NumPad1, GLFW_KEY_KP_1);
-    input::keyboardMap.insert(input::keyboard::NumPad2, GLFW_KEY_KP_2);
-    input::keyboardMap.insert(input::keyboard::NumPad3, GLFW_KEY_KP_3);
-    input::keyboardMap.insert(input::keyboard::NumPad4, GLFW_KEY_KP_4);
-    input::keyboardMap.insert(input::keyboard::NumPad5, GLFW_KEY_KP_5);
-    input::keyboardMap.insert(input::keyboard::NumPad6, GLFW_KEY_KP_6);
-    input::keyboardMap.insert(input::keyboard::NumPad7, GLFW_KEY_KP_7);
-    input::keyboardMap.insert(input::keyboard::NumPad8, GLFW_KEY_KP_8);
-    input::keyboardMap.insert(input::keyboard::NumPad9, GLFW_KEY_KP_9);
-    input::keyboardMap.insert(input::keyboard::NumPadDecimal, GLFW_KEY_KP_DECIMAL);
-    input::keyboardMap.insert(input::keyboard::NumPadDivide, GLFW_KEY_KP_DIVIDE);
-    input::keyboardMap.insert(input::keyboard::NumPadMultiply, GLFW_KEY_KP_MULTIPLY);
-    input::keyboardMap.insert(input::keyboard::NumPadSubtract, GLFW_KEY_KP_SUBTRACT);
-    input::keyboardMap.insert(input::keyboard::NumPadAdd, GLFW_KEY_KP_ADD);
-    input::keyboardMap.insert(input::keyboard::NumPadEnter, GLFW_KEY_KP_ENTER);
-    input::keyboardMap.insert(input::keyboard::NumPadEqual, GLFW_KEY_KP_EQUAL);
-    input::keyboardMap.insert(input::keyboard::LeftShift, GLFW_KEY_LEFT_SHIFT);
-    input::keyboardMap.insert(input::keyboard::LeftControl, GLFW_KEY_LEFT_CONTROL);
-    input::keyboardMap.insert(input::keyboard::LeftAlt, GLFW_KEY_LEFT_ALT);
-    input::keyboardMap.insert(input::keyboard::LeftSuper, GLFW_KEY_LEFT_SUPER);
-    input::keyboardMap.insert(input::keyboard::RightShift, GLFW_KEY_RIGHT_SHIFT);
-    input::keyboardMap.insert(input::keyboard::RightControl, GLFW_KEY_RIGHT_CONTROL);
-    input::keyboardMap.insert(input::keyboard::RightAlt, GLFW_KEY_RIGHT_ALT);
-    input::keyboardMap.insert(input::keyboard::RightSuper, GLFW_KEY_RIGHT_SUPER);
-    input::keyboardMap.insert(input::keyboard::Menu, GLFW_KEY_MENU);
-    // clang-format on
-
-    return 0;
-}();
+bool input::isKeyPressed(input::keyboard key) {
+    const bool* keyStatus = SDL_GetKeyboardState(nullptr);
+    return keyStatus[toScancode(key)];
+}

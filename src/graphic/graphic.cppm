@@ -1,6 +1,4 @@
 module;
-#include <GLFW/glfw3.h>
-
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/mat4x4.hpp>
@@ -20,6 +18,7 @@ import :descriptor;
 import :uniformBufferObject;
 import :common;
 
+import projinfo;
 import osinfo;
 import logger;
 
@@ -89,38 +88,25 @@ class graphic::app {
     std::vector<vk::raii::Fence> presentFences;
 
     void createInstance();
-    void createSurface();
 
-    void recreateSwapchain();
+    void recreateSwapchain(bool forced = false);
 
-    void drawFrame();
-
-    void initWindow();
     void initVulkan();
-    void mainLoop(
-        std::function<void()> beforeRenderCallback = nullptr,
-        std::function<void()> afterRenderCallback = nullptr
-    );
 
     void cleanupSwapchain();
-    void cleanup();
 
    public:
     Window& window;
 
-    bool framebufferResized = false;
-
     app(Window& window_)
         : window(window_) {
-        initWindow();
         initVulkan();
     };
     ~app() { cleanup(); };
 
-    void run(
-        std::function<void()> beforeRenderCallback = nullptr,
-        std::function<void()> afterRenderCallback = nullptr
-    );
+    void drawFrame();
+
+    void cleanup();
 };
 
 namespace {
@@ -136,9 +122,11 @@ void graphic::app::createInstance() {
 
     constexpr vk::ApplicationInfo appInfo{
         .pApplicationName = "Hello Quadrangle",
-        .applicationVersion = VK_MAKE_VERSION(1, 0, 0),
-        .pEngineName = "No Engine",
-        .engineVersion = VK_MAKE_VERSION(1, 0, 0),
+        .applicationVersion = vk::makeVersion(1, 0, 0),
+        .pEngineName = project::name.data(),
+        .engineVersion = vk::makeVersion(
+            project::versionMajor, project::versionMinor, project::versionPatch
+        ),
         .apiVersion = vk::ApiVersion14
     };
 
@@ -189,13 +177,11 @@ void graphic::app::createInstance() {
     // instance extensions
     std::vector<const char*> requiredExtensions;
 
-    uint32_t glfwExtensionCount = 0;
-    const char** glfwExtensions;
+    std::span<const char*> windowExtensions =
+        window.getRequiredInstanceExtensions();
 
-    glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
-
-    for (int i = 0; i < glfwExtensionCount; i++)
-        requiredExtensions.push_back(glfwExtensions[i]);
+    for (int i = 0; i < windowExtensions.size(); i++)
+        requiredExtensions.push_back(windowExtensions[i]);
 
     validationLayer::pushRequiredInstanceExtensions(requiredExtensions);
 
@@ -227,29 +213,32 @@ void graphic::app::createInstance() {
     instance = vk::raii::Instance(context, createInfo);
 }
 
-void graphic::app::createSurface() {
-    VkSurfaceKHR _surface;
+void graphic::app::recreateSwapchain(bool forced) {
+    // TODO: return when window.isMinimumFlagSet() after window impl
+    // 주석을 주석 처리할 수는 없나
 
-    if (glfwCreateWindowSurface(*instance, *window, nullptr, &_surface) !=
-        VK_SUCCESS)
-        throw std::runtime_error("Cannot create window surface. ");
+    if (window.isMinimizedFlagSet())
+        return;
 
-    surface = vk::raii::SurfaceKHR(instance, _surface);
-}
-
-void graphic::app::recreateSwapchain() {
-    auto [width, height] = window.getFramebufferSize();
-    while (width == 0 || height == 0) {
-        std::tie(width, height) = window.getFramebufferSize();
-        glfwWaitEvents();
+    if (not forced) {
+        if (not window.isSizeChangedFlagSet())
+            return;
     }
+
+    window.resetSizeChangedFlag();
+
+    auto [width, height] = window.getPixelSize();
+    // while (width == 0 || height == 0) {
+    //     device.waitIdle();
+    //     std::tie(width, height) = window.getPixelSize();
+    // }
 
     device.waitIdle();
 
     cleanupSwapchain();
 
     swapChain = swapchain::createSwapChain(
-        physicalDevice, device, surface, *window, swapChain
+        physicalDevice, device, surface, window, swapChain
     );
 
     SwapChainSupportDetails swapchainSupport =
@@ -257,7 +246,7 @@ void graphic::app::recreateSwapchain() {
     swapChainSurfaceFormat =
         swapchain::chooseSwapSurfaceFormat(swapchainSupport.formats);
     swapChainExtent =
-        swapchain::chooseSwapExtent(swapchainSupport.capabilities, *window);
+        swapchain::chooseSwapExtent(swapchainSupport.capabilities, window);
 
     cleanupSwapchain();
 
@@ -291,24 +280,28 @@ void graphic::app::recreateSwapchain() {
 }
 
 void graphic::app::drawFrame() {
+    if (window.isMinimizedFlagSet())
+        return;
+
     {
         auto result = device.waitForFences(
             *presentFences[currentFrame], vk::True, UINT64_MAX
         );
-        if (result != vk::Result::eSuccess) {
+
+        if (result != vk::Result::eSuccess)
             throw std::runtime_error("cannot wait for fence(presentFence)");
-        }
     }
 
     auto [result, imageIndex] = swapChain.acquireNextImage(
         UINT64_MAX, *imageAvaliableSemaphores[currentFrame], nullptr
     );
     if (result == vk::Result::eErrorOutOfDateKHR) {
-        framebufferResized = false;
-        recreateSwapchain();
+        recreateSwapchain(true);
 
         return;
-    } else if (result == vk::Result::eSuboptimalKHR || framebufferResized) {
+    } else if (
+        result == vk::Result::eSuboptimalKHR || window.isSizeChangedFlagSet()
+    ) {
         vk::PipelineStageFlags waitStage =
             vk::PipelineStageFlagBits::eBottomOfPipe;
         vk::SubmitInfo submitInfo{
@@ -320,7 +313,6 @@ void graphic::app::drawFrame() {
         graphicsQueue.submit(submitInfo, nullptr);
         graphicsQueue.waitIdle();
 
-        framebufferResized = false;
         recreateSwapchain();
 
         return;
@@ -400,9 +392,8 @@ void graphic::app::drawFrame() {
 
     result = presentQueue.presentKHR(presentInfo);
     if (result == vk::Result::eErrorOutOfDateKHR ||
-        result == vk::Result::eSuboptimalKHR || framebufferResized) {
-        framebufferResized = false;
-        recreateSwapchain();
+        result == vk::Result::eSuboptimalKHR || window.isSizeChangedFlagSet()) {
+        recreateSwapchain(true);
 
         return;
     } else if (result != vk::Result::eSuccess)
@@ -411,28 +402,13 @@ void graphic::app::drawFrame() {
     currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 }
 
-static void framebufferResizeCallback(
-    GLFWwindow* window,
-    int width,
-    int height
-) {
-    graphic::app* app =
-        reinterpret_cast<graphic::app*>(glfwGetWindowUserPointer(window));
-
-    app->framebufferResized = true;
-}
-
-void graphic::app::initWindow() {
-    glfwSetFramebufferSizeCallback(*window, framebufferResizeCallback);
-}
-
 void graphic::app::initVulkan() {
     createInstance();
 
     if (validationLayer::enableValidationLayers)
         debugMessenger = validationLayer::createDebugMessenger(instance);
 
-    createSurface();
+    surface = window.createSurface(instance);
 
     physicalDevice = device::pickPhysicalDevice(instance, surface);
 
@@ -440,7 +416,7 @@ void graphic::app::initVulkan() {
         device::createLogicalDevice(physicalDevice, surface);
 
     swapChain =
-        swapchain::createSwapChain(physicalDevice, device, surface, *window);
+        swapchain::createSwapChain(physicalDevice, device, surface, window);
     swapChainImages = swapchain::createImages(device, swapChain);
 
     SwapChainSupportDetails swapchainSupport =
@@ -448,7 +424,7 @@ void graphic::app::initVulkan() {
     swapChainSurfaceFormat =
         swapchain::chooseSwapSurfaceFormat(swapchainSupport.formats);
     swapChainExtent =
-        swapchain::chooseSwapExtent(swapchainSupport.capabilities, *window);
+        swapchain::chooseSwapExtent(swapchainSupport.capabilities, window);
 
     swapChainImageViews = swapchain::createImageViews(
         device, swapChainImages, swapChainSurfaceFormat
@@ -535,27 +511,6 @@ void graphic::app::initVulkan() {
     }
 }
 
-void graphic::app::mainLoop(
-    std::function<void()> beforeRenderCallback,
-    std::function<void()> afterRenderCallback
-) {
-    logger.Log("mainLoop start", "Info");
-
-    while (!glfwWindowShouldClose(*window)) {
-        glfwPollEvents();
-
-        if (beforeRenderCallback)
-            beforeRenderCallback();
-
-        drawFrame();
-
-        if (afterRenderCallback)
-            afterRenderCallback();
-    }
-
-    device.waitIdle();
-}
-
 void graphic::app::cleanupSwapchain() {
     swapChainFramebuffers.clear();
 
@@ -563,16 +518,5 @@ void graphic::app::cleanupSwapchain() {
 }
 
 void graphic::app::cleanup() {
-    // cleanupSwapchain();
-
-    // glfwDestroyWindow(window);
-
-    // glfwTerminate();
-}
-
-void graphic::app::run(
-    std::function<void()> beforeRenderCallback,
-    std::function<void()> afterRenderCallback
-) {
-    graphic::app::mainLoop(beforeRenderCallback, afterRenderCallback);
+    device.waitIdle();
 }

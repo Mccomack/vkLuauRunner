@@ -81,10 +81,10 @@ std::string& Logger::getFileName() {
     std::string buildType = project::isDebugBuild ? "Debug" : "Release";
 
     static std::string fileName = std::format(
-        "{}T{}Z_{}_{}.log",
+        "{}_{}T{}Z_{}.log",
+        project::name,
         getFormattedDate().str(),
         getFormattedTime().str(),
-        project::name,
         buildType
     );
 

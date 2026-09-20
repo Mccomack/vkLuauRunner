@@ -7,7 +7,7 @@ tmp=$(echo "$1" | tr '[:upper:]' '[:lower:]')
 if [ "$tmp" == "release" ]; then
     buildType="Release"
 else
-    if [ "$tmp" != "debug" ] 
+    if [ "$tmp" != "debug" ]
     then
         echo "Please set build type(Release, Debug) at the first argument. using default build type(Debug)..."
     fi
@@ -21,12 +21,20 @@ if [ "$tmp" == "test" ]; then
     buildTest="ON"
 fi
 
+buildBundle="OFF"
+tmp=$(echo "$3" | tr '[:upper:]' '[:lower:]')
+if [ "$tmp" == "bundle" ]; then
+    buildBundle="ON"
+fi
+
+echo "buildType=$buildType, buildTest=$buildTest, buildBundle=$buildBundle"
+
 case "$(uname -s)" in
     Darwin) target="$HOME/Library/Application Support/vkLuauRunner" toolchain="cmake/toolchain/macos.cmake" ;;
     *)      target="$HOME/.local/share/vkLuauRunner" toolchain="cmake/toolchain/linux.cmake";;
 esac
 
-cmake -S . -B "build/$buildType" -G "Ninja" -DCMAKE_TOOLCHAIN_FILE=$toolchain -DCMAKE_BUILD_TYPE=$buildType -DBUILD_TEST=$buildTest
+cmake -S . -B "build/$buildType" -G "Ninja" -DCMAKE_TOOLCHAIN_FILE=$toolchain -DCMAKE_BUILD_TYPE=$buildType -DBUILD_TEST=$buildTest -DBUILD_BUNDLE=$buildBundle
 
 cmake --build "build/$buildType"
 

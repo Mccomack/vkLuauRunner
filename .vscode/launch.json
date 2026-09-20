@@ -5,7 +5,7 @@
             "name": "LLDB Debug",
             "type": "lldb",
             "request": "launch",
-            "program": "${workspaceFolder}/build/Debug/program",
+            "program": "${workspaceFolder}/build/current/src/program",
             "args": [],
             "cwd": "${workspaceFolder}/runtest",
             "preLaunchTask": "cmake-build-debug"

@@ -1,4 +1,2 @@
 CompileFlags:
-  Add:
-    - "-std=c++23"
-    - "-fprebuilt-module-path=./../build/current/CMakeFiles/program.dir"
+  CompilationDatabase: ./build/current

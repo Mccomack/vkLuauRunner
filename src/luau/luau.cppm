@@ -60,14 +60,14 @@ class luau::State {
         return *this;
     }
 
-    lua_State* operator*() { return L; }
     lua_State* operator*() const { return L; }
+    operator lua_State*() const { return L; }
 
     void registerFunction(
         const std::string& name,
         lua_CFunction func,
         luau::SecurityType requiredLevel
-    ) {
+    ) const {
         return luau::registerFunction(L, name, func, requiredLevel);
     };
 
@@ -131,14 +131,14 @@ class luau::Environment {
         return *this;
     }
 
-    lua_State* operator*() { return thread; }
     lua_State* operator*() const { return thread; }
+    operator lua_State*() const { return thread; }
 
     void registerFunction(
         const std::string& name,
         lua_CFunction func,
         luau::SecurityType requiredLevel
-    ) {
+    ) const {
         return luau::registerFunction(thread, name, func, requiredLevel);
     };
 
