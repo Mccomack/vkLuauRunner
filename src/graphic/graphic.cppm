@@ -89,18 +89,16 @@ class graphic::app {
 
     void createInstance();
 
-    void recreateSwapchain();
+    void recreateSwapchain(bool forced = false);
 
     void initVulkan();
 
     void cleanupSwapchain();
 
    public:
-    const Window& window;
+    Window& window;
 
-    bool framebufferResized = false;
-
-    app(const Window& window_)
+    app(Window& window_)
         : window(window_) {
         initVulkan();
     };
@@ -125,7 +123,7 @@ void graphic::app::createInstance() {
     constexpr vk::ApplicationInfo appInfo{
         .pApplicationName = "Hello Quadrangle",
         .applicationVersion = vk::makeVersion(1, 0, 0),
-        .pEngineName = "No Engine",
+        .pEngineName = project::name.data(),
         .engineVersion = vk::makeVersion(
             project::versionMajor, project::versionMinor, project::versionPatch
         ),
@@ -215,12 +213,25 @@ void graphic::app::createInstance() {
     instance = vk::raii::Instance(context, createInfo);
 }
 
-void graphic::app::recreateSwapchain() {
-    auto [width, height] = window.getFramebufferSize();
-    while (width == 0 || height == 0) {
-        device.waitIdle();
-        std::tie(width, height) = window.getFramebufferSize();
+void graphic::app::recreateSwapchain(bool forced) {
+    // TODO: return when window.isMinimumFlagSet() after window impl
+    // 주석을 주석 처리할 수는 없나
+
+    if (window.isMinimizedFlagSet())
+        return;
+
+    if (not forced) {
+        if (not window.isSizeChangedFlagSet())
+            return;
     }
+
+    window.resetSizeChangedFlag();
+
+    auto [width, height] = window.getPixelSize();
+    // while (width == 0 || height == 0) {
+    //     device.waitIdle();
+    //     std::tie(width, height) = window.getPixelSize();
+    // }
 
     device.waitIdle();
 
@@ -269,24 +280,28 @@ void graphic::app::recreateSwapchain() {
 }
 
 void graphic::app::drawFrame() {
+    if (window.isMinimizedFlagSet())
+        return;
+
     {
         auto result = device.waitForFences(
             *presentFences[currentFrame], vk::True, UINT64_MAX
         );
-        if (result != vk::Result::eSuccess) {
+
+        if (result != vk::Result::eSuccess)
             throw std::runtime_error("cannot wait for fence(presentFence)");
-        }
     }
 
     auto [result, imageIndex] = swapChain.acquireNextImage(
         UINT64_MAX, *imageAvaliableSemaphores[currentFrame], nullptr
     );
     if (result == vk::Result::eErrorOutOfDateKHR) {
-        framebufferResized = false;
-        recreateSwapchain();
+        recreateSwapchain(true);
 
         return;
-    } else if (result == vk::Result::eSuboptimalKHR || framebufferResized) {
+    } else if (
+        result == vk::Result::eSuboptimalKHR || window.isSizeChangedFlagSet()
+    ) {
         vk::PipelineStageFlags waitStage =
             vk::PipelineStageFlagBits::eBottomOfPipe;
         vk::SubmitInfo submitInfo{
@@ -298,7 +313,6 @@ void graphic::app::drawFrame() {
         graphicsQueue.submit(submitInfo, nullptr);
         graphicsQueue.waitIdle();
 
-        framebufferResized = false;
         recreateSwapchain();
 
         return;
@@ -378,9 +392,8 @@ void graphic::app::drawFrame() {
 
     result = presentQueue.presentKHR(presentInfo);
     if (result == vk::Result::eErrorOutOfDateKHR ||
-        result == vk::Result::eSuboptimalKHR || framebufferResized) {
-        framebufferResized = false;
-        recreateSwapchain();
+        result == vk::Result::eSuboptimalKHR || window.isSizeChangedFlagSet()) {
+        recreateSwapchain(true);
 
         return;
     } else if (result != vk::Result::eSuccess)

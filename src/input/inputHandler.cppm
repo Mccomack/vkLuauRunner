@@ -47,5 +47,5 @@ handler::~handler() {
 input::Status handler::getKeyStatus(keyboard key) {
     const bool* keyState = SDL_GetKeyboardState(nullptr);
 
-    return keyState[keyboardMap.getB(key)] ? Status::ePress : Status::eNone;
+    return keyState[input::toScancode(key)] ? Status::ePress : Status::eNone;
 }

@@ -78,7 +78,7 @@ vk::Extent2D graphic::swapchain::chooseSwapExtent(
         return capabilities.currentExtent;
     }
 
-    auto [width, height] = window.getFramebufferSize();
+    auto [width, height] = window.getPixelSize();
 
     vk::Extent2D actualExtend{
         static_cast<uint32_t>(width), static_cast<uint32_t>(height)

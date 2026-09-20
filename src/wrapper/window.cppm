@@ -21,69 +21,113 @@ export class Window {
     // free windows 🤑🤑🤑
     SDL_Window* window;
 
-   public:
-    // 창 생성하는 거. 앱 만드는 게 아니라서 여러 개 있어도 문제 없을 듯?
-    Window(int width = 800, int height = 600)
-        : window([&]() -> SDL_Window* {
-              SDL_Init(SDL_INIT_VIDEO);
+    std::atomic<uint64_t> position;
 
-              SDL_Window* window_ = SDL_CreateWindow(
-                  "Window",
-                  width,
-                  height,
-                  SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE
-              );
+    // 각각 hdr 적용 전 화면 사이즈, hdr 적용 후 화면 사이즈, 화면 사이즈 변경
+    // 여부.
+    std::atomic<uint64_t> pixelSize;
+    std::atomic<uint64_t> finalSize;
+    std::atomic<bool> sizeChanged;
+    std::atomic<bool> minimized;
 
-              if (!window_)
-                  throw std::runtime_error(SDL_GetError());
-
-              return window_;
-          }()) {}
-
-    // 홍명보당한 경우
-    ~Window() {
-        if (!window)
-            return;
-
-        SDL_DestroyWindow(window);
-        SDL_Quit();
+    // 비트연산자 🤓
+    // width 먼저, height 나중
+    uint64_t pack(uint32_t w, uint32_t h) {
+        return (static_cast<uint64_t>(w) << 32) | h;
     }
 
-    // pointer 관련 편의성 함수. SDL_Window* 반환
+    std::pair<uint32_t, uint32_t> unpack(uint64_t packed) const {
+        return {
+            static_cast<uint32_t>(packed >> 32),
+            static_cast<uint32_t>(packed & 0xFFFFFFFF)
+        };
+    }
+
+    void initSDL(uint32_t width, uint32_t height);
+    void cleanup();
+
+   public:
+    Window(uint32_t width = 800, uint32_t height = 600) {
+        initSDL(width, height);
+    }
+
+    ~Window() { cleanup(); }
+
     SDL_Window* operator*() const { return window; }
     operator SDL_Window*() const { return window; }
 
-    std::tuple<int, int> getFramebufferSize() const {
-        int width, height;
-
-        SDL_GetWindowSizeInPixels(window, &width, &height);
-
-        return std::make_tuple(width, height);
-    }
-
-    std::tuple<int, int> getFinalSize() const {
-        int width, height;
-
-        SDL_GetWindowSize(window, &width, &height);
-
-        return std::make_tuple(width, height);
-    }
-
     vk::raii::SurfaceKHR createSurface(
         const vk::raii::Instance& instance
-    ) const {
-        VkSurfaceKHR surface;
+    ) const;
+    std::span<const char*> getRequiredInstanceExtensions() const;
 
-        SDL_Vulkan_CreateSurface(window, *instance, nullptr, &surface);
-
-        return vk::raii::SurfaceKHR(instance, surface);
+    // 생 pixel 기준 화면 사이즈
+    std::pair<uint32_t, uint32_t> getPixelSize() const {
+        return unpack(pixelSize);
     }
 
-    std::span<const char*> getRequiredInstanceExtensions() const {
-        uint32_t count;
-        const char* const* extensions =
-            SDL_Vulkan_GetInstanceExtensions(&count);
+    // hdr 처리 후 화면 사이즈
+    std::pair<uint32_t, uint32_t> getFinalSize() const {
+        return unpack(finalSize);
+    }
 
-        return std::span{const_cast<const char**>(extensions), count};
+    bool isSizeChangedFlagSet() const { return sizeChanged.load(); }
+    bool isMinimizedFlagSet() const { return minimized.load(); }
+
+    void setPixelSize(uint32_t w, uint32_t h) {
+        pixelSize.store(pack(w, h), std::memory_order_relaxed);
+        sizeChanged.store(true, std::memory_order_relaxed);
+    }
+
+    void setFinalSize(uint32_t w, uint32_t h) {
+        finalSize.store(pack(w, h), std::memory_order_relaxed);
+        sizeChanged.store(true, std::memory_order_relaxed);
+    }
+
+    void resetSizeChangedFlag() {
+        sizeChanged.store(false, std::memory_order_relaxed);
+    }
+
+    void setMinimizedFlag(bool flag) {
+        minimized.store(flag, std::memory_order_relaxed);
     }
 };
+
+void Window::initSDL(uint32_t width, uint32_t height) {
+    SDL_Init(SDL_INIT_VIDEO);
+
+    window = SDL_CreateWindow(
+        "Window", width, height, SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE
+    );
+
+    if (!window)
+        throw std::runtime_error(SDL_GetError());
+
+    setPixelSize(width, height);
+    setFinalSize(width, height);
+}
+
+void Window::cleanup() {
+    if (!window)
+        return;
+
+    SDL_DestroyWindow(window);
+    SDL_Quit();
+}
+
+vk::raii::SurfaceKHR Window::createSurface(
+    const vk::raii::Instance& instance
+) const {
+    VkSurfaceKHR surface;
+
+    SDL_Vulkan_CreateSurface(window, *instance, nullptr, &surface);
+
+    return vk::raii::SurfaceKHR(instance, surface);
+}
+
+std::span<const char*> Window::getRequiredInstanceExtensions() const {
+    uint32_t count;
+    const char* const* extensions = SDL_Vulkan_GetInstanceExtensions(&count);
+
+    return std::span{const_cast<const char**>(extensions), count};
+}

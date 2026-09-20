@@ -96,11 +96,21 @@ void app::app::run() {
                     quit = true;
                     break;
                 case SDL_EVENT_WINDOW_RESIZED:
+                    mainWindow.setFinalSize(e.window.data1, e.window.data2);
+                    break;
+                case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
+                    mainWindow.setPixelSize(e.window.data1, e.window.data2);
+                    break;
                 case SDL_EVENT_WINDOW_MINIMIZED:
+                    mainWindow.setMinimizedFlag(true);
+                    break;
                 case SDL_EVENT_WINDOW_RESTORED:
-                    renderer.framebufferResized = true;
+                    mainWindow.setMinimizedFlag(false);
                     break;
                 default:
+                    logger.Debugf(
+                        "SDL Event didn't handled. event type: {}", e.type
+                    );
                     break;
             }
         }
