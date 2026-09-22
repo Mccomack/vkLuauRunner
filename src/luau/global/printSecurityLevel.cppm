@@ -22,17 +22,3 @@ namespace luau::global {
         return 0;
     }
 }
-
-namespace {
-    inline int _ = []() -> int {
-        // clang-format off
-        luau::getDefaultFunctions().push_back(luau::funcRegInfo{
-            .name = "printSecurityLevel",
-            .reqLevel = luau::SecurityType::eNone,
-            .func = luau::global::lprintSecurityLevel
-        });
-        // clang-format on
-
-        return 0;
-    }();
-}

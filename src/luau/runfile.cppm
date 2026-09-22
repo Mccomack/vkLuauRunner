@@ -18,7 +18,7 @@ std::string luau::run::readFile(const std::filesystem::path& path) {
     std::ifstream file(path);
     if (!file.is_open())
         throw std::runtime_error("cannot open file: " + path.string());
-    
+
     std::ostringstream ss;
     ss << file.rdbuf();
     return ss.str();
@@ -28,7 +28,7 @@ void luau::run::runLuauFile(lua_State* L, const std::filesystem::path& path) {
     const std::string source   = readFile(path);
     const std::string chunkName = "@" + path.filename().string();
 
-    // 1. 컴파일 (optimizationLevel 2 권장 - codegen과 함께 쓸 때)
+    // 1. 컴파일 (optimizationLevel 2 권장 (codegen과 함께 쓸 때) )
     Luau::CompileOptions opts{
         .optimizationLevel = 2
     };
@@ -50,7 +50,7 @@ void luau::run::runLuauFile(lua_State* L, const std::filesystem::path& path) {
         nativeOpts.flags = Luau::CodeGen::CodeGenFlags::CodeGen_OnlyNativeModules;
 
         Luau::CodeGen::CompilationResult result = Luau::CodeGen::compile(L, -1, nativeOpts);
-        // 실패해도 fatal은 아님 - 그냥 인터프리터로 실행됨
+        // 실패해도 fatal은 아님. 그냥 인터프리터로 실행됨
     }
 
     // 4. 실행

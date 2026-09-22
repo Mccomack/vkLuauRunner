@@ -36,28 +36,22 @@ namespace luau::library {
         return 1;
     }
 
-    luau::libRegInfo test{
-        .name = "test",
-
-        .methods = {
-            luau::funcRegInfo{
-                .name = "somemethod",
-                .reqLevel = luau::SecurityType::eNone,
-                .func = test_lsomemethod
-            },
-            luau::funcRegInfo{
-                .name = "toMoneyFace",
-                .reqLevel = luau::SecurityType::eNone,
-                .func = test_ltoMoneyFace
-            }
+    constexpr std::array kTestMethods{
+        luau::funcRegInfo{
+            .name = "somemethod",
+            .reqLevel = luau::SecurityType::eNone,
+            .func = test_lsomemethod
+        },
+        luau::funcRegInfo{
+            .name = "toMoneyFace",
+            .reqLevel = luau::SecurityType::eNone,
+            .func = test_ltoMoneyFace
         }
     };
-}
 
-namespace {
-    inline static int _ = []() -> int {
-        luau::getDefaultLibraries().push_back(&luau::library::test);
+    constexpr luau::libRegInfo kTestLibrary{
+        .name = "test",
 
-        return 0;
-    }();
+        .methods = kTestMethods
+    };
 }

@@ -64,7 +64,7 @@ class luau::State {
     operator lua_State*() const { return L; }
 
     void registerFunction(
-        const std::string& name,
+        std::string_view name,
         lua_CFunction func,
         luau::SecurityType requiredLevel
     ) const {

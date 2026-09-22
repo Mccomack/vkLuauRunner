@@ -31,19 +31,3 @@ export namespace luau::global {
         return 0;
     }
 }
-
-namespace {
-    inline static int _ = []() -> int {
-        // clang-format off
-        luau::funcRegInfo print{
-            .name = "print",
-            .reqLevel = luau::SecurityType::eNone,
-            .func = luau::global::lprint
-        };
-        // clang-format on
-
-        luau::getDefaultFunctions().push_back(print);
-
-        return 0;
-    }();
-}

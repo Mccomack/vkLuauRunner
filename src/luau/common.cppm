@@ -29,7 +29,7 @@ namespace luau {
     };
 
     struct funcRegInfo {
-        std::string name;
+        std::string_view name;
         SecurityType reqLevel = SecurityType::eDefault;
         lua_CFunction func;
     };
@@ -52,9 +52,9 @@ namespace luau {
         prop<bool> >;
 
     struct libRegInfo {
-        std::string name;
+        std::string_view name;
 
-        std::vector<funcRegInfo> methods;
+        std::span<const funcRegInfo> methods;
     };
 
     struct objRegInfo {
@@ -64,29 +64,17 @@ namespace luau {
         std::vector<anyProp> properties;
     };
 
-    std::vector<funcRegInfo>& getDefaultFunctions();
-    std::vector<libRegInfo*>& getDefaultLibraries();
     std::vector<objRegInfo*>& getDefaultObjects();
 
     int securityWrapper(lua_State* L);
     void registerFunction(
         lua_State* L,
-        const std::string& name,
+        std::string_view name,
         lua_CFunction func,
         SecurityType requiredLevel
     );
     void registerLibrary(lua_State* L, const libRegInfo& regInfo);
     void registerObject(lua_State* L, const objRegInfo& objInfo);
-}
-
-std::vector<luau::funcRegInfo>& luau::getDefaultFunctions() {
-    static std::vector<funcRegInfo> defaultFunctions;
-    return defaultFunctions;
-};
-
-std::vector<luau::libRegInfo*>& luau::getDefaultLibraries() {
-    static std::vector<libRegInfo*> defaultLibraries;
-    return defaultLibraries;
 }
 
 std::vector<luau::objRegInfo*>& luau::getDefaultObjects() {
@@ -115,14 +103,14 @@ int luau::securityWrapper(lua_State* L) {
 
 void luau::registerFunction(
     lua_State* L,
-    const std::string& name,
+    std::string_view name,
     lua_CFunction func,
     luau::SecurityType requiredLevel
 ) {
     lua_pushinteger(L, static_cast<int>(requiredLevel));
-    lua_pushcfunction(L, func, name.c_str());
-    lua_pushcclosure(L, &luau::securityWrapper, name.c_str(), 2);
-    lua_setglobal(L, name.c_str());
+    lua_pushcfunction(L, func, name.data());
+    lua_pushcclosure(L, &luau::securityWrapper, name.data(), 2);
+    lua_setglobal(L, name.data());
 }
 
 void luau::registerLibrary(lua_State* L, const libRegInfo& libInfo) {
@@ -130,13 +118,13 @@ void luau::registerLibrary(lua_State* L, const libRegInfo& libInfo) {
 
     for (const luau::funcRegInfo& funcInfo : libInfo.methods) {
         lua_pushinteger(L, static_cast<int>(funcInfo.reqLevel));
-        lua_pushcfunction(L, funcInfo.func, funcInfo.name.c_str());
-        lua_pushcclosure(L, &luau::securityWrapper, funcInfo.name.c_str(), 2);
-        lua_setfield(L, -2, funcInfo.name.c_str());
+        lua_pushcfunction(L, funcInfo.func, funcInfo.name.data());
+        lua_pushcclosure(L, &luau::securityWrapper, funcInfo.name.data(), 2);
+        lua_setfield(L, -2, funcInfo.name.data());
     }
 
     lua_setreadonly(L, -1, true);
-    lua_setglobal(L, libInfo.name.c_str());
+    lua_setglobal(L, libInfo.name.data());
 }
 
 void luau::registerObject(lua_State* L, const objRegInfo& objInfo) {
