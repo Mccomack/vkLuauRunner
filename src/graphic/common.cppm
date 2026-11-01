@@ -82,7 +82,7 @@ export namespace graphic {
         vk::raii::DeviceMemory bufferMemory = nullptr;
     };
 
-    const int MAX_FRAMES_IN_FLIGHT = 2;
+    constexpr int MAX_FRAMES_IN_FLIGHT = 2;
 
     QueueFamilyIndices findQueueFamilies(
         const vk::raii::PhysicalDevice& physicalDevice,

@@ -1,6 +1,6 @@
 $ErrorActionPreference = "Stop"
 
-& "$PSScriptRoot\build.ps1" "Debug"
+& "$PSScriptRoot\scripts\build.ps1" "Debug"
 
 New-Item -ItemType Directory -Force -Path "runtest" | Out-Null
 Push-Location runtest

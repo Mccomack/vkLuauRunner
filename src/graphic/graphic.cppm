@@ -248,8 +248,6 @@ void graphic::app::recreateSwapchain(bool forced) {
     swapChainExtent =
         swapchain::chooseSwapExtent(swapchainSupport.capabilities, window);
 
-    cleanupSwapchain();
-
     swapChainImages = swapchain::createImages(device, swapChain);
     swapChainImageViews = swapchain::createImageViews(
         device, swapChainImages, swapChainSurfaceFormat
@@ -292,6 +290,8 @@ void graphic::app::drawFrame() {
             throw std::runtime_error("cannot wait for fence(presentFence)");
     }
 
+    recreateSwapchain();
+
     auto [result, imageIndex] = swapChain.acquireNextImage(
         UINT64_MAX, *imageAvaliableSemaphores[currentFrame], nullptr
     );
@@ -302,20 +302,22 @@ void graphic::app::drawFrame() {
     } else if (
         result == vk::Result::eSuboptimalKHR || window.isSizeChangedFlagSet()
     ) {
-        vk::PipelineStageFlags waitStage =
-            vk::PipelineStageFlagBits::eBottomOfPipe;
-        vk::SubmitInfo submitInfo{
-            .waitSemaphoreCount = 1,
-            .pWaitSemaphores = &*imageAvaliableSemaphores[currentFrame],
-            .pWaitDstStageMask = &waitStage
-        };
+        // vk::PipelineStageFlags waitStage =
+        //     vk::PipelineStageFlagBits::eBottomOfPipe;
+        // vk::SubmitInfo submitInfo{
+        //     .waitSemaphoreCount = 1,
+        //     .pWaitSemaphores = &*imageAvaliableSemaphores[currentFrame],
+        //     .pWaitDstStageMask = &waitStage
+        // };
 
-        graphicsQueue.submit(submitInfo, nullptr);
-        graphicsQueue.waitIdle();
+        // graphicsQueue.submit(submitInfo, nullptr);
+        // graphicsQueue.waitIdle();
 
-        recreateSwapchain();
+        // recreateSwapchain();
+        // currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 
-        return;
+        // return drawFrame();
+        // // return;
     } else if (result != vk::Result::eSuccess) {
         assert(
             result == vk::Result::eTimeout || result == vk::Result::eNotReady

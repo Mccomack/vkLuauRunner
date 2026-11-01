@@ -12,8 +12,8 @@ endif()
 add_executable(program_test ${TEST_SOURCES})
 
 if(SRC_MODULES)
-    target_sources(program_test PRIVATE 
-        FILE_SET CXX_MODULES 
+    target_sources(program_test PRIVATE
+        FILE_SET CXX_MODULES
         BASE_DIRS ${CMAKE_SOURCE_DIR}/src
         FILES ${SRC_MODULES}
     )
@@ -26,6 +26,8 @@ execute_process(
     OUTPUT_VARIABLE GIT_HASH
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
+
+add_subdirectory(../external/googletest)
 
 target_compile_definitions(program_test PRIVATE
     GIT_HASH="${GIT_HASH}"
@@ -41,7 +43,6 @@ target_compile_definitions(program_test PRIVATE
 
 target_include_directories(program_test PRIVATE
     ${CMAKE_SOURCE_DIR}/external/json/include
-    ${CMAKE_SOURCE_DIR}/external/glfw/include
     ${CMAKE_SOURCE_DIR}/external/SDL/include
     ${CMAKE_SOURCE_DIR}/external/glm
     ${CMAKE_SOURCE_DIR}/external/luau/VM/include
@@ -54,11 +55,11 @@ target_include_directories(program_test PRIVATE
 
 target_link_libraries(program_test PRIVATE
     GTest::gtest_main
+    GTest::gmock
 
     Vulkan::Vulkan
     VulkanModule
 
-    glfw
     SDL3::SDL3-static
 
     Luau.VM
@@ -68,11 +69,12 @@ target_link_libraries(program_test PRIVATE
 
 target_compile_options(program_test PRIVATE
     -stdlib=libc++
-    $<$<AND:$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>,$<CONFIG:Debug>>:-g -O0>
-)
+    # $<$<CXX_COMPILER_ID:GNU>:-fmodules-ts>
+    # $<$<CXX_COMPILER_ID:Clang>:-fmodules>
+    # $<$<CXX_COMPILER_ID:MSVC>:/experimental:module>
 
-target_compile_definitions(program_test PRIVATE
-    GIT_HASH="${GIT_HASH}"
+    $<$<AND:$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>,$<CONFIG:Debug>>:-g -O0>
+    $<$<AND:$<CXX_COMPILER_ID:MSVC>,$<CONFIG:Debug>>:/Zi /Od>
 )
 
 gtest_discover_tests(program_test)

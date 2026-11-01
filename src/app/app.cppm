@@ -20,30 +20,6 @@ export namespace app {
     class app;
 }
 
-void afterInit() {
-    luau::State main(luau::SecurityType::eDefault);
-    luau::global::registerDefaultFunctions(*main);
-    luau::library::registerDefaultLibraries(*main);
-    luau::object::registerDefaultObjects(*main);
-    luau::sandbox(main);
-    luau::Environment script1(main);
-    luau::sandbox(script1);
-    luau::Environment script2(main);
-    luau::sandbox(script2);
-
-    try {
-        luau::run::runLuauFile(
-            *script1, os::appPath / "asset" / "script" / "main.luau"
-        );
-        logger.Log("---");
-        luau::run::runLuauFile(
-            *script2, os::appPath / "asset" / "script" / "2ndrankedppl.luau"
-        );
-    } catch (const std::exception& e) {
-        logger.Log(e.what(), "Error");
-    }
-}
-
 class app::app {
    private:
     bool quit;
@@ -58,8 +34,32 @@ class app::app {
     app()
         : renderer(mainWindow),
           inputHandler(mainWindow) {
-        afterInit();
+        SDL_AddEventWatch(resizingEventWatcher, this);
+
+        luau::State main(luau::SecurityType::eDefault);
+        luau::global::registerDefaultFunctions(*main);
+        luau::library::registerDefaultLibraries(*main);
+        luau::object::registerDefaultObjects(*main);
+        luau::sandbox(main);
+        luau::Environment script1(main);
+        luau::sandbox(script1);
+        luau::Environment script2(main);
+        luau::sandbox(script2);
+
+        try {
+            luau::run::runLuauFile(
+                *script1, os::appPath / "asset" / "script" / "main.luau"
+            );
+            logger.Log("---");
+            luau::run::runLuauFile(
+                *script2, os::appPath / "asset" / "script" / "2ndrankedppl.luau"
+            );
+        } catch (const std::exception& e) {
+            logger.Log(e.what(), "Error");
+        }
     };
+
+    static bool resizingEventWatcher(void* userdata, SDL_Event* e);
 
     void run();
 };
@@ -81,6 +81,22 @@ void app::app::beforeRender(app& obj) {
 
 void app::app::afterRender(app& obj) {
     // TODO: impl
+}
+
+bool app::app::resizingEventWatcher(void* userdata, SDL_Event* e) {
+    auto* self = static_cast<class app::app*>(userdata);
+
+    switch (e->type) {
+        case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
+            self->mainWindow.setPixelSize(e->window.data1, e->window.data2);
+            self->renderer.drawFrame();
+            break;
+        case SDL_EVENT_WINDOW_RESIZED:
+            self->mainWindow.setFinalSize(e->window.data1, e->window.data2);
+            break;
+    }
+
+    return true;
 }
 
 void app::app::run() {

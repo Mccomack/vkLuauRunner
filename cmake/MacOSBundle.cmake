@@ -21,12 +21,17 @@ function(macos_bundle_app TARGET)
     set(bundle_dir "$<TARGET_BUNDLE_DIR:${TARGET}>")
     set(resources_dir "$<TARGET_BUNDLE_CONTENT_DIR:${TARGET}>/Resources")
 
+    get_filename_component(llvm_root "${CMAKE_CXX_COMPILER}" DIRECTORY)
+    get_filename_component(llvm_root "${llvm_root}/.." ABSOLUTE)
+    set(fixup_dirs "${llvm_root}/lib/unwind;${llvm_root}/lib/c++;${llvm_root}/lib")
+
     # MoltenVK같은 경우에는 otool -L으로 뜨지 않기 때문에 따로 의존성 처리
     install(CODE "
         file(COPY \"${CMAKE_SOURCE_DIR}/asset\" DESTINATION \"${resources_dir}\")
         file(COPY \"${CMAKE_SOURCE_DIR}/build/shaders\" DESTINATION \"${resources_dir}\")
         include(BundleUtilities)
-        fixup_bundle(\"${bundle_dir}\" \"\" \"\")
+        fixup_bundle(\"${bundle_dir}\" \"\" \"/opt/homebrew/opt/llvm/lib/unwind;/opt/homebrew/opt/llvm/lib/c++;/opt/homebrew/opt/llvm/lib\")
+        execute_process(COMMAND codesign --force --deep -s - \"${bundle_dir}\" COMMAND_ERROR_IS_FATAL ANY)
     ")
 
     add_custom_command(TARGET ${TARGET} POST_BUILD

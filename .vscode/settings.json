@@ -10,7 +10,8 @@
     "clangd.path": "/opt/homebrew/opt/llvm/bin/clangd",
     "clangd.arguments": [
         "--compile-commands-dir=${workspaceFolder}/build/current",
-        "--log=verbose"
+        "--log=verbose",
+        "--experimental-modules-support"
     ],
     "markdownlint.lintWorkspaceGlobs": [
         "**/*.md",

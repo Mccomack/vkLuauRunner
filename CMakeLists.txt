@@ -58,7 +58,6 @@ set(LUAU_BUILD_WEB OFF CACHE BOOL "" FORCE)
 # add_subdirectory(external/glfw)
 add_subdirectory(external/SDL)
 add_subdirectory(external/luau)
-add_subdirectory(external/googletest)
 
 foreach(t SDL3-static SDL3_test)
     if(TARGET ${t})
