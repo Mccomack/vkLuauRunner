@@ -1,10 +1,10 @@
 export type stringable = string | number | {[any]: any} | boolean | nil
 
 declare engine: {
-    smth: () -> nil,
+    smth: () -> (),
 }
 
-declare class Enum
+declare extern type Enum with
     member: string
     function something(self): number
 end
@@ -22,6 +22,6 @@ declare function printSecurityLevel(): nil
 
 -- declare test: test
 declare test: {
-    somemethod: () -> string,
+    somemethod: () -> string;
     toMoneyFace: (str: stringable) -> string;
 }

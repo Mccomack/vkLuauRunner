@@ -16,4 +16,4 @@ config.json
 !.vscode/extensions.json
 !.vscode/*.code-snippets
 
-.omc/*
+.omc/

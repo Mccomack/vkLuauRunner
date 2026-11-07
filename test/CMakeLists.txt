@@ -17,6 +17,7 @@ if(SRC_MODULES)
         BASE_DIRS ${CMAKE_SOURCE_DIR}/src
         FILES ${SRC_MODULES}
     )
+
     set_target_properties(program_test PROPERTIES CXX_SCAN_FOR_MODULES ON)
 endif()
 
@@ -27,7 +28,10 @@ execute_process(
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
-add_subdirectory(../external/googletest)
+add_subdirectory(
+  ${CMAKE_SOURCE_DIR}/external/googletest
+  ${CMAKE_BINARY_DIR}/external/googletest
+)
 
 target_compile_definitions(program_test PRIVATE
     GIT_HASH="${GIT_HASH}"
@@ -37,7 +41,6 @@ target_compile_definitions(program_test PRIVATE
     APP_VERSION_MINOR=${PROJECT_VERSION_MINOR}
     APP_VERSION_PATCH=${PROJECT_VERSION_PATCH}
 
-    GLFW_INCLUDE_VULKAN
     VULKAN_HPP_CPPM_MODULE
 )
 
@@ -76,5 +79,7 @@ target_compile_options(program_test PRIVATE
     $<$<AND:$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>,$<CONFIG:Debug>>:-g -O0>
     $<$<AND:$<CXX_COMPILER_ID:MSVC>,$<CONFIG:Debug>>:/Zi /Od>
 )
+
+target_link_options(program_test PRIVATE -stdlib=libc++)
 
 gtest_discover_tests(program_test)

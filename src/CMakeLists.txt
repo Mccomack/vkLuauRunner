@@ -78,13 +78,11 @@ target_compile_definitions(program PRIVATE
     APP_VERSION_MINOR=${PROJECT_VERSION_MINOR}
     APP_VERSION_PATCH=${PROJECT_VERSION_PATCH}
 
-    GLFW_INCLUDE_VULKAN
     VULKAN_HPP_CPPM_MODULE
 )
 
 target_include_directories(program PRIVATE
     ${CMAKE_SOURCE_DIR}/external/json/include
-    # ${CMAKE_SOURCE_DIR}/external/glfw/include
     ${CMAKE_SOURCE_DIR}/external/SDL/include
     ${CMAKE_SOURCE_DIR}/external/glm
     ${CMAKE_SOURCE_DIR}/external/luau/VM/include
