@@ -1,5 +1,4 @@
 include(${CMAKE_SOURCE_DIR}/cmake/VulkanModule.cmake)
-include(${CMAKE_SOURCE_DIR}/cmake/MacOSBundle.cmake)
 
 # shader 컴파일
 # file(GLOB_RECURSE GLSL_FILES "shaders/*.vert" "shaders/*.frag" "shaders/*.comp")
@@ -42,14 +41,15 @@ if(NOT SOURCES AND NOT MODULE_SOURCES)
     message(WARNING "No source files found in src/ directory")
 endif()
 
-add_executable(program ${SOURCES})
+# add_executable(program ${SOURCES})
+add_library(engine STATIC ${SOURCES})
 
 if(MODULE_SOURCES)
-    target_sources(
-        program PRIVATE FILE_SET CXX_MODULES FILES ${MODULE_SOURCES}
+    target_sources(engine PUBLIC
+        FILE_SET CXX_MODULES FILES ${MODULE_SOURCES}
     )
 
-    set_target_properties(program PROPERTIES CXX_SCAN_FOR_MODULES ON)
+    set_target_properties(engine PROPERTIES CXX_SCAN_FOR_MODULES ON)
 
     # foreach(module_file ${MODULE_SOURCES})
     #     set_source_files_properties(${module_file} PROPERTIES
@@ -57,10 +57,6 @@ if(MODULE_SOURCES)
     #     )
     # endforeach()
 endif()
-
-set_source_files_properties(brewfix.cpp PROPERTIES
-    CXX_SCAN_FOR_MODULES OFF
-)
 
 #  projectinfo 정의
 execute_process(
@@ -70,7 +66,7 @@ execute_process(
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
-target_compile_definitions(program PRIVATE
+target_compile_definitions(engine PUBLIC
     GIT_HASH="${GIT_HASH}"
 
     APP_VERSION="${PROJECT_VERSION}"
@@ -81,7 +77,7 @@ target_compile_definitions(program PRIVATE
     VULKAN_HPP_CPPM_MODULE
 )
 
-target_include_directories(program PRIVATE
+target_include_directories(engine PUBLIC
     ${CMAKE_SOURCE_DIR}/external/json/include
     ${CMAKE_SOURCE_DIR}/external/SDL/include
     ${CMAKE_SOURCE_DIR}/external/glm
@@ -93,9 +89,9 @@ target_include_directories(program PRIVATE
     ${CMAKE_SOURCE_DIR}/includes
 )
 
-target_compile_features(program PRIVATE cxx_std_23)
+target_compile_features(engine PUBLIC cxx_std_23)
 
-target_link_libraries(program PRIVATE
+target_link_libraries(engine PUBLIC
     Vulkan::Vulkan
     VulkanModule
 
@@ -107,7 +103,7 @@ target_link_libraries(program PRIVATE
     Luau.CodeGen
 )
 
-target_compile_options(program PRIVATE
+target_compile_options(engine PUBLIC
     -stdlib=libc++
     # $<$<CXX_COMPILER_ID:GNU>:-fmodules-ts>
     # $<$<CXX_COMPILER_ID:Clang>:-fmodules>
@@ -116,7 +112,3 @@ target_compile_options(program PRIVATE
     $<$<AND:$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>,$<CONFIG:Debug>>:-g -O0>
     $<$<AND:$<CXX_COMPILER_ID:MSVC>,$<CONFIG:Debug>>:/Zi /Od>
 )
-
-if(BUILD_BUNDLE)
-    macos_bundle_app(program)
-endif()

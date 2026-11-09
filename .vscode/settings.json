@@ -25,6 +25,6 @@
     "luau-lsp.completion.autocompleteEnd": true,
     "luau-lsp.completion.showPropertiesOnMethodCall": true,
     "luau-lsp.types.definitionFiles": {
-        "@engine": "./src/luau/definitions.d.luau"
+        "@engine": "./engine/luau/definitions.d.luau"
     },
 }

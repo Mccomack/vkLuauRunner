@@ -89,8 +89,10 @@ foreach(t ${LUAU_TARGETS})
 endforeach()
 
 # 메인
+add_subdirectory(engine)
+
 option(BUILD_BUNDLE "Build macOS .app bundle" OFF)
-add_subdirectory(src)
+add_subdirectory(platform)
 
 option(BUILD_TEST "Build test" ON)
 if(BUILD_TEST)

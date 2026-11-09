@@ -7,5 +7,5 @@ mkdir -p runtest && cd runtest
 
 case "$(uname -s)" in
     Darwin) open ../build/Release/program.app ;;
-    *) ../build/Release/src/program ;;
+    *) ../build/Release/program ;;
 esac
