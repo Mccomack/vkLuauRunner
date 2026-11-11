@@ -1,6 +1,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 import luau;
+import luauHelper;
 
 TEST(Luau, RunFromStr) {
     luau::State main(luau::SecurityType::eDefault);
