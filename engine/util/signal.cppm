@@ -1,5 +1,3 @@
-module;
-
 export module signal;
 
 import std;
@@ -10,78 +8,107 @@ class Signal {
     using Callback = std::function<void(Args...)>;
     using Id = std::uint64_t;
 
+   private:
+    struct State {
+        struct Slot {
+            Id id;
+            Callback fn;  // 비어 있으면 삭제 예약된 슬롯
+        };
+
+        // fire 중 push_back 해도 실행 중인 요소의 참조 유지
+        std::deque<Slot> slots;
+        Id nextId = 1;
+        int firing = 0;
+        bool dirty = false;
+
+        void remove(Id id) {
+            auto it = std::ranges::find(slots, id, &Slot::id);
+            if (it == slots.end())
+                return;
+
+            if (firing > 0) {
+                it->fn = nullptr;  // 지연 삭제
+                dirty = true;
+            } else {
+                slots.erase(it);
+            }
+        }
+
+        void compact() {
+            if (firing == 0 && dirty) {
+                std::erase_if(slots, [](const Slot& s) { return !s.fn; });
+                dirty = false;
+            }
+        }
+    };
+
+    std::shared_ptr<State> state = std::make_shared<State>();
+
+   public:
     class Connection {
        private:
-        Signal* signal;
-        Id id;
+        std::weak_ptr<State> state;
+        Id id = 0;
 
        public:
-        Connection() noexcept : signal(nullptr), id(0) {}
-        Connection(Signal* signal_, Id id_) noexcept
-            : signal(signal_), id(id_) {}
+        Connection() noexcept = default;
+        Connection(std::weak_ptr<State> state_, Id id_) noexcept
+            : state(std::move(state_)),
+              id(id_) {}
 
         Connection(const Connection&) = delete;
         Connection& operator=(const Connection&) = delete;
 
-        Connection(Connection&& other) noexcept
-            : signal(other.signal), id(other.id) {
-            other.signal = nullptr;
-        }
+        Connection(Connection&&) noexcept = default;
 
         Connection& operator=(Connection&& other) noexcept {
-            if (this == &other)
-                return *this;
-
-            disconnect();
-
-            signal = other.signal;
-            id = other.id;
-            other.signal = nullptr;
-
+            if (this != &other) {
+                disconnect();
+                state = std::move(other.state);
+                id = other.id;
+            }
             return *this;
         }
 
         ~Connection() { disconnect(); }
 
         void disconnect() {
-            if (!signal)
-                return;
-
-            signal->disconnect(id);
-            signal = nullptr;
+            if (auto s = state.lock())
+                s->remove(id);
+            state.reset();
         }
     };
 
-   private:
-    Id nextId = 1;
-    std::unordered_map<Id, Callback> callbacks;
-
-   public:
     Signal() = default;
-
     Signal(const Signal&) = delete;
     Signal& operator=(const Signal&) = delete;
-
     Signal(Signal&&) = delete;
     Signal& operator=(Signal&&) = delete;
 
     [[nodiscard]] Connection connect(Callback callback) {
-        Id id = nextId++;
-        callbacks.emplace(id, std::move(callback));
-
-        return Connection(this, id);
+        Id id = state->nextId++;
+        state->slots.push_back({id, std::move(callback)});
+        return Connection(state, id);
     }
 
-    void disconnect(Id id) { callbacks.erase(id); }
-
     void fire(Args... args) const {
-        std::vector<Callback> snapshot;
-        snapshot.reserve(callbacks.size());
+        auto s = state;  // 콜백 안에서 Signal이 파괴돼도 State는 유지
+        const auto count =
+            s->slots.size();  // fire 중 새로 연결된 건 이번엔 호출 안 함
 
-        for (const auto& [id, callback] : callbacks)
-            snapshot.push_back(callback);
+        ++s->firing;
+        struct Guard {
+            State& s;
+            ~Guard() {
+                --s.firing;
+                s.compact();
+            }
+        } guard{*s};
 
-        for (const auto& callback : snapshot)
-            callback(args...);
+        for (std::size_t i = 0; i < count; ++i) {
+            auto& slot = s->slots[i];
+            if (slot.fn)  // 중간에 disconnect된 슬롯은 건너뜀
+                slot.fn(args...);
+        }
     }
 };
